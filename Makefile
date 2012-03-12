@@ -1,7 +1,10 @@
 # The default task is 'all'.
-all :  scanner      parser      hallo
+all :  clean scanner parser hallo
+	echo "Build successful!"
+
 # Test runs all the tests.
 test : test.scanner test.parser
+	echo "Tests successful!"
 
 # Just for testing make and the fpc installation
 hallo :
