@@ -1,228 +1,370 @@
-PROGRAM OSS; (* NW 19.9.93 / 17.11.94*)
-	(*IMPORT Oberon, Texts;*)
-  
-	CONST cIdLen = 16;
-	CONST cKW = 34;
-    (*symbols*)
-	CONST cNull = 0;
-    CONST cTimes = 1;
-    CONST cDiv = 3;
-    CONST cMod = 4;
-    CONST cAnd = 5;
-    CONST cPlus = 6;
-    CONST cMinus = 7;
-    CONST cOr = 8;
-    CONST cEql = 9;
-    CONST cNeq = 10;
-    CONST cLss = 11;
-    CONST cGeq = 12;
-    CONST cLeq = 13;
-    CONST cGtr = 14;
-    CONST cPeriod = 18;
-    CONST cComma = 19;
-    CONST cColon = 20;
-    CONST cRparen = 22;
-    CONST cRbrak = 23; 
-    CONST cOf = 25;
-    CONST cThen = 26;
-    CONST cDo = 27; 
-    CONST cLparen = 29;
-    CONST cLbrak = 30;
-    CONST cNot = 32;
-    CONST cBecomes = 33;
-    CONST cNumber = 34;
-    CONST cIdent = 37; 
-    CONST cDemicolon = 38;
-    CONST cEnd = 40;
-    CONST cElse = 41;
-    CONST cElsif = 42;
-    CONST cIf = 44;
-    CONST cWhile = 46;
-    CONST cArray = 54;
-    CONST cRecord = 55;
-    CONST cConst = 57;
-    CONST cType = 58;
-    CONST cVar = 59;
-    CONST cProcedure = 60;
-    CONST cBegin = 61;
-    CONST cModule = 63;
-    CONST cEof = 64;
+PROGRAM OSS;
 
-	TYPE tIdent = ARRAY [1..cIdLen] OF CHAR;
-
-	VAR val: LONGINT;
-	VAR id: tIdent;
-	VAR error: BOOLEAN;
-
-	VAR ch: CHAR;
-	VAR nkw: INTEGER;
-	VAR errpos: LONGINT;
-	VAR R: Text;
-	VAR W: Text;
-	VAR keyTab: ARRAY [1..cKW] OF
-	RECORD 
-		sym: INTEGER;
-		id: ARRAY [1..12] OF CHAR;
-	END;
+	CONST
+		(* größte Zahl, die im Source angegeben werden darf *)
+		cMaxNumber = 1000000;
+		cIFileName = 'ScannerInput.txt'; (* Input- Datei des Scanners *)
+		cOFileName = 'ScannerOutput.txt'; (* Output- Datei des Scanners *)
+		(* weder letter noch digit, um Ende eines Keywords zu kennzeichnen *)
+		cChr0 = #0;
 	
-	VAR sym: INTEGER; (* eingefügt da in Proz ident verwendet?? *)
+		cIdLen = 16; (* maximale Länge von Schlüsselwörter und Variablen etc. *)
+		cKWMaxNumber = 34; (* Anzahl der Key- Wörter *)
 
-	(*
-	PROCEDURE Mark(msg: ARRAY OF CHAR);
-	VAR p: LONGINT;
-	BEGIN p := Texts.Pos(R) - 1;
-		IF p > errpos THEN
-			Texts.WriteString(W, "  pos "); Texts.WriteInt(W, p, 1);
-			Texts.Write(W, " "); Texts.WriteString(W, msg);
-			Texts.WriteLn(W); Texts.Append(Oberon.Log, W.buf)
-		END ;
-		errpos := p; error := TRUE
-	END Mark;
-	*)
+		(* symbols *)
+		cNull = 0;
+		cTimes = 1;
+		cDiv = 3; cMod = 4;
+		cAnd = 5; cOr = 8;
+		cPlus = 6; cMinus = 7;
+		cEql = 9; cNeq = 10;
+		cLss = 11; cGeq = 12; cLeq = 13; cGtr = 14;
+		cPeriod = 18; cComma = 19; cColon = 20;
+		cRparen = 22; cLparen = 29;
+		cRbrak = 23; cLbrak = 30;
+		cOf = 25;
+		cThen = 26;
+		cDo = 27;
+		cNot = 32;
+		cBecomes = 33;
+		cNumber = 34;
+		cIdent = 37;
+		cSemicolon = 38;
+		cEnd = 40;
+		cIf = 44; cElse = 41; cElsif = 42;
+		cWhile = 46;
+		cArray = 54;
+		cRecord = 55;
+		cConst = 57;
+		cType = 58;
+		cVar = 59;
+		cProcedure = 60;
+		cBegin = 61;
+		cModule = 63;
+		cEof = 64;
+		(* ??? wie behandeln wir Strings. einfaches oder doppeltes Hochkomma ? *)
+		cQuote = 99;
 
-  
-	PROCEDURE Get(VAR sym: INTEGER);
-  
-		PROCEDURE Ident;
-		VAR i, k: INTEGER;
-		BEGIN i := 0;
-			REPEAT
-				IF i < cIdLen THEN BEGIN id[i] := ch; INC(i); END;
-			Read(R, ch);
-			(*
-			UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z');
-			id[i] := 0X; k := 0;
-			*)
-			UNTIL (ch < '0') OR (ch > '9') AND (ch < 'A') OR (ch > 'Z');
-			id[i] := CHR(0); k := 0;
-			(*
-			WHILE (k < nkw) & (id # keyTab[k].id) DO INC(k) END ;
-			*)
-			WHILE (k < nkw) AND (id = keyTab[k].id) DO
-				BEGIN
-					INC(k) 
-				END ;
-			IF k < nkw THEN
-				sym := keyTab[k].sym
-			ELSE
-				sym := sym; (* sym := ident; *) (* ausgeblendet, da ident nirgends def? *)
+
+	TYPE 
+		tInt = LONGINT;
+		tStrId = ARRAY [0..cIdLen - 1] OF CHAR;
+
+
+	VAR
+		sym: tInt;
+		val: tInt;
+		id: tStrId;
+		error: BOOLEAN;
+
+		ch: CHAR;
+		nKW: tInt;
+		(*errpos: LONGINT;*) (* never used *)
+		R: Text;
+		W: Text;
+		KWs: ARRAY [1..cKWMaxNumber] OF
+			RECORD
+				sym: tInt;
+				id: tStrId;
+			END;
+
+
+		PROCEDURE Mark(msg: STRING);
+		BEGIN
+			Writeln( msg);
 		END;
 
+
+	(* grue, falls ch eine Ziffer *)
+	FUNCTION isDigit( ch: CHAR): BOOLEAN;
+	BEGIN
+		isDigit := ( ch >= '0') AND ( ch <= '9');
+	END;
+
+	(* true, falls ch ein Buchstabe *)
+	FUNCTION isLetter( ch: CHAR): BOOLEAN;
+	BEGIN
+		isLetter := ((ch >= 'a') AND (ch <= 'z')) OR	((ch >= 'A') AND (ch <= 'Z'));
+	END;
+	
+	(* true, falls ch letter oder digit *)
+	FUNCTION isLetterOrDigit( ch: CHAR): BOOLEAN;
+	BEGIN
+		isLetterOrDigit := isLetter( ch) or isDigit( ch);
+	END;
+	
+	
+	
+	(* druckt ID aus *)
+	PROCEDURE printId(str: tStrId);
+		VAR i: tInt;
+	BEGIN
+		i := 0;
+		WHILE isLetterOrDigit( str[i]) DO
+		BEGIN
+			WRITE( W, str[i]);
+			i := i + 1;
+		END;
+		writeln( W);
+	END;
+
+	(* true, falls beide ID's gleich sind *)
+	FUNCTION isEquStrId( id1: tStrId; id2: tStrId): BOOLEAN;
+		VAR i: tInt;
+		equal: BOOLEAN;
+	BEGIN
+		equal := TRUE; i := 1;
+		WHILE isLetterOrDigit( id1[i]) AND equal DO
+		BEGIN
+			equal := ( id1[i] = id2[i]);
+			i := i + 1;
+		END;
+
+		equal := equal AND ( NOT isLetterOrDigit(id2[i]));
+		isEquStrId := equal;
+	END;
+
+
+	(* Liefert das nächste Symbol aus der Input- Datei *)
+	PROCEDURE Get(VAR sym: tInt);
+
+		(* falls beim Lesen erkannt wurde, dass es sich um ein Symbol handelt *)
+		(* z.B. Keyword oder Variable *)
+		PROCEDURE Ident;
+			VAR i, k: tInt;
+		BEGIN
+			i := 0;
+			REPEAT
+				IF i < cIdLen THEN
+				BEGIN
+					id[i] := ch;
+					i := i + 1; (* INC(i); *)
+				END;
+				Read(R, ch);
+
+			(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
+			UNTIL ( NOT isLetterOrDigit( ch));
+
+			id[i] := cChr0;
+			k := 0;
+
+			WHILE (k < nKW) AND (NOT isEquStrId(id, KWs[k].id)) DO
+			BEGIN
+				k := k + 1; (* INC(k); *)
+			END;
+
+			IF k < nKW THEN	sym := KWs[k].sym
+			ELSE BEGIN sym := cIdent;	END
+		END;
+
+		(* falls beim Lesen erkannt wurde, dass es sich um eine Zahl handelt *)
 		PROCEDURE Number;
 			BEGIN
 				val := 0;
-				(* sym := number; *) (* ausgeblendet, da number niergends definiert *)
-				sym := sym;
+				sym := cNumber;
+
 				REPEAT
-					(*
-					MAX(LONGINT) nicht gefunden 
-					IF val <= (MAX(LONGINT) - ORD(ch) + ORD("0")) DIV 10 THEN
-					*) 
-					IF val <= (2000000000 - ORD(ch) + ORD('0')) DIV 10 THEN
-						val := 10 * val + (ORD(ch) - ORD('0'))
-					ELSE
-						begin 
-							(* Mark('number too large'); *)
-							val := 0
-						END ;
+					IF val <= (cMaxNumber - ORD( ch) + ORD( '0')) DIV 10 THEN
+						val := 10 * val + ( ORD( ch) - ORD( '0'))
+					ELSE BEGIN
+						Mark( 'number too large');
+						val := 0
+					END ;
 					Read(R, ch);
-				UNTIL (ch < '0') OR (ch > '9')
+				UNTIL ( NOT IsDigit(ch))
 			END;
-    
+
+		(* falls beim Lesen erkannt wurde, dass es sich um einen Kommentar handelt *)
 		PROCEDURE comment;
-		BEGIN 
-			Read(R, ch);
-			WHILE 1=1;
-				WHILE 1=1;
-					(* LOOP *) (* hab Befehl nicht verstanden *)
-					(* LOOP *) (* hab Befehl nicht verstanden *)
-					WHILE ch = "(" DO Texts.Read(R, ch);
-					IF ch = '*' THEN comment END
+		BEGIN
+			Read( R, ch);
+			WHILE true DO
+			BEGIN
+				WHILE true DO
+				BEGIN
+					WHILE ch = '(' DO
+					BEGIN
+						Read( R, ch);
+						IF ch = '*' THEN comment;
+					END;
+					IF ch = '*' THEN BEGIN Read( R, ch); EXIT END ;
+
+					IF eof( R) THEN EXIT;
+					Read( R, ch)
 				END ;
-				IF ch = '*' THEN Read(R, ch); EXIT END ;
-				IF R.eot THEN EXIT END ;
-				Read(R, ch)
-			END ;
-			IF ch = ') THEN Texts.Read(R, ch); EXIT END ;
-			IF R.eot THEN (*Mark("comment not terminated")*); EXIT END
-		END
+
+				IF ch = ')' THEN BEGIN Read( R, ch);	EXIT END ;
+
+				IF eof( R) THEN
+				BEGIN
+					Mark('comment not terminated');
+					EXIT
+				END
+			END;
+		END;
+
+	BEGIN
+		(*W HILE ~R.eot & (ch <= " ") DO Texts.Read(R, ch) END; *)
+		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN Read( R, ch) END;
+
+		(* IF R.eot THEN sym := eof *)
+		IF EOF( R) THEN sym := cEof
+
+		ELSE IF ch = '&' THEN BEGIN Read( R, ch); sym := cAnd END
+		ELSE IF ch = '*' THEN BEGIN Read( R, ch); sym := cTimes END
+		ELSE IF ch = '+' THEN BEGIN Read( R, ch); sym := cPlus END
+		ELSE IF ch = '-' THEN BEGIN Read( R, ch); sym := cMinus END
+		ELSE IF ch = '=' THEN BEGIN Read( R, ch); sym := cEql END
+		ELSE IF ch = '#' THEN BEGIN Read( R, ch); sym := cNeq END
+		ELSE IF ch = '<' THEN BEGIN
+							Read( R, ch);
+							IF ch = '=' THEN
+							BEGIN
+								Read( R, ch);
+								sym := cLeq
+							END
+							ELSE sym := cLss;
+						END
+		ELSE IF ch = '>' THEN BEGIN
+							Read( R, ch);
+							IF ch = '=' THEN
+							BEGIN
+								Read( R, ch);
+								sym := cGeq
+							END
+							ELSE sym := cGtr
+						END
+
+		ELSE IF ch = ';' THEN BEGIN Read( R, ch); sym := cSemicolon END
+		ELSE IF ch = ',' THEN BEGIN Read( R, ch); sym := cComma END
+		ELSE IF ch = ':' THEN BEGIN
+							Read( R, ch);
+							IF ch = '=' THEN
+							BEGIN
+								Read( R, ch);
+								sym := cBecomes
+							END
+							ELSE sym := cColon
+						END
+		ELSE IF ch = '.' THEN BEGIN Read(R, ch); sym := cPeriod END
+		ELSE IF ch = '(' THEN BEGIN
+							Read( R, ch);
+							IF ch = '*' THEN
+							BEGIN
+								comment;
+								Get(sym)
+							END
+							ELSE sym := cLparen
+						END
+		ELSE IF ch = ')' THEN BEGIN Read( R, ch); sym := cRparen END
+		ELSE IF ch = '[' THEN BEGIN Read( R, ch); sym := cLbrak END
+		ELSE IF ch = ']' THEN BEGIN Read( R, ch); sym := cRbrak END
+		ELSE IF ch = '''' THEN BEGIN Read( R, ch); sym := cQuote END
+		ELSE IF isDigit(  ch) THEN Number
+		ELSE IF isLetter( ch) THEN Ident
+		ELSE IF ch = '~' THEN BEGIN Read( R, ch); sym := cNot END
+
+		ELSE BEGIN
+			Read( R, ch);
+			sym := cNull
+		END;
+
+
 	END;
 
-  BEGIN
-    WHILE ~R.eot & (ch <= " ") DO Texts.Read(R, ch) END;
-    IF R.eot THEN sym := eof
-    ELSE 
-      CASE ch OF
-         "&": Texts.Read(R, ch); sym := and
-      |  "*": Texts.Read(R, ch); sym := times
-      |  "+": Texts.Read(R, ch); sym := plus
-      |  "-": Texts.Read(R, ch); sym := minus
-      |  "=": Texts.Read(R, ch); sym := eql
-      |  "#": Texts.Read(R, ch); sym := neq
-      |  "<": Texts.Read(R, ch);
-          IF ch = "=" THEN Texts.Read(R, ch); sym := leq ELSE sym := lss END
-      |  ">": Texts.Read(R, ch);
-          IF ch = "=" THEN Texts.Read(R, ch); sym := geq ELSE sym := gtr END
-      |  ";": Texts.Read(R, ch); sym := semicolon
-      |  ",": Texts.Read(R, ch); sym := comma
-      |  ":": Texts.Read(R, ch);
-          IF ch = "=" THEN Texts.Read(R, ch); sym := becomes ELSE sym := colon END
-      |  ".": Texts.Read(R, ch); sym := period
-      |  "(": Texts.Read(R, ch);
-          IF ch = "*" THEN comment; Get(sym) ELSE sym := lparen END
-      |  ")": Texts.Read(R, ch); sym := rparen
-      |  "[": Texts.Read(R, ch); sym := lbrak
-      |  "]": Texts.Read(R, ch); sym := rbrak
-      |  "0".."9": Number;
-      |  "A" .. "Z", "a".."z": Ident
-      |  "~": Texts.Read(R, ch); sym := not
-      ELSE Texts.Read(R, ch); sym := null
-      END
-    END
-  END Get;
+	(*
+	PROCEDURE Init*(T: Texts.Text; pos: LONGINT);
+	BEGIN error := FALSE; errpos := pos; Texts.OpenReader(R, T, pos); Texts.Read(R, ch)
+	END Init;
+	* *)
 
-  PROCEDURE Init*(T: Texts.Text; pos: LONGINT);
-  BEGIN error := FALSE; errpos := pos; Texts.OpenReader(R, T, pos); Texts.Read(R, ch)
-  END Init;
-  
-  PROCEDURE EnterKW(sym: INTEGER; name: ARRAY OF CHAR);
-  BEGIN keyTab[nkw].sym := sym; COPY(name, keyTab[nkw].id); INC(nkw)
-  END EnterKW;
+	PROCEDURE copyKW( fromString: tStrID; VAR id: tStrID);
+		VAR i : tInt;
+	BEGIN
+		i := 0;
+		WHILE isLetterOrDigit( fromString[i]) DO
+		BEGIN
+			id[i] := fromString[i];
+			i := i + 1;
+		END;
+	END;
 
-BEGIN Texts.OpenWriter(W); error := TRUE; nkw := 0;
-  EnterKW(null, "BY");
-  EnterKW(do, "DO");
-  EnterKW(if, "IF");
-  EnterKW(null, "IN");
-  EnterKW(null, "IS");
-  EnterKW(of, "OF");
-  EnterKW(or, "OR");
-  EnterKW(null, "TO");
-  EnterKW(end, "END");
-  EnterKW(null, "FOR");
-  EnterKW(mod, "MOD");
-  EnterKW(null, "NIL");
-  EnterKW(var, "VAR");
-  EnterKW(null, "CASE");
-  EnterKW(else, "ELSE");
-  EnterKW(null, "EXIT");
-  EnterKW(then, "THEN");
-  EnterKW(type, "TYPE");
-  EnterKW(null, "WITH");
-  EnterKW(array, "ARRAY");
-  EnterKW(begin, "BEGIN");
-  EnterKW(const, "CONST");
-  EnterKW(elsif, "ELSIF");
-  EnterKW(null, "IMPORT");
-  EnterKW(null, "UNTIL");
-  EnterKW(while, "WHILE");
-  EnterKW(record, "RECORD");
-  EnterKW(null, "REPEAT");
-  EnterKW(null, "RETURN");
-  EnterKW(null, "POINTER");
-  EnterKW(procedure, "PROCEDURE");
-  EnterKW(div, "DIV");
-  EnterKW(null, "LOOP");
-  EnterKW(module, "MODULE");
-END OSS.
+
+	PROCEDURE EnterKW( sym: tInt; name: tStrID);
+	BEGIN
+		KWs[nKW].sym := sym;
+		copyKW( name, KWs[nKW].id);
+		nKW := nKW + 1; (* INC(nKW); *)
+	END;
+
+	BEGIN
+		(* Texts.OpenWriter(W); *)
+
+		Assign( R, cIFileName);
+		Reset( R); Read(R, ch);
+
+		Assign( W, cOFileName);
+		Rewrite( W);
+
+		Error := TRUE;
+		nKW := 0;
+		EnterKW( cNull, 'BY');
+		EnterKW( cDo, 'DO');
+		EnterKW( cIf, 'IF');
+		EnterKW( cNull, 'IN');
+		EnterKW( cNull, 'IS');
+		EnterKW( cOf, 'OF');
+		EnterKW( cOr, 'OR');
+		EnterKW( cNull, 'TO');
+		EnterKW( cEnd, 'END');
+		EnterKW( cNull, 'FOR');
+		EnterKW( cMod, 'MOD');
+		EnterKW( cNull, 'NIL');
+		EnterKW( cVar, 'VAR');
+		EnterKW( cNull, 'CASE');
+		EnterKW( cElse, 'ELSE');
+		EnterKW( cNull, 'EXIT');
+		EnterKW( cThen, 'THEN');
+		EnterKW( cType, 'TYPE');
+		EnterKW( cNull, 'WITH');
+		EnterKW( cArray, 'ARRAY');
+		EnterKW( cBegin, 'BEGIN');
+		EnterKW( cConst, 'CONST');
+		EnterKW( cElsif, 'ELSIF');
+		EnterKW( cNull, 'IMPORT');
+		EnterKW( cNull, 'UNTIL');
+		EnterKW( cWhile, 'WHILE');
+		EnterKW( cRecord, 'RECORD');
+		EnterKW( cNull, 'REPEAT');
+		EnterKW( cNull, 'RETURN');
+		EnterKW( cNull, 'POINTER');
+		EnterKW( cProcedure, 'PROCEDURE');
+		EnterKW( cDiv, 'DIV');
+		EnterKW( cNull, 'LOOP');
+		EnterKW( cModule, 'MODULE');
+
+		get( sym);
+		while( sym <> cEOF) DO
+		BEGIN
+			if sym = cIdent then
+			BEGIN
+				write( W, sym);
+				write( W, '  ident = ');
+				printId( id);
+			END
+			ELSE IF sym = cNumber then
+			BEGIN
+				write( W, sym);
+				write( W, '  ident = ');
+				writeln( W, val);
+			END
+
+			ELSE writeln( W, sym);
+			get( sym);
+		END;
+		writeln( W, sym);
+
+		close( R); close( W);
+		
+	END.
 
