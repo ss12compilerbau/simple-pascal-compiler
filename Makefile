@@ -12,10 +12,11 @@ test : test.scanner test.parser
 # Scanner
 scanner :
 	fpc scanner.pas
-	./scanner scanner.pas
 
 test.scanner :
-	echo "TODO: To be figured out how to run tests in pascal"
+  ./scanner scanner.pas scanner.out
+  ./scanner tests/hello.pas tests/hello.out
+  compare tests/hello.out tests/hello.should
 
 # Parser
 parser :
