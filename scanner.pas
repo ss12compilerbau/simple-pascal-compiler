@@ -1,10 +1,30 @@
-PROGRAM OSS;
+PROGRAM SPC;
+(*
+The scanner goes through a source code file, finds the elementar parts of the 
+language and converts them into tokens.
+The parts to scan are
+ * Reserved words
+ * identifiers
+ * operators
+ * separators
+ * constants
+
+• the scanner maintains a global variable
+    ∘ currenntCharacter which is initialized to the first character of the input program by invoking a library procedure: readCharacter(); which reads the next character from the input program.
+    ∘ the scanner is invoked by the parser through a procedure: getSymbol(); which returns the token that represents the next symbol (in anotherglobal variable). For each invocation of getSymbol() the scanner checks if currentCharacter already constitutes a valid symbol.
+        ‣ if yes: the scanner invokes readCharacter() (to prepare for the next invocation of getSymbol()) and returns the appropriate token.
+        ‣ if no: the scanner keeps invoking readCharacter() until it recognizes a valid symbol or returns an error.
+• Define the set of valid symbols
+    ∘ identifiers are sequences of letters and digits that start with a letter; numbers are sequences of digits; strings are sequences of printable characters.
+    ∘ define the set of keywords
+    ∘ define what a comment is //, /* */
+    ∘ define symbol-to-token mapping
+    ∘ implement in your language
+*)
 
 	CONST
 		(* größte Zahl, die im Source angegeben werden darf *)
 		cMaxNumber = 1000000;
-		cIFileName = 'ScannerInput.txt'; (* Input- Datei des Scanners *)
-		cOFileName = 'ScannerOutput.txt'; (* Output- Datei des Scanners *)
 		(* weder letter noch digit, um Ende eines Keywords zu kennzeichnen *)
 		cChr0 = #0;
 	
