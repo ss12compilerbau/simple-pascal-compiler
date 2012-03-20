@@ -14,9 +14,9 @@ scanner :
 	fpc scanner.pas
 
 test.scanner :
-  ./scanner scanner.pas scanner.out
-  ./scanner tests/hello.pas tests/hello.out
-  compare tests/hello.out tests/hello.should
+	./scanner scanner.pas scanner.out
+	./scanner tests/hello.pas tests/hello.out
+	compare tests/hello.out tests/hello.should
 
 # Parser
 parser :
