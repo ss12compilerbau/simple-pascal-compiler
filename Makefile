@@ -11,8 +11,8 @@ test : test.scanner test.parser
 
 # Scanner
 scanner :
-	fpc scan.pas
-	./scan scan.pas
+	fpc scanner.pas
+	./scanner scanner.pas
 
 test.scanner :
 	echo "TODO: To be figured out how to run tests in pascal"
