@@ -297,13 +297,13 @@ PROGRAM OSS;
 		nKW := nKW + 1; (* INC(nKW); *)
 	END;
 
+  PROCEDURE Scan( inputFile: String; outputFile: String );
 	BEGIN
-		(* Texts.OpenWriter(W); *)
 
-		Assign( R, cIFileName);
+		Assign( R, inputFile);
 		Reset( R); Read(R, ch);
 
-		Assign( W, cOFileName);
+		Assign( W, outputFile);
 		Rewrite( W);
 
 		Error := TRUE;
@@ -365,6 +365,17 @@ PROGRAM OSS;
 		writeln( W, sym);
 
 		close( R); close( W);
-		
+  END;
+
+  BEGIN
+    if ParamCount < 2 then
+    begin
+        writeln('Not enough parameters given. Usage: ' + ParamStr(0) + ' input.pas output.out');
+        halt(1);
+    end
+    else begin
+        scan( ParamStr(1), ParamStr(2) );
+    end;
+
 	END.
 
