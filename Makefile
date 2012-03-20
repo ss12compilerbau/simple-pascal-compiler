@@ -16,7 +16,7 @@ scanner :
 test.scanner :
 	./scanner scanner.pas scanner.out
 	./scanner tests/hello.pas tests/hello.out
-	compare tests/hello.out tests/hello.should
+	diff tests/hello.out tests/hello.should
 
 # Parser
 parser :
