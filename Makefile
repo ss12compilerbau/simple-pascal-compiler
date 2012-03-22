@@ -2,11 +2,12 @@
 # http://www.gnu.org/software/make/manual/
 
 # The default task is 'all'.
-all :  clean scanner parser
+all : build
+build:  clean scanner parser
 	echo "Build successful!"
 
 # Test runs all the tests.
-test : test.scanner test.parser
+test : build test.scanner test.parser
 	echo "Tests successful!"
 
 # Scanner
@@ -27,5 +28,6 @@ test.parser :
 
 
 clean :
-	rm -rf *.s *.o hallo scan scanner
+	rm -rf *.s *.o hello scan scanner *.out tests/*.out
+	echo "Clean succesful"
 
