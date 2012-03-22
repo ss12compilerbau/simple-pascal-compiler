@@ -63,6 +63,8 @@ The parts to scan are
 		cModule = 63;
 		cEof = 64;
 		(* ??? wie behandeln wir Strings. einfaches oder doppeltes Hochkomma ? *)
+		(* TODO implement String handling *)
+		cString = 98;
 		cQuote = 99;
 
 
@@ -95,7 +97,7 @@ The parts to scan are
 		END;
 
 
-	(* grue, falls ch eine Ziffer *)
+	(* true, falls ch eine Ziffer *)
 	FUNCTION isDigit( ch: CHAR): BOOLEAN;
 	BEGIN
 		isDigit := ( ch >= '0') AND ( ch <= '9');
@@ -146,7 +148,7 @@ The parts to scan are
 
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
-	PROCEDURE Get(VAR sym: tInt);
+	PROCEDURE getSymbol(VAR sym: tInt);
 
 		(* falls beim Lesen erkannt wurde, dass es sich um ein Symbol handelt *)
 		(* z.B. Keyword oder Variable *)
@@ -272,7 +274,7 @@ The parts to scan are
 							IF ch = '*' THEN
 							BEGIN
 								comment;
-								Get(sym)
+								getSymbol(sym)
 							END
 							ELSE sym := cLparen
 						END
@@ -363,7 +365,7 @@ The parts to scan are
 		EnterKW( cNull, 'LOOP');
 		EnterKW( cModule, 'MODULE');
 
-		get( sym);
+		getSymbol( sym);
 		while( sym <> cEOF) DO
 		BEGIN
 			if sym = cIdent then
@@ -380,7 +382,7 @@ The parts to scan are
 			END
 
 			ELSE writeln( W, sym);
-			get( sym);
+			getSymbol( sym);
 		END;
 		writeln( W, sym);
 
