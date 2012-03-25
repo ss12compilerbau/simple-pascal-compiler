@@ -1,15 +1,12 @@
-37  ident = Program
+62
 37  ident = Hallo
 38
-37  ident = begin
+61
 37  ident = writeln
 29
-99
-37  ident = Hi
-37  ident = everybody
-99
+98  ident = Hi everybody!
 22
 38
-37  ident = end
+40
 18
 64
