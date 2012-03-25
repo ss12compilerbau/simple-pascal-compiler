@@ -1,28 +1,6 @@
 PROGRAM SPC;
-(*
-The scanner goes through a source code file, finds the elementar parts of the 
-language and converts them into tokens.
-The parts to scan are
- * Reserved words
- * identifiers
- * operators
- * separators
- * constants
-
-• the scanner maintains a global variable
-    ∘ currenntCharacter which is initialized to the first character of the input program by invoking a library procedure: readCharacter(); which reads the next character from the input program.
-    ∘ the scanner is invoked by the parser through a procedure: getSymbol(); which returns the token that represents the next symbol (in anotherglobal variable). For each invocation of getSymbol() the scanner checks if currentCharacter already constitutes a valid symbol.
-        ‣ if yes: the scanner invokes readCharacter() (to prepare for the next invocation of getSymbol()) and returns the appropriate token.
-        ‣ if no: the scanner keeps invoking readCharacter() until it recognizes a valid symbol or returns an error.
-• Define the set of valid symbols
-    ∘ identifiers are sequences of letters and digits that start with a letter; numbers are sequences of digits; strings are sequences of printable characters.
-    ∘ define the set of keywords
-    ∘ define what a comment is //, /* */
-    ∘ define symbol-to-token mapping
-    ∘ implement in your language
-*)
-
 	CONST
+	    debugmode = false;
 		(* größte Zahl, die im Source angegeben werden darf *)
 		cMaxNumber = 1000000;
 		(* weder letter noch digit, um Ende eines Keywords zu kennzeichnen *)
@@ -30,6 +8,7 @@ The parts to scan are
 	
 		cIdLen = 16; (* maximale Länge von Schlüsselwörter und Variablen etc. *)
 		cKWMaxNumber = 34; (* Anzahl der Key- Wörter *)
+		cStrLen = 1024; (* maximale Länge von Strings *)
 
 		(* symbols *)
 		cNull = 0;
@@ -60,11 +39,10 @@ The parts to scan are
 		cVar = 59;
 		cProcedure = 60;
 		cBegin = 61;
+		cProgram = 62;
 		cModule = 63;
 		cEof = 64;
-		(* ??? wie behandeln wir Strings. einfaches oder doppeltes Hochkomma ? *)
-		(* TODO implement String handling *)
-		cString = 98;
+		cString = 98; (* Strings beginnen und enden mit ' *)
 		cQuote = 99;
 
 
@@ -122,9 +100,12 @@ The parts to scan are
 		VAR i: tInt;
 	BEGIN
 		i := 0;
-		WHILE isLetterOrDigit( str[i]) DO
+		(* WHILE isLetterOrDigit( str[i]) DO *)
+		while not ( str[i] = cChr0 ) DO
 		BEGIN
 			WRITE( W, str[i]);
+			if debugmode then 
+				WRITE( str[i]);
 			i := i + 1;
 		END;
 		writeln( W);
@@ -179,6 +160,32 @@ The parts to scan are
 			ELSE BEGIN sym := cIdent;	END
 		END;
 
+        (* falls beim Lesen erkannt wurde, dass es sich um ein String handelt *)
+        PROCEDURE getString;
+            var i,k: tInt;
+        BEGIN
+            (* komsumiere "'" am Anfang *)
+            Read(R, ch);
+			i := 0;
+			REPEAT
+				IF i < cStrLen THEN
+				BEGIN
+					id[i] := ch;
+					i := i + 1; (* INC(i); *)
+					if ch = '''' then 
+					begin
+					    Read(R, ch);
+					end;
+				END;
+				Read(R, ch);
+
+			(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
+			UNTIL ( ch = '''' );
+			id[i] := cChr0;
+			sym := cString;
+			Read(R, ch);
+        END;
+
 		(* falls beim Lesen erkannt wurde, dass es sich um eine Zahl handelt *)
 		PROCEDURE Number;
 			BEGIN
@@ -204,7 +211,7 @@ The parts to scan are
 			BEGIN
 				WHILE true DO
 				BEGIN
-					WHILE ch = '(' DO
+					IF ch = '(' THEN
 					BEGIN
 						Read( R, ch);
 						IF ch = '*' THEN comment;
@@ -226,7 +233,7 @@ The parts to scan are
 		END;
 
 	BEGIN
-		(*W HILE ~R.eot & (ch <= " ") DO Texts.Read(R, ch) END; *)
+		(* WHILE ~R.eof & (ch <= " ") DO Texts.Read(R, ch) END; *)
 		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN Read( R, ch) END;
 
 		(* IF R.eot THEN sym := eof *)
@@ -274,14 +281,14 @@ The parts to scan are
 							IF ch = '*' THEN
 							BEGIN
 								comment;
-								getSymbol(sym)
+								getSymbol(sym);
 							END
 							ELSE sym := cLparen
 						END
 		ELSE IF ch = ')' THEN BEGIN Read( R, ch); sym := cRparen END
 		ELSE IF ch = '[' THEN BEGIN Read( R, ch); sym := cLbrak END
 		ELSE IF ch = ']' THEN BEGIN Read( R, ch); sym := cRbrak END
-		ELSE IF ch = '''' THEN BEGIN Read( R, ch); sym := cQuote END
+		ELSE IF ch = '''' THEN getString (* es war mal.. Read( R, ch); sym := cQuote END*)
 		ELSE IF isDigit(  ch) THEN Number
 		ELSE IF isLetter( ch) THEN Ident
 		ELSE IF ch = '~' THEN BEGIN Read( R, ch); sym := cNot END
@@ -361,6 +368,7 @@ The parts to scan are
 		EnterKW( cNull, 'RETURN');
 		EnterKW( cNull, 'POINTER');
 		EnterKW( cProcedure, 'PROCEDURE');
+		EnterKW( cProgram, 'PROGRAM');
 		EnterKW( cDiv, 'DIV');
 		EnterKW( cNull, 'LOOP');
 		EnterKW( cModule, 'MODULE');
@@ -370,21 +378,46 @@ The parts to scan are
 		BEGIN
 			if sym = cIdent then
 			BEGIN
-				write( W, sym);
-				write( W, '  ident = ');
+				write( W, sym); 
+				if debugmode then 
+				    write(sym);
+				write( W, '  ident = '); 
+				if debugmode then 
+				    write( '  ident = ');
 				printId( id);
 			END
 			ELSE IF sym = cNumber then
 			BEGIN
-				write( W, sym);
-				write( W, '  ident = ');
-				writeln( W, val);
+				write( W, sym); 
+				if debugmode then 
+				    write( sym);
+				write( W, '  ident = '); 
+				if debugmode then 
+				    write( '  ident = ');
+				writeln( W, val); writeln( val);
 			END
 
-			ELSE writeln( W, sym);
+			ELSE IF sym = cString then
+			BEGIN
+				write( W, sym); 
+				if debugmode then 
+				    write( sym);
+				write( W, '  ident = '); 
+				if debugmode then 
+				    write( '  ident = ');
+				printId( id);
+			END
+
+			ELSE BEGIN
+			    writeln( W, sym); 
+				if debugmode then 
+				    writeln( sym);
+			END;
 			getSymbol( sym);
 		END;
-		writeln( W, sym);
+		writeln( W, sym); 
+		if debugmode then 
+		    writeln( sym);
 
 		close( R); close( W);
   END;
@@ -399,5 +432,5 @@ The parts to scan are
         scan( ParamStr(1), ParamStr(2) );
     end;
 
-	END.
+  END.
 
