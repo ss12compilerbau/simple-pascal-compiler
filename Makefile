@@ -14,8 +14,10 @@ test : build test.scanner test.parser
 scanner :
 	fpc scanner.pas
 
-test.scanner :
+test.scanner : test.scanner.hello
 	./scanner scanner.pas scanner.out
+
+test.scanner.hello:
 	./scanner tests/hello.pas tests/hello.out
 	diff tests/hello.out tests/hello.should
 
