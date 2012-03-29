@@ -1,6 +1,6 @@
 PROGRAM SPC;
 	CONST
-	    debugmode = false;
+	    (* debugmode = true; *)
 		(* größte Zahl, die im Source angegeben werden darf *)
 		cMaxNumber = 1000000;
 		(* weder letter noch digit, um Ende eines Keywords zu kennzeichnen *)
@@ -49,15 +49,17 @@ PROGRAM SPC;
 	TYPE 
 		tInt = LONGINT;
 		tStrId = ARRAY [0..cIdLen - 1] OF CHAR;
+		tStr = ARRAY [0..cStrLen - 1] OF CHAR;
 
 
 	VAR
 		sym: tInt;
 		val: tInt;
 		id: tStrId;
-		error: BOOLEAN;
+		str: tStr;
+		(* error: BOOLEAN; *)
 
-		ch: CHAR;
+		ch: CHAR; (* UCase *)
 		nKW: tInt;
 		(*errpos: LONGINT;*) (* never used *)
 		R: Text;
@@ -67,12 +69,21 @@ PROGRAM SPC;
 				sym: tInt;
 				id: tStrId;
 			END;
+		debugmode: boolean;
 
 
-		PROCEDURE Mark(msg: STRING);
-		BEGIN
-			Writeln( msg);
-		END;
+	(***************************************************
+	* IO
+	***************************************************)
+	PROCEDURE NextChar();
+	BEGIN
+		Read(R, ch);
+	END;
+	
+	PROCEDURE Mark(msg: STRING);
+	BEGIN
+		Writeln( msg);
+	END;
 
 
 	(* true, falls ch eine Ziffer *)
@@ -84,13 +95,39 @@ PROGRAM SPC;
 	(* true, falls ch ein Buchstabe *)
 	FUNCTION isLetter( ch: CHAR): BOOLEAN;
 	BEGIN
-		isLetter := ((ch >= 'a') AND (ch <= 'z')) OR	((ch >= 'A') AND (ch <= 'Z'));
+		isLetter := ((ch >= 'a') AND (ch <= 'z')) OR ((ch >= 'A') AND (ch <= 'Z'));
 	END;
 	
 	(* true, falls ch letter oder digit *)
 	FUNCTION isLetterOrDigit( ch: CHAR): BOOLEAN;
 	BEGIN
 		isLetterOrDigit := isLetter( ch) or isDigit( ch);
+	END;
+	
+	FUNCTION UCase(c: CHAR) : CHAR;
+	BEGIN
+		IF( (c >= 'a') AND ( c <= 'z')) THEN
+			UCase := chr( ord('A') + ord(c) - ord('a'))
+		ELSE
+			UCase := c;
+	END;
+	
+	
+	(* true, falls beide ID's gleich sind *)
+	(* nicht case sensitiv *)
+	FUNCTION isEquStrId( id1: tStrId; id2: tStrId): BOOLEAN;
+		VAR i: tInt;
+		equal: BOOLEAN;
+	BEGIN
+		equal := TRUE; i := 1;
+		WHILE isLetterOrDigit( id1[i]) AND equal DO
+		BEGIN
+			equal := ( UCase(id1[i]) = UCASE(id2[i]));
+			i := i + 1;
+		END;
+
+		equal := equal AND ( NOT isLetterOrDigit(id2[i]));
+		isEquStrId := equal;
 	END;
 	
 	
@@ -104,28 +141,28 @@ PROGRAM SPC;
 		while not ( str[i] = cChr0 ) DO
 		BEGIN
 			WRITE( W, str[i]);
-			if debugmode then 
-				WRITE( str[i]);
+			if debugmode then WRITE( str[i]);
+			i := i + 1;
+		END;
+		writeln( W);
+	END;
+	
+	(* druckt ID aus *)
+	PROCEDURE printStr(str: tStr);
+		VAR i: tInt;
+	BEGIN
+		i := 0;
+		(* WHILE isLetterOrDigit( str[i]) DO *)
+		while not ( str[i] = cChr0 ) DO
+		BEGIN
+			WRITE( W, str[i]);
+			if debugmode then WRITE( str[i]);
 			i := i + 1;
 		END;
 		writeln( W);
 	END;
 
-	(* true, falls beide ID's gleich sind *)
-	FUNCTION isEquStrId( id1: tStrId; id2: tStrId): BOOLEAN;
-		VAR i: tInt;
-		equal: BOOLEAN;
-	BEGIN
-		equal := TRUE; i := 1;
-		WHILE isLetterOrDigit( id1[i]) AND equal DO
-		BEGIN
-			equal := ( id1[i] = id2[i]);
-			i := i + 1;
-		END;
-
-		equal := equal AND ( NOT isLetterOrDigit(id2[i]));
-		isEquStrId := equal;
-	END;
+	
 
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
@@ -143,7 +180,7 @@ PROGRAM SPC;
 					id[i] := ch;
 					i := i + 1; (* INC(i); *)
 				END;
-				Read(R, ch);
+				NextChar;				
 
 			(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
 			UNTIL ( NOT isLetterOrDigit( ch));
@@ -162,28 +199,28 @@ PROGRAM SPC;
 
         (* falls beim Lesen erkannt wurde, dass es sich um ein String handelt *)
         PROCEDURE getString;
-            var i,k: tInt;
+            var i: tInt;
         BEGIN
             (* komsumiere "'" am Anfang *)
-            Read(R, ch);
+            NextChar;
 			i := 0;
 			REPEAT
 				IF i < cStrLen THEN
 				BEGIN
-					id[i] := ch;
+					str[i] := ch;
 					i := i + 1; (* INC(i); *)
 					if ch = '''' then 
 					begin
-					    Read(R, ch);
+					    NextChar;
 					end;
 				END;
-				Read(R, ch);
+				NextChar;
 
 			(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
 			UNTIL ( ch = '''' );
-			id[i] := cChr0;
+			str[i] := cChr0;
 			sym := cString;
-			Read(R, ch);
+			NextChar;
         END;
 
 		(* falls beim Lesen erkannt wurde, dass es sich um eine Zahl handelt *)
@@ -199,85 +236,115 @@ PROGRAM SPC;
 						Mark( 'number too large');
 						val := 0
 					END ;
-					Read(R, ch);
+					NextChar;
 				UNTIL ( NOT IsDigit(ch))
 			END;
 
 		(* falls beim Lesen erkannt wurde, dass es sich um einen Kommentar handelt *)
+		(*
 		PROCEDURE comment;
 		BEGIN
-			Read( R, ch);
+			NextChar;
 			WHILE true DO
 			BEGIN
 				WHILE true DO
 				BEGIN
-					IF ch = '(' THEN
+					WHILE ch = '(' DO
 					BEGIN
-						Read( R, ch);
+						NextChar;
 						IF ch = '*' THEN comment;
 					END;
-					IF ch = '*' THEN BEGIN Read( R, ch); EXIT END ;
+					IF ch = '*' THEN BEGIN NextChar; EXIT END ;
 
 					IF eof( R) THEN EXIT;
-					Read( R, ch)
+					NextChar;
 				END ;
 
-				IF ch = ')' THEN BEGIN Read( R, ch);	EXIT END ;
+				IF ch = ')' THEN BEGIN NextChar; EXIT END ;
 
 				IF eof( R) THEN
 				BEGIN
 					Mark('comment not terminated');
 					EXIT
-				END
+				END;
 			END;
 		END;
+		*)
+		Procedure comment;
+			var inComment: BOOLEAN;
+		BEGIN
+			inComment := TRUE;
+			NextChar;
+			
+			WHILE inComment DO
+			BEGIN
+				if eof( R) THEN
+				BEGIN
+					Mark('ERROR: comment not terminated');
+					EXIT
+				END;
+				IF( ch = '*') THEN
+				BEGIN
+					nextChar;
+					if eof( R) THEN
+					BEGIN
+						Mark('ERROR: comment not terminated');
+						EXIT
+					END;
+					inComment := (ch <> ')')
+				END;
+				nextChar;
+			END;
+		END; 
 
 	BEGIN
+		debugmode := false;
+	
 		(* WHILE ~R.eof & (ch <= " ") DO Texts.Read(R, ch) END; *)
-		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN Read( R, ch) END;
+		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN NextChar; END;
 
 		(* IF R.eot THEN sym := eof *)
 		IF EOF( R) THEN sym := cEof
 
-		ELSE IF ch = '&' THEN BEGIN Read( R, ch); sym := cAnd END
-		ELSE IF ch = '*' THEN BEGIN Read( R, ch); sym := cTimes END
-		ELSE IF ch = '+' THEN BEGIN Read( R, ch); sym := cPlus END
-		ELSE IF ch = '-' THEN BEGIN Read( R, ch); sym := cMinus END
-		ELSE IF ch = '=' THEN BEGIN Read( R, ch); sym := cEql END
-		ELSE IF ch = '#' THEN BEGIN Read( R, ch); sym := cNeq END
+		ELSE IF ch = '&' THEN BEGIN NextChar; sym := cAnd END
+		ELSE IF ch = '*' THEN BEGIN NextChar; sym := cTimes END
+		ELSE IF ch = '+' THEN BEGIN NextChar;; sym := cPlus END
+		ELSE IF ch = '-' THEN BEGIN NextChar; sym := cMinus END
+		ELSE IF ch = '=' THEN BEGIN NextChar; sym := cEql END
+		ELSE IF ch = '#' THEN BEGIN NextChar; sym := cNeq END
 		ELSE IF ch = '<' THEN BEGIN
-							Read( R, ch);
+							NextChar;
 							IF ch = '=' THEN
 							BEGIN
-								Read( R, ch);
+								NextChar;
 								sym := cLeq
 							END
 							ELSE sym := cLss;
 						END
 		ELSE IF ch = '>' THEN BEGIN
-							Read( R, ch);
+							NextChar;
 							IF ch = '=' THEN
 							BEGIN
-								Read( R, ch);
+								NextChar;
 								sym := cGeq
 							END
 							ELSE sym := cGtr
 						END
 
-		ELSE IF ch = ';' THEN BEGIN Read( R, ch); sym := cSemicolon END
-		ELSE IF ch = ',' THEN BEGIN Read( R, ch); sym := cComma END
+		ELSE IF ch = ';' THEN BEGIN NextChar; sym := cSemicolon END
+		ELSE IF ch = ',' THEN BEGIN NextChar; sym := cComma END
 		ELSE IF ch = ':' THEN BEGIN
-							Read( R, ch);
+							NextChar;
 							IF ch = '=' THEN
 							BEGIN
-								Read( R, ch);
+								NextChar;
 								sym := cBecomes
 							END
 							ELSE sym := cColon
 						END
-		ELSE IF ch = '.' THEN BEGIN Read(R, ch); sym := cPeriod END
+		ELSE IF ch = '.' THEN BEGIN NextChar; sym := cPeriod END
 		ELSE IF ch = '(' THEN BEGIN
-							Read( R, ch);
+							NextChar;
 							IF ch = '*' THEN
 							BEGIN
 								comment;
@@ -285,16 +352,16 @@ PROGRAM SPC;
 							END
 							ELSE sym := cLparen
 						END
-		ELSE IF ch = ')' THEN BEGIN Read( R, ch); sym := cRparen END
-		ELSE IF ch = '[' THEN BEGIN Read( R, ch); sym := cLbrak END
-		ELSE IF ch = ']' THEN BEGIN Read( R, ch); sym := cRbrak END
+		ELSE IF ch = ')' THEN BEGIN NextChar; sym := cRparen END
+		ELSE IF ch = '[' THEN BEGIN NextChar; sym := cLbrak END
+		ELSE IF ch = ']' THEN BEGIN NextChar; sym := cRbrak END
 		ELSE IF ch = '''' THEN getString (* es war mal.. Read( R, ch); sym := cQuote END*)
 		ELSE IF isDigit(  ch) THEN Number
 		ELSE IF isLetter( ch) THEN Ident
-		ELSE IF ch = '~' THEN BEGIN Read( R, ch); sym := cNot END
+		ELSE IF ch = '~' THEN BEGIN NextChar; sym := cNot END
 
 		ELSE BEGIN
-			Read( R, ch);
+			NextChar;
 			sym := cNull
 		END;
 
@@ -330,12 +397,12 @@ PROGRAM SPC;
 	BEGIN
 
 		Assign( R, inputFile);
-		Reset( R); Read(R, ch);
+		Reset( R); NextChar;
 
 		Assign( W, outputFile);
 		Rewrite( W);
 
-		Error := TRUE;
+		(* Error := TRUE; *)
 		nKW := 0;
 		EnterKW( cNull, 'BY');
 		EnterKW( cDo, 'DO');
@@ -379,45 +446,39 @@ PROGRAM SPC;
 			if sym = cIdent then
 			BEGIN
 				write( W, sym); 
-				if debugmode then 
-				    write(sym);
+				if debugmode then write(sym);
 				write( W, '  ident = '); 
-				if debugmode then 
-				    write( '  ident = ');
+				if debugmode then write( '  ident = ');
 				printId( id);
 			END
+			
 			ELSE IF sym = cNumber then
 			BEGIN
 				write( W, sym); 
-				if debugmode then 
-				    write( sym);
+				if debugmode then write( sym);
 				write( W, '  ident = '); 
-				if debugmode then 
-				    write( '  ident = ');
-				writeln( W, val); writeln( val);
+				if debugmode then write( '  ident = ');
+				writeln( W, val);
+				if debugmode then writeln( val);
 			END
 
 			ELSE IF sym = cString then
 			BEGIN
 				write( W, sym); 
-				if debugmode then 
-				    write( sym);
+				if debugmode then write( sym);
 				write( W, '  ident = '); 
-				if debugmode then 
-				    write( '  ident = ');
-				printId( id);
+				if debugmode then write( '  ident = ');
+				printStr( str);
 			END
 
 			ELSE BEGIN
 			    writeln( W, sym); 
-				if debugmode then 
-				    writeln( sym);
+				if debugmode then writeln( sym);
 			END;
 			getSymbol( sym);
 		END;
 		writeln( W, sym); 
-		if debugmode then 
-		    writeln( sym);
+		if debugmode then writeln( sym);
 
 		close( R); close( W);
   END;
