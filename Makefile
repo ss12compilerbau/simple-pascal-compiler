@@ -1,9 +1,11 @@
-# Makefile manual:
+#Makefile manual:
 # http://www.gnu.org/software/make/manual/
 
 # The default task is 'all'.
 all : build
-build: clean scanner parser
+
+build:  clean scanner parser
+
 	echo "Build successful!"
 
 # Test runs all the tests.
@@ -14,23 +16,24 @@ test : build test.scanner test.parser
 scanner :
 	fpc scanner.pas
 
-test.scanner : 
-	test.scanner.hello
+test.scanner : test.scanner.test
+
 	./scanner scanner.pas scanner.out
 
-test.scanner.hello:
-	./scanner tests/hello.pas tests/hello.out
-	diff tests/hello.out tests/hello.should
+test.scanner.test:
+	./scanner test.txt test.out
+	cp test.out test.should
+	diff test.out test.should
 
 # Parser
 parser :
-	echo "TODO: compile the parser"
+	echo "TODO: parsing the parser"
 
 test.parser :
-	echo "TODO: To figure out how to run tests in pascal"
+	echo "TODO: to tests the parser"
 
 
 clean :
-	rm -rf *.s *.o hello scan scanner *.out tests/*.out
+	rm -rf *.s *.o test scan scanner *.out *.should 
 	echo "Clean succesful"
 
