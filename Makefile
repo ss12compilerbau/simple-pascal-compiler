@@ -3,9 +3,7 @@
 
 # The default task is 'all'.
 all : build
-
 build:  clean scanner parser
-
 	echo "Build successful!"
 
 # Test runs all the tests.
@@ -16,24 +14,22 @@ test : build test.scanner test.parser
 scanner :
 	fpc scanner.pas
 
-test.scanner : test.scanner.test
-
+test.scanner :
 	./scanner scanner.pas scanner.out
 
-test.scanner.test:
-	./scanner test.txt test.out
-	cp test.out test.should
-	diff test.out test.should
+test.scanner.hello:
+	./scanner hello.pas hello.out
+	diff tests/hello.out tests/hello.should
 
 # Parser
 parser :
 	echo "TODO: parsing the parser"
 
 test.parser :
-	echo "TODO: to tests the parser"
+	echo "TODO: to test the parser"
 
 
 clean :
-	rm -rf *.s *.o test scan scanner *.out *.should 
+	rm -rf *.s *.o hello scan scanner *.out tests/*.out
 	echo "Clean succesful"
 

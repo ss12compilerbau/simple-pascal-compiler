@@ -1,0 +1,193 @@
+62
+37 ident = hello
+38
+60
+37 ident = aComment
+38
+61
+37 ident = writeln
+29
+98 ident = This is a sample comment
+22
+38
+37 ident = write
+29
+98 ident = only this
+22
+38
+37 ident = writeln
+29
+98 ident = should be written
+22
+38
+37 ident = writeln
+29
+98 ident = (*is this a comment?*)
+22
+38
+40
+38
+60
+37 ident = aString
+38
+61
+37 ident = writeln
+29
+98 ident = Hi, there!
+22
+38
+37 ident = writeln
+29
+98 ident = It's Friday!
+22
+38
+40
+38
+60
+37 ident = aSymbol
+38
+59
+37 ident = i
+19
+37 ident = j
+20
+37 ident = integer
+38
+37 ident = sum
+19
+37 ident = times
+20
+37 ident = integer
+38
+37 ident = isLessThan
+20
+37 ident = boolean
+38
+61
+37 ident = i
+33
+34 ident = 2
+38
+37 ident = j
+33
+34 ident = 3
+38
+37 ident = isLessThan
+33
+37 ident = true
+38
+37 ident = sum
+33
+38 ident = i
+6
+37 ident = j
+38
+37 ident = times
+33
+37 ident = i
+1
+37 ident = j
+38
+44
+37 ident = i
+11
+37 ident = j
+26
+37 ident = writeln
+29
+37 ident = isLessThan
+22
+38
+40
+38
+60
+37 ident = aNumber
+38
+59
+37 ident = i
+19
+37 ident = j
+19
+37 ident = k
+20
+37 ident = integer
+38
+37 ident = a
+19
+37 ident = b
+19
+37 ident = c
+20
+37 ident = real
+38
+61
+37 ident = i
+33
+34 ident = 0
+38
+37 ident = j
+33
+34 ident = 1
+38
+37 ident = k
+33
+34 ident = 32
+38
+37 ident = a
+33
+34 ident = 3.141592
+38
+37 ident = b
+33
+34 ident = 0.0E3
+38
+37 ident = c
+33
+34 ident = 123E5
+38
+37 ident = writeln
+29
+37 ident = i
+22
+38
+37 ident = writeln
+29
+37 ident = j
+22
+38
+37 ident = writeln
+29
+37 ident = k
+22
+38
+37 ident = writeln
+29
+37 ident = a
+22
+38
+37 ident = writeln
+29
+37 ident = b
+22
+38
+37 ident = writeln
+29
+37 ident = c
+22
+38
+40
+38
+61
+37 ident = aComment
+38
+37 ident = aString
+38
+37 ident = aSymbol
+38
+37 ident = aNumber
+38
+40
+18
+64
+                                                                                                     57,1          37%
+                                                                             1,1        Anfang
