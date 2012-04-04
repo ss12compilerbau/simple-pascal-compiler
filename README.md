@@ -13,66 +13,74 @@ On commandline/console:
 ## EBNF
 ### Programs and Blocks
 
-      pgm                   = pgmHeading [ pgmDeclarations ] pgmStatements "." .
-      pgmHeading            = program pgmIdentifier "(" ")" ";" .
-      pgmDeclarations       = pgmDeclaration {pgmDeclaration} .
-      pgmDeclaration        = [ constDeclaration |  varDeclaration | procDeclaration ] .
-      constDeclaration      = const constIdentifier "=" constant ";" .
-      varDeclaration        = var varIdentifier ":" type ";" .
-      procDeclaration       = procHeading pgmStatements ";" .
-      procHeading           = procedure procIdentifier ";" .
+            pgm = pgmHeading pgmDeclarations codeBlock "." .
+            pgmHeading = program pgmIdentifier ";" .
+            pgmDeclarations = { pgmDeclaration }
+            pgmDeclaration = varDeclaration | procDeclaration | funcDeclaration .
+            procDeclaration = procHeading varDeclarations codeBlock ";" .
+            procHeading = procedure procIdentifier defParameters ";" .
+            funcDeclaration = funcHeading varDeclarations codeBlock ";" .
+            funcHeading = function funcIdentifier defParameters ":" type ";" .
+            varDeclarations = { varDeclaration }
+            varDeclaration = var declaration ";" .
 
-### Statements
+### Statements, Procedures and Functions
 
-      pgmStatements         = begin [ statements ] end .
-      statements            = statement { statement } .
-      statement             = simpleStatement | structuredStatement | mallocStatement.
-      simpleStatement       = [ ( variable ":=" expression | procIdentifier ) ";" ] .
-      structuredStatement   = begin statements end | while expression do statements | ifStatement .
-      ifStatement           = if expression then statement [ else statement ] ";".
-      mallocStatement       = variable ":=" malloc "(" positiveInteger [ "," variable ] ")" ";" .
+            codeBlock = begin statements  end .
+            statements = { statement }
+            statement = simpleStatement | ifStatement | whileStatement | proCall .
+            simpleStatement = variable ":=" ( expression | funcCall ) ";" .
+            ifStatement = if expression  then codeBlock [  else codeBlock ] ";" .
+            whileStatement = while expression  do codeBlock ";" .
+            funcCall = funcIdentifier callParameters ";" .
+            procCall = procIdentifier callParameters ";" .
+            defParameters = [ "(" paraDecl { ";" paraDecl } ")" ]
+            paraDecl = varIdentifier ":" type
+            callParameters = [ "(" expression { ";" expression } ")" ]
 
-### Expressions
+### Expressions Procedures and Functions
 
-      expression            = simpleExpression [ relOperator simpleExpression ] .
-      simpleExpression      = [ sign ] term { addOperator term } .
-      term                  = factor { multOperator factor } .
-      factor                = variable | integer | string | constIdentifier | procIdentifier | "(" expression ")" | not factor .
+            expression = simpleExpression [ relOperator simpleExpression ] .
+            simpleExpression = [ sign ] term { addOperator term } .
+            term = factor { multOperator factor } .
+            factor = variable | longint | string | funcIdentifier | "(" expression ")" |  not factor .
 
 ### Types
 
-      type                  = simpleType | recordType | pointerType .
-      simpleType            = longint | string .
-      varInTypeDeclaration  = varIdentifier "=" type ";" .
-      recordType            = record varInTypeDeclaration { varInTypeDeclaration } end .
-      pointerType           = "^" typeIdentifier
+            type = simpleType | recordType | pointerType .
+            simpleType = longint | string .
+            recordType = record paraDecl { ";" paraDecl }  end .
+            pointerType = "^" typeIdentifier
+            EBNF GenComVariables
+            variable = varIdentifier { varModifier } .
+            varModifier = [ "^" ] ( arrAccess | recAccess )
+            arrAccess = "[" expression "]"
+            recAccess = "." varIdentifier
 
-### EBNF GenComVariables and Identifier Categories
+### Identifiers
 
-      pgmIndentifier        = identifier
-      constIndentifier      = identifier
-      varIndentifier        = identifier
-      typeIndentifier       = identifier
-      procIndentifier       = identifier
-      identifier            = letter { letter | digit } .
-      constant              = [ sign ] ( integer |  string ) .
-      variable              = varIdentifier | indexedVariable | recordVariable | refVariable
-      varIdentifier         = Identifier
-      indexedVariable       = variable "[" positiveInteger "]"
-      recordVariable        = variable "." identifier
-      refVariable           = variable "^"
+            pgmIndentifier = identifier
+            constIndentifier = identifier
+            varIndentifier = identifier
+            typeIndentifier = identifier
+            procIndentifier = identifier
+            funcIndentifier = identifier
+            identifier = letter { letter | digit } .
 
 ### Low Level Definitions
 
-      sign                  = "+" | "-" .
-      integer               = [ sign ] unsignedInteger .
-      unsignedInteger       = digit { digit } .
-      positiveInteger       = unsignedInteger greater 0
-      string                = "'" stringCharacter { stringCharacter } "'" .
-      stringCharacter       = any-character-except-quote | "''" . 
-      relOperator           = "=" | "<>" | "<" | "<=" | ">" | ">=" .
-      addOperator           = "+" | "-" | or . 
-      multOperator          = "*" | "/" | and .
-      letter                = "A" | ... | "Z" | "a" | ... | "z" . 
-      digit                 = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" .
+            sign = "+" | "-" .
+            longint = [ sign ] unsignedLongnt .
+            unsignedLongint = digit { digit } .
+            string = "'" stringCharacter { stringCharacter } "'" .
+            stringCharacter = any-character-except-quote | "''" . 
+            relOperator = "=" | "<>" | "<" | "<=" | ">" | ">=" .
+            addOperator = "+" | "-" | or . 
+            multOperator = "*" | "/" | and .
+            letter = "A" | ... | "Z" | "a" | ... | "z" . 
+            digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" . 
+
+### Kommentare
+
+            Kommentare sind zwischen "(*" und "*)" eingeschlossen
 
