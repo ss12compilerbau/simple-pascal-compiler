@@ -1,7 +1,7 @@
 PROGRAM SPC;
 
 	CONST
-		debugmode = false;
+		debug = true;
 		(* größte Zahl, die im Source angegeben werden darf *)
 		cMaxNumber = 1000000;
 		(* weder letter noch digit, um Ende eines Keywords zu kennzeichnen *)
@@ -66,7 +66,10 @@ PROGRAM SPC;
 
 
 	VAR
+		debugmode: boolean;
 		sym: tInt;
+		lineNr: tInt;
+		colNr: Integer;
 		val: tInt;
 		id: tStrId;
 		error: BOOLEAN;
@@ -85,9 +88,20 @@ PROGRAM SPC;
 
 	PROCEDURE Mark(msg: STRING);
 	BEGIN
-		Writeln( msg);
+	    Write('Hey! Error at Pos ');
+	    Write(lineNr);
+	    Write(':');
+	    Write(colNr);
+	    Write(', ');
+	    Writeln(msg);
 	END;
 
+	PROCEDURE Next;
+	BEGIN
+	    Read( R, ch);
+	    colNr := colNr + 1;
+	    IF ch = '' THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
+	END;
 
 	(* true, falls ch eine Ziffer *)
 	FUNCTION isDigit( ch: CHAR): BOOLEAN;
@@ -117,11 +131,14 @@ PROGRAM SPC;
 		WHILE NOT ( str[i] = cChr0 ) DO
 		BEGIN
 			WRITE( W, str[i]);
-			IF debugmode THEN
+			IF debugmode then
+			BEGIN
 				WRITE( str[i]);
-				i := i + 1;
+			END;
+			i := i + 1;
 		END;
 		writeln( W);
+		IF debugmode then writeln;
 	END;
 
 	(* true, falls beide ID's gleich sind *)
@@ -156,7 +173,7 @@ PROGRAM SPC;
 				id[i] := ch;
 				i := i + 1; (* INC(i); *)
 			END;
-			Read(R, ch);
+			Next;
 
 		(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
 		UNTIL ( NOT isLetterOrDigit( ch));
@@ -177,7 +194,7 @@ PROGRAM SPC;
     VAR	i : tInt;
     BEGIN
 		(* komsumiere "'" am Anfang *)
-		Read(R, ch);
+		Next;
 		i := 0;
 		REPEAT
 			IF i < cStrLen THEN
@@ -186,16 +203,16 @@ PROGRAM SPC;
 				i := i + 1; (* INC(i); *)
 				IF ch = '''' then
 				BEGIN
-					Read(R, ch);
+					Next;
 				END;
 			END;
-			Read(R, ch);
+			Next;
 
 		(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
 		UNTIL ( ch = '''' );
 			id[i] := cChr0;
 			sym := cString;
-			Read(R, ch);
+			Next;
 	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um eine Zahl handelt *)
@@ -211,30 +228,30 @@ PROGRAM SPC;
 				Mark( 'number too large');
 				val := 0
 			END ;
-			Read(R, ch);
+			Next;
 		UNTIL ( NOT IsDigit(ch))
 	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um einen Kommentar handelt *)
 	PROCEDURE comment;
 	BEGIN
-		Read( R, ch);
+		Next;
 		WHILE true DO
 		BEGIN
 			WHILE true DO
 			BEGIN
 			IF ch = '(' THEN
 				BEGIN
-				Read( R, ch);
+				Next;
 				IF ch = '*' THEN comment;
 				END;
-				IF ch = '*' THEN BEGIN Read( R, ch); EXIT END ;
+				IF ch = '*' THEN BEGIN Next; EXIT END ;
 
 				IF eof( R) THEN EXIT;
-				Read( R, ch)
+				Next;
 			END;
 
-			IF ch = ')' THEN BEGIN Read( R, ch); EXIT END ;
+			IF ch = ')' THEN BEGIN Next; EXIT END ;
 
 			IF eof( R) THEN
 			BEGIN
@@ -247,52 +264,52 @@ PROGRAM SPC;
 
 	BEGIN
 		(* WHILE ~R.eof & (ch <= " ") DO Texts.Read(R, ch) END; *)
-		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN Read( R, ch) END;
+		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN Next; END;
 
 		(* IF R.eof THEN sym := eof *)
 		IF EOF( R) THEN sym := cEof
-		ELSE IF ch = '&' THEN BEGIN Read( R, ch); sym := cAnd END
-		ELSE IF ch = '*' THEN BEGIN Read( R, ch); sym := cTimes END
-		ELSE IF ch = '+' THEN BEGIN Read( R, ch); sym := cPlus END
-		ELSE IF ch = '-' THEN BEGIN Read( R, ch); sym := cMinus END
-		ELSE IF ch = '=' THEN BEGIN Read( R, ch); sym := cEql END
-		ELSE IF ch = '#' THEN BEGIN Read( R, ch); sym := cNeq END
+		ELSE IF ch = '&' THEN BEGIN Next; sym := cAnd END
+		ELSE IF ch = '*' THEN BEGIN Next; sym := cTimes END
+		ELSE IF ch = '+' THEN BEGIN Next; sym := cPlus END
+		ELSE IF ch = '-' THEN BEGIN Next; sym := cMinus END
+		ELSE IF ch = '=' THEN BEGIN Next; sym := cEql END
+		ELSE IF ch = '#' THEN BEGIN Next; sym := cNeq END
 		ELSE IF ch = '<' THEN 
 						BEGIN
-							Read( R, ch);
+							Next;
 							IF ch = '=' THEN
 							BEGIN
-								Read( R, ch);
+								Next;
 								sym := cLeq
 							END
 							ELSE sym := cLss;
 						END
 		ELSE IF ch = '>' THEN 
 						BEGIN
-							Read( R, ch);
+							Next;
 							IF ch = '=' THEN
 							BEGIN
-								Read( R, ch);
+								Next;
 								sym := cGeq
 							END
 							ELSE sym := cGtr
 						END
 
-		ELSE IF ch = ';' THEN BEGIN Read( R, ch); sym := cSemicolon END
-		ELSE IF ch = ',' THEN BEGIN Read( R, ch); sym := cComma END
+		ELSE IF ch = ';' THEN BEGIN Next; sym := cSemicolon END
+		ELSE IF ch = ',' THEN BEGIN Next; sym := cComma END
 		ELSE IF ch = ':' THEN 
 						BEGIN
-							Read( R, ch);
+							Next;
 							IF ch = '=' THEN
 							BEGIN
-								Read( R, ch);
+								Next;
 								sym := cBecomes
 							END
 							ELSE sym := cColon
 						END
-		ELSE IF ch = '.' THEN BEGIN Read(R, ch); sym := cPeriod END
+		ELSE IF ch = '.' THEN BEGIN Next; sym := cPeriod END
 		ELSE IF ch = '(' THEN BEGIN
-									Read( R, ch);
+									Next;
 									IF ch = '*' THEN
 									BEGIN
 										comment;
@@ -300,16 +317,16 @@ PROGRAM SPC;
 									END
 									ELSE sym := cLparen
 									END
-		ELSE IF ch = ')' THEN BEGIN Read( R, ch); sym := cRparen END
-		ELSE IF ch = '[' THEN BEGIN Read( R, ch); sym := cLbrak END
-		ELSE IF ch = ']' THEN BEGIN Read( R, ch); sym := cRbrak END
-		ELSE IF ch = '''' THEN getString (* es war mal.. Read( R, ch); sym := cQuote END*)
+		ELSE IF ch = ')' THEN BEGIN Next; sym := cRparen END
+		ELSE IF ch = '[' THEN BEGIN Next; sym := cLbrak END
+		ELSE IF ch = ']' THEN BEGIN Next; sym := cRbrak END
+		ELSE IF ch = '''' THEN getString (* es war mal.. Next; sym := cQuote END*)
 		ELSE IF isDigit( ch) THEN Number
 		ELSE IF isLetter( ch) THEN Ident
-		ELSE IF ch = '~' THEN BEGIN Read( R, ch); sym := cNot END
+		ELSE IF ch = '~' THEN BEGIN Next; sym := cNot END
 
 		ELSE BEGIN
-				Read( R, ch);	
+				Next;	
 				sym := cNull
 		END;
 
@@ -342,8 +359,10 @@ PROGRAM SPC;
 	PROCEDURE Scan( inputFile: String; outputFile: String );
 	BEGIN
 
+		lineNr := 1;
+		colNr := 1;
 		Assign( R, inputFile);
-		Reset( R); Read(R, ch);
+		Reset( R); Next;
 
 		Assign( W, outputFile);
 		Rewrite( W);
@@ -437,6 +456,7 @@ PROGRAM SPC;
 	END;
 
 	BEGIN
+	    debugmode := debug;
 		IF ParamCount < 2 THEN
 			BEGIN
 				writeln('Not enough parameters given. Usage: ' + ParamStr(0) + ' input.pas output.out');
