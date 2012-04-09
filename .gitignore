@@ -1,6 +1,6 @@
 *.o
 *.out
 *.exe
-hallo
-scanner
-
+SPC
+ScanWrapper
+*~
