@@ -928,12 +928,13 @@
 		Assign( R, inputFile);
 		Reset( R); NextChar;
 
-		Assign( W, outputFile);
-		Rewrite( W);
+		// Assign( W, outputFile);
+		// Rewrite( W);
 		
 		writeln( parsePgm);
 		
-		close( R); close( W);
+		close( R); 
+		// close( W);
 	end;
 
 	(* end Parser *)

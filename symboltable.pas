@@ -1,0 +1,4 @@
+	
+	procedure STInit();
+	Begin
+	End;

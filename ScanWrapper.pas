@@ -2,8 +2,7 @@ PROGRAM SPC;
 
 	Var debugmode: boolean;
 
-{$include 'scanner.pas';}
-{$include 'parser.pas';}
+	{$include 'scanner.pas';}
 
 	(* druckt ID aus *)
 	PROCEDURE printId(str: tStrId);
@@ -97,22 +96,14 @@ PROGRAM SPC;
 	END;
 
 
-	BEGIN
-		debugmode := true;
-
-	    scannerInit();
-	    parserInit();
-
-
-    if ParamCount < 1 then
-    begin
-        writeln('Not enough parameters given. Usage: ' + ParamStr(0) + ' input.pas');
-        halt(1);
-    end
-    else begin
+BEGIN
+    scannerInit();
+	if ParamCount < 1 then begin
+			writeln('Not enough parameters given. Usage: ' + ParamStr(0) + ' input.pas');
+			halt(1);
+		end
+	else begin
 		scan(ParamStr(1));
-//		parse( ParamStr(1), ParamStr(2) );
-    end;
-
-  END.
+	end;
+END.
 

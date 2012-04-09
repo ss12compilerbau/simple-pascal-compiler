@@ -14,31 +14,40 @@ test : build test.scanner test.parser
 build.scanner :
 	fpc ScanWrapper.pas
 
-test.scanner : test.selfScanning test.scanner.terminals test scanner.comment
-	./ScanWrapper scanner.pas >scanner.out
+test.scanner : test.selfScanning test.scanner.terminals test.scanner.comment
+	@echo "Scanner tests ok."
 
 test.scanner.terminals :
 	./ScanWrapper tests/scan_terminals.pas >test.out
-	@diff test.out tests/scan_terminals.should
+	diff test.out tests/scan_terminals.should
 	@echo "test.scanner.terminals ok"
 
 test.scanner.comment :
 	./ScanWrapper tests/scan_comment.pas >test.out
-	@diff test.out tests/scan_comment.should
+	diff test.out tests/scan_comment.should
 	@echo "test.scanner.comment ok"
 
 test.selfScanning :
-	./ScanWrapper scanner.pas
+	./ScanWrapper scanner.pas >/dev/null
+	@echo "selfscanning ok"
 
 # Parser
 build.parser :
-	fpc SPC.pas
+	@echo "TODO: build the parser"
+	# fpc ParserWrapper.pas
 
 test.parser : test.selfParsing
 	@echo "TODO: to test the parser"
 
 test.selfParsing :
-	./SPC parser.pas
+	# ./ParserWrapper parser.pas
+
+# Symboltable
+build.symboltable :
+	fpc STWrapper.pas
+
+test.symboltable:
+	@echo "Symboltable tests ok."
 
 clean :
 	rm -rf *.s *.o hello ScanWrapper SPC *.out tests/*.out
