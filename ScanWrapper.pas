@@ -1,12 +1,11 @@
 PROGRAM SPC;
 
-	Var debugmode: boolean;
 
 	{$include 'scanner.pas';}
 
 	(* druckt ID aus *)
 	PROCEDURE printId(str: tStrId);
-		VAR i: tInt;
+		VAR i: Longint;
 	BEGIN
 		i := 0;
 		(* WHILE isLetterOrDigit( str[i]) DO *)
@@ -23,7 +22,7 @@ PROGRAM SPC;
 
 	(* druckt ID aus *)
 	PROCEDURE printStr(str: tStr);
-		VAR i: tInt;
+		VAR i: Longint;
 	BEGIN
 		i := 0;
 		(* WHILE isLetterOrDigit( str[i]) DO *)
