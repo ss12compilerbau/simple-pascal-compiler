@@ -85,7 +85,6 @@
 		nKW: tInt;
 		(*errpos: LONGINT;*) (* never used *)
 		R: Text;
-		W: Text;
 		KWs: ARRAY [1..cKWMaxNumber] OF
 			RECORD
 				sym: tInt;
@@ -153,37 +152,6 @@
 
 		equal := equal AND ( NOT isLetterOrDigit(id2[i]));
 		isEquStrId := equal;
-	END;
-
-	(* druckt ID aus *)
-	PROCEDURE printId(str: tStrId);
-		VAR i: tInt;
-	BEGIN
-		i := 0;
-		(* WHILE isLetterOrDigit( str[i]) DO *)
-		while not ( str[i] = cChr0 ) DO
-		BEGIN
-			WRITE( W, str[i]);
-			if debugmode then WRITE( str[i]);
-			i := i + 1;
-		END;
-		writeln( W);
-		IF debugmode then writeln;
-	END;
-
-	(* druckt ID aus *)
-	PROCEDURE printStr(str: tStr);
-		VAR i: tInt;
-	BEGIN
-		i := 0;
-		(* WHILE isLetterOrDigit( str[i]) DO *)
-		while not ( str[i] = cChr0 ) DO
-		BEGIN
-			WRITE( W, str[i]);
-			if debugmode then WRITE( str[i]);
-			i := i + 1;
-		END;
-		writeln( W);
 	END;
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
@@ -289,6 +257,8 @@
 		END;
 	END;
 
+	procedure getSymbol; forward;
+
 	(* Liefert das nächste Symbol aus der Input- Datei *)
 	(* PROCEDURE getSym(VAR sym: tInt); *)
 	PROCEDURE getSymSub;
@@ -357,8 +327,8 @@
 			IF ch = '/' THEN BEGIN
 				REPEAT
 					NextChar;
-				UNTIL (ch <> #13);
-//				getSymbol(sym);
+				UNTIL (ch = #10);
+				getSymbol;
 			END
 			ELSE
 				Mark('Unrecognized "/"');
@@ -390,12 +360,6 @@
 		end;
 	end;
 
-	(*
-	PROCEDURE Init*(T: Texts.Text; pos: LONGINT);
-	BEGIN error := FALSE; errpos := pos; Texts.OpenReader(R, T, pos); Texts.Read(R, ch)
-	END Init;
-	*)
-
 	PROCEDURE copyKW( fromString: tStrID; VAR id: tStrID);
 		VAR i : tInt;
 	BEGIN
@@ -414,64 +378,22 @@
 		nKW := nKW + 1; (* INC(nKW); *)
 	END;
 
-	PROCEDURE Scan( inputFile: String; outputFile: String );
-	BEGIN
-
-		lineNr := 1;
-		colNr := 1;
+	Procedure scanInitFile(inputFile: String);
+	Begin
 		Assign( R, inputFile);
-		Reset( R); NextChar;
-
-		Assign( W, outputFile);
-		Rewrite( W);
-
-		getSymbol;
-		while( sym <> cEOF) DO
-		BEGIN
-			if sym = cIdent then
-			BEGIN
-				write( W, sym);
-				if debugmode then write(sym);
-				write( W, '  ident = ');
-				if debugmode then write( '  ident = ');
-				printId( id);
-			END
-
-			ELSE IF sym = cNumber then
-			BEGIN
-				write( W, sym);
-				if debugmode then write( sym);
-				write( W, '  ident = ');
-				if debugmode then write( '  ident = ');
-				writeln( W, val);
-				if debugmode then writeln( val);
-			END
-
-			ELSE IF sym = cString then
-			BEGIN
-				write( W, sym);
-				if debugmode then write( sym);
-				write( W, '  ident = ');
-				if debugmode then write( '  ident = ');
-				printStr( str);
-			END
-
-			ELSE BEGIN
-			  writeln( W, sym);
-				if debugmode then writeln( sym);
-			END;
-			getSymbol;
-		END;
-		writeln( W, sym);
-		if debugmode then writeln( sym);
-
-		close( R); close( W);
-	END;
+		Reset( R); 
+		NextChar;
+	End;
 
 	Procedure ScannerInit();
 	Begin
+
+		lineNr := 1;
+		colNr := 1;
+
 		cTrue := 1;
 		cFalse := 0;
+
 		lastSymWasPeek := cFalse;
 		// Counter für KeyWords
 		nKW := 0;
@@ -511,3 +433,4 @@
 		EnterKW( cNull, 'LOOP');
 		EnterKW( cModule, 'MODULE');
 	End;
+
