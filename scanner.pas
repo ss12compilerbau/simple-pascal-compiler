@@ -1,80 +1,87 @@
-PROGRAM SPC;
-
 	CONST
-		debug = true;
 		(* größte Zahl, die im Source angegeben werden darf *)
 		cMaxNumber = 1000000;
 		(* weder letter noch digit, um Ende eines Keywords zu kennzeichnen *)
 		cChr0 = #0;
-
-		cIdLen = 16; (* maximale Länge von Schlüsselwörter und Variablen etc. *)
+		cIdLen = 32; (* maximale Länge von Schlüsselwörter und Variablen etc. *)
 		cKWMaxNumber = 34; (* Anzahl der Key- Wörter *)
 		cStrLen = 1024; (* maximale Länge von Strings *)
 
 		(* symbols *)
-		cNull = 0;
-		cTimes = 1;
-		cDiv = 3; 
-		cMod = 4;
-		cAnd = 5; 
-		cPlus = 6; 
-		cMinus = 7;
-		cOr = 8;	
-		cEql = 9; 
-		cNeq = 10;
-		cLss = 11; 
-		cGeq = 12; 
-		cLeq = 13; 
-		cGtr = 14;
-		cPeriod = 18; 
-		cComma = 19; 
-		cColon = 20;
-		cRparen = 22; 
-		cRbrak = 23; 
-		cOf = 25;
-		cThen = 26;
-		cDo = 27;
-		cLparen = 29;		
-		cLbrak = 30;
-		cNot = 32;
-		cBecomes = 33;
-		cNumber = 34;
-		cIdent = 37;
-		cSemicolon = 38;
-		cEnd = 40;		
-		cElse = 41; 
-		cElsif = 42;
-		cIf = 44; 
-		cWhile = 46;
-		cArray = 54;
-		cRecord = 55;
-		cConst = 57;
-		cType = 58;
-		cVar = 59;
-		cProcedure = 60;
-		cBegin = 61;
-		cProgram = 62;
-		cModule = 63;
-		cEof = 64;
+		cNull = 0; // Unknown
+		cTimes = 1; // *
+		cDiv = 3; // DIV
+		cMod = 4;// MOD
+		cAnd = 5; // &
+		cPlus = 6; // +
+		cMinus = 7; // -
+		cOr = 8; // OR
+		cEql = 9; // =
+		cNeq = 10; // #
+		cLss = 11; // <
+		cGeq = 12; // >=
+		cLeq = 13; // <=
+		cGtr = 14; // >
+		cPeriod = 18; // .
+		cComma = 19; // ,
+		cColon = 20; // :
+		cRparen = 22; // )
+		cRbrak = 23; // ]
+		cOf = 25; // OF
+		cThen = 26; // THEN
+		cDo = 27; // DO
+		cLparen = 29; // (
+		cLbrak = 30; // [
+		cNot = 32; // ~
+		cBecomes = 33; // :=
+		cNumber = 34; // decimal number
+		cIdent = 37; // some identifier
+		cSemicolon = 38; // ;
+		cEnd = 40; // END
+		cElse = 41; // ELSE
+		cElsif = 42; // ELSIF
+		cIf = 44; // IF
+		cWhile = 46; // WHILE
+		cArray = 54; // ARRAY
+		cRecord = 55; // RECORD
+		cConst = 57; // CONST
+		cType = 58; // TYPE
+		cVar = 59; // VAR
+		cProcedure = 60; // PROCEDURE
+		cBegin = 61; // BEGIN
+		cProgram = 62; // PROGRAM
+		cModule = 63; // MODULE
+		cEof = 64; // EOF
+		cFunction = 97;
 		cString = 98; (* Strings beginnen und enden mit ' *)
-		cQuote = 99;
-
+		cUses = 96;
+		cUnit = 95;
+		cInterface = 94;
+		cImplementation = 93;
+		cForward = 92;
 
 	TYPE
 		tInt = LONGINT;
 		tStrId = ARRAY [0..cIdLen - 1] OF CHAR;
-
+		tStr = ARRAY [0..cStrLen - 1] OF CHAR;
 
 	VAR
-		debugmode: boolean;
-		sym: tInt;
+		(* Konstanten *)
+		cTrue : longint;
+		cFalse : longint;
+
 		lineNr: tInt;
 		colNr: Integer;
-		val: tInt;
-		id: tStrId;
-		error: BOOLEAN;
 
-		ch: CHAR;
+		sym: tInt; (* speichert das nächste Symbol des Scanners *)
+		val: tInt; (* wenn sym = cNumber, dann speichert val den longint- Wert *)
+		id: tStrId; (* wenn sym = cIdent, dann speichert id den Identifier *)
+		str: tStr; (* wenn sym = cString, dann speichert str den string- Wert *)
+		(* error: BOOLEAN; *)
+
+		lastSymWasPeek : longint; (* cTrue, falls sym durch Aufruf peekSymbol *)
+
+		ch: CHAR; (* UCase *)
 		nKW: tInt;
 		(*errpos: LONGINT;*) (* never used *)
 		R: Text;
@@ -85,22 +92,24 @@ PROGRAM SPC;
 				id: tStrId;
 			END;
 
+	(***************************************************
+	* IO
+	***************************************************)
+	PROCEDURE NextChar();
+	BEGIN
+		Read(R, ch);
+		colNr := colNr + 1;
+		IF ch = '' THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
+	END;
 
 	PROCEDURE Mark(msg: STRING);
 	BEGIN
-	    Write('Hey! Error at Pos ');
-	    Write(lineNr);
-	    Write(':');
-	    Write(colNr);
-	    Write(', ');
-	    Writeln(msg);
-	END;
-
-	PROCEDURE Next;
-	BEGIN
-	    Read( R, ch);
-	    colNr := colNr + 1;
-	    IF ch = '' THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
+		Write('Hey! Error at Pos ');
+		Write(lineNr);
+		Write(':');
+		Write(colNr);
+		Write(', ');
+		Writeln(msg);
 	END;
 
 	(* true, falls ch eine Ziffer *)
@@ -121,35 +130,24 @@ PROGRAM SPC;
 		isLetterOrDigit := isLetter( ch) or isDigit( ch);
 	END;
 
-
-	(* druckt ID aus *)
-	PROCEDURE printId(str: tStrId);
-	VAR i: tInt;
+	FUNCTION UCase(c: CHAR) : CHAR;
 	BEGIN
-		i := 0;
-		(* WHILE isLetterOrDigit( str[i]) DO *)
-		WHILE NOT ( str[i] = cChr0 ) DO
-		BEGIN
-			WRITE( W, str[i]);
-			IF debugmode then
-			BEGIN
-				WRITE( str[i]);
-			END;
-			i := i + 1;
-		END;
-		writeln( W);
-		IF debugmode then writeln;
+		IF( (c >= 'a') AND ( c <= 'z')) THEN
+			UCase := chr( ord('A') + ord(c) - ord('a'))
+		ELSE
+			UCase := c;
 	END;
 
 	(* true, falls beide ID's gleich sind *)
+	(* nicht case sensitiv *)
 	FUNCTION isEquStrId( id1: tStrId; id2: tStrId): BOOLEAN;
-	VAR i: tInt;
+		VAR i: tInt;
 		equal: BOOLEAN;
 	BEGIN
 		equal := TRUE; i := 1;
 		WHILE isLetterOrDigit( id1[i]) AND equal DO
 		BEGIN
-			equal := ( id1[i] = id2[i]);
+			equal := ( UCase(id1[i]) = UCASE(id2[i]));
 			i := i + 1;
 		END;
 
@@ -157,14 +155,45 @@ PROGRAM SPC;
 		isEquStrId := equal;
 	END;
 
+	(* druckt ID aus *)
+	PROCEDURE printId(str: tStrId);
+		VAR i: tInt;
+	BEGIN
+		i := 0;
+		(* WHILE isLetterOrDigit( str[i]) DO *)
+		while not ( str[i] = cChr0 ) DO
+		BEGIN
+			WRITE( W, str[i]);
+			if debugmode then WRITE( str[i]);
+			i := i + 1;
+		END;
+		writeln( W);
+		IF debugmode then writeln;
+	END;
+
+	(* druckt ID aus *)
+	PROCEDURE printStr(str: tStr);
+		VAR i: tInt;
+	BEGIN
+		i := 0;
+		(* WHILE isLetterOrDigit( str[i]) DO *)
+		while not ( str[i] = cChr0 ) DO
+		BEGIN
+			WRITE( W, str[i]);
+			if debugmode then WRITE( str[i]);
+			i := i + 1;
+		END;
+		writeln( W);
+	END;
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
-	PROCEDURE getSymbol(VAR sym: tInt);
+	(* PROCEDURE getSym(VAR sym: tInt); *)
+	PROCEDURE getSymSub();forward;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um ein Symbol handelt *)
 	(* z.B. Keyword oder Variable *)
 	PROCEDURE Ident;
-	VAR i, k: tInt;
+		VAR i, k: tInt;
 	BEGIN
 		i := 0;
 		REPEAT
@@ -173,46 +202,47 @@ PROGRAM SPC;
 				id[i] := ch;
 				i := i + 1; (* INC(i); *)
 			END;
-			Next;
+			NextChar;
 
 		(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
 		UNTIL ( NOT isLetterOrDigit( ch));
-			id[i] := cChr0;
-			k := 0;
+
+		id[i] := cChr0;
+		k := 0;
 
 		WHILE (k < nKW) AND (NOT isEquStrId(id, KWs[k].id)) DO
 		BEGIN
 			k := k + 1; (* INC(k); *)
 		END;
 
-		IF k < nKW THEN sym := KWs[k].sym
-		ELSE BEGIN sym := cIdent; END
-		END;
+		IF k < nKW THEN	sym := KWs[k].sym
+		ELSE BEGIN sym := cIdent;	END
+	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um ein String handelt *)
-    PROCEDURE getString;
-    VAR	i : tInt;
-    BEGIN
+	PROCEDURE getString;
+		var i: tInt;
+	BEGIN
 		(* komsumiere "'" am Anfang *)
-		Next;
+		NextChar;
 		i := 0;
 		REPEAT
 			IF i < cStrLen THEN
 			BEGIN
-				id[i] := ch;
+				str[i] := ch;
 				i := i + 1; (* INC(i); *)
-				IF ch = '''' then
-				BEGIN
-					Next;
-				END;
+				if ch = '''' then
+				begin
+					NextChar;
+				end;
 			END;
-			Next;
+			NextChar;
 
 		(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
 		UNTIL ( ch = '''' );
-			id[i] := cChr0;
-			sym := cString;
-			Next;
+		str[i] := cChr0;
+		sym := cString;
+		NextChar;
 	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um eine Zahl handelt *)
@@ -228,117 +258,146 @@ PROGRAM SPC;
 				Mark( 'number too large');
 				val := 0
 			END ;
-			Next;
+			NextChar;
 		UNTIL ( NOT IsDigit(ch))
 	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um einen Kommentar handelt *)
-	PROCEDURE comment;
+	Procedure comment;
+		var inComment: BOOLEAN;
 	BEGIN
-		Next;
-		WHILE true DO
+		inComment := TRUE;
+		NextChar;
+		WHILE inComment DO
 		BEGIN
-			WHILE true DO
+			if eof( R) THEN
 			BEGIN
-			IF ch = '(' THEN
-				BEGIN
-				Next;
-				IF ch = '*' THEN comment;
-				END;
-				IF ch = '*' THEN BEGIN Next; EXIT END ;
-
-				IF eof( R) THEN EXIT;
-				Next;
-			END;
-
-			IF ch = ')' THEN BEGIN Next; EXIT END ;
-
-			IF eof( R) THEN
-			BEGIN
-				Mark('comment not terminated');
+				Mark('ERROR: comment not terminated');
 				EXIT
-			END
+			END;
+			IF( ch = '*') THEN
+			BEGIN
+				nextChar;
+				if eof( R) THEN
+				BEGIN
+					Mark('ERROR: comment not terminated');
+					EXIT
+				END;
+				inComment := (ch <> ')')
+			END;
+			nextChar;
 		END;
 	END;
 
-
+	(* Liefert das nächste Symbol aus der Input- Datei *)
+	(* PROCEDURE getSym(VAR sym: tInt); *)
+	PROCEDURE getSymSub;
 	BEGIN
 		(* WHILE ~R.eof & (ch <= " ") DO Texts.Read(R, ch) END; *)
-		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN Next; END;
+		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN NextChar; END;
 
-		(* IF R.eof THEN sym := eof *)
+		(* IF R.eot THEN sym := eof *)
 		IF EOF( R) THEN sym := cEof
-		ELSE IF ch = '&' THEN BEGIN Next; sym := cAnd END
-		ELSE IF ch = '*' THEN BEGIN Next; sym := cTimes END
-		ELSE IF ch = '+' THEN BEGIN Next; sym := cPlus END
-		ELSE IF ch = '-' THEN BEGIN Next; sym := cMinus END
-		ELSE IF ch = '=' THEN BEGIN Next; sym := cEql END
-		ELSE IF ch = '#' THEN BEGIN Next; sym := cNeq END
-		ELSE IF ch = '<' THEN 
-						BEGIN
-							Next;
-							IF ch = '=' THEN
-							BEGIN
-								Next;
-								sym := cLeq
-							END
-							ELSE sym := cLss;
-						END
-		ELSE IF ch = '>' THEN 
-						BEGIN
-							Next;
-							IF ch = '=' THEN
-							BEGIN
-								Next;
-								sym := cGeq
-							END
-							ELSE sym := cGtr
-						END
 
-		ELSE IF ch = ';' THEN BEGIN Next; sym := cSemicolon END
-		ELSE IF ch = ',' THEN BEGIN Next; sym := cComma END
-		ELSE IF ch = ':' THEN 
-						BEGIN
-							Next;
-							IF ch = '=' THEN
-							BEGIN
-								Next;
-								sym := cBecomes
-							END
-							ELSE sym := cColon
-						END
-		ELSE IF ch = '.' THEN BEGIN Next; sym := cPeriod END
+		ELSE IF ch = '&' THEN BEGIN NextChar; sym := cAnd END
+		ELSE IF ch = '*' THEN BEGIN NextChar; sym := cTimes END
+		ELSE IF ch = '+' THEN BEGIN NextChar;; sym := cPlus END
+		ELSE IF ch = '-' THEN BEGIN NextChar; sym := cMinus END
+		ELSE IF ch = '=' THEN BEGIN NextChar; sym := cEql END
+		ELSE IF ch = '#' THEN BEGIN NextChar; sym := cNeq END
+		ELSE IF ch = '<' THEN BEGIN
+				NextChar;
+				IF ch = '=' THEN
+				BEGIN
+					NextChar;
+					sym := cLeq
+				END
+				ELSE sym := cLss;
+			END
+		ELSE IF ch = '>' THEN BEGIN
+				NextChar;
+				IF ch = '=' THEN
+				BEGIN
+					NextChar;
+					sym := cGeq;
+				END
+				ELSE sym := cGtr;
+			END
+		ELSE IF ch = ';' THEN BEGIN NextChar; sym := cSemicolon; END
+		ELSE IF ch = ',' THEN BEGIN NextChar; sym := cComma; END
+		ELSE IF ch = ':' THEN BEGIN
+				NextChar;
+				IF ch = '=' THEN
+				BEGIN
+					NextChar;
+					sym := cBecomes;
+				END
+				ELSE sym := cColon;
+			END
+		ELSE IF ch = '.' THEN BEGIN NextChar; sym := cPeriod; END
 		ELSE IF ch = '(' THEN BEGIN
-									Next;
-									IF ch = '*' THEN
-									BEGIN
-										comment;
-										getSymbol(sym);
-									END
-									ELSE sym := cLparen
-									END
-		ELSE IF ch = ')' THEN BEGIN Next; sym := cRparen END
-		ELSE IF ch = '[' THEN BEGIN Next; sym := cLbrak END
-		ELSE IF ch = ']' THEN BEGIN Next; sym := cRbrak END
-		ELSE IF ch = '''' THEN getString (* es war mal.. Next; sym := cQuote END*)
-		ELSE IF isDigit( ch) THEN Number
-		ELSE IF isLetter( ch) THEN Ident
-		ELSE IF ch = '~' THEN BEGIN Next; sym := cNot END
-
-		ELSE BEGIN
-				Next;	
-				sym := cNull
+				NextChar;
+				IF ch = '*' THEN
+				BEGIN
+					comment;
+					getSymSub;
+				END
+				ELSE sym := cLparen
+			END
+		ELSE IF ch = ')' THEN BEGIN NextChar; sym := cRparen; END
+		ELSE IF ch = '[' THEN BEGIN NextChar; sym := cLbrak; END
+		ELSE IF ch = ']' THEN BEGIN NextChar; sym := cRbrak; END
+		ELSE IF ch = '''' THEN Begin getString; END
+		ELSE IF isDigit(  ch) THEN Begin Number; END
+		ELSE IF isLetter( ch) THEN Begin Ident; END
+		ELSE IF ch = '~' THEN BEGIN NextChar; sym := cNot END
+		ELSE IF ch = '/' THEN
+		BEGIN
+			NextChar;
+			IF ch = '/' THEN BEGIN
+				REPEAT
+					NextChar;
+				UNTIL (ch <> #13);
+//				getSymbol(sym);
+			END
+			ELSE
+				Mark('Unrecognized "/"');
+			END
+		ELSE Begin
+			Mark('Unrecognized Symbol "' + ch + '"');
+			NextChar;
+			sym := cNull
 		END;
-
 
 	END;
 
-	(*PROCEDURE Init*(T: Texts.Text; pos: LONGINT);
+	procedure getSymbol;
+	begin
+		if lastSymWasPeek = cTrue then begin
+			(* Symbol steht schon in sym, da letzter Aufruf peekSymbol *)
+			lastSymWasPeek := cFalse; (* nächster Aufruf holt neues Symbol *)
+		end
+		else begin
+			getSymSub;
+		end;
+	end;
+
+	procedure peekSymbol;
+	begin
+		if lastSymWasPeek = cFalse then begin
+			getSymbol;
+			lastSymWasPeek := cTrue;
+		end;
+	end;
+
+	(*
+	PROCEDURE Init*(T: Texts.Text; pos: LONGINT);
 	BEGIN error := FALSE; errpos := pos; Texts.OpenReader(R, T, pos); Texts.Read(R, ch)
-	END Init;* *)
+	END Init;
+	*)
 
 	PROCEDURE copyKW( fromString: tStrID; VAR id: tStrID);
-	VAR i : tInt;
+		VAR i : tInt;
 	BEGIN
 		i := 0;
 		WHILE isLetterOrDigit( fromString[i]) DO
@@ -347,7 +406,6 @@ PROGRAM SPC;
 			i := i + 1;
 		END;
 	END;
-
 
 	PROCEDURE EnterKW( sym: tInt; name: tStrID);
 	BEGIN
@@ -362,12 +420,60 @@ PROGRAM SPC;
 		lineNr := 1;
 		colNr := 1;
 		Assign( R, inputFile);
-		Reset( R); Next;
+		Reset( R); NextChar;
 
 		Assign( W, outputFile);
 		Rewrite( W);
 
-		Error := TRUE;
+		getSymbol;
+		while( sym <> cEOF) DO
+		BEGIN
+			if sym = cIdent then
+			BEGIN
+				write( W, sym);
+				if debugmode then write(sym);
+				write( W, '  ident = ');
+				if debugmode then write( '  ident = ');
+				printId( id);
+			END
+
+			ELSE IF sym = cNumber then
+			BEGIN
+				write( W, sym);
+				if debugmode then write( sym);
+				write( W, '  ident = ');
+				if debugmode then write( '  ident = ');
+				writeln( W, val);
+				if debugmode then writeln( val);
+			END
+
+			ELSE IF sym = cString then
+			BEGIN
+				write( W, sym);
+				if debugmode then write( sym);
+				write( W, '  ident = ');
+				if debugmode then write( '  ident = ');
+				printStr( str);
+			END
+
+			ELSE BEGIN
+			  writeln( W, sym);
+				if debugmode then writeln( sym);
+			END;
+			getSymbol;
+		END;
+		writeln( W, sym);
+		if debugmode then writeln( sym);
+
+		close( R); close( W);
+	END;
+
+	Procedure ScannerInit();
+	Begin
+		cTrue := 1;
+		cFalse := 0;
+		lastSymWasPeek := cFalse;
+		// Counter für KeyWords
 		nKW := 0;
 		EnterKW( cNull, 'BY');
 		EnterKW( cDo, 'DO');
@@ -393,10 +499,10 @@ PROGRAM SPC;
 		EnterKW( cConst, 'CONST');
 		EnterKW( cElsif, 'ELSIF');
 		EnterKW( cNull, 'IMPORT');
-		EnterKW( cNull, 'UNTIL');
+		EnterKW( cForward, 'FORWARD');
 		EnterKW( cWhile, 'WHILE');
 		EnterKW( cRecord, 'RECORD');
-		EnterKW( cNull, 'REPEAT');
+		EnterKW( cFunction, 'FUNCTION');
 		EnterKW( cNull, 'RETURN');
 		EnterKW( cNull, 'POINTER');
 		EnterKW( cProcedure, 'PROCEDURE');
@@ -404,66 +510,4 @@ PROGRAM SPC;
 		EnterKW( cDiv, 'DIV');
 		EnterKW( cNull, 'LOOP');
 		EnterKW( cModule, 'MODULE');
-
-		getSymbol( sym);
-		WHILE( sym <> cEOF) DO
-		BEGIN
-			IF sym = cIdent THEN
-			BEGIN
-				write( W, sym);
-				IF debugmode THEN
-					write(sym);
-					write( W, ' ident = ');
-					IF debugmode THEN
-						write( ' ident = ');
-						printId( id);
-			END
-			ELSE IF sym = cNumber then
-			BEGIN
-				write( W, sym);
-				IF debugmode THEN
-					write( sym);
-					write( W, ' ident = ');
-					IF debugmode THEN
-						write( ' ident = ');
-						writeln( W, val); 
-						writeln( val);
-			END
-
-			ELSE IF sym = cString THEN
-			BEGIN
-				write( W, sym);
-				IF debugmode THEN
-					write( sym);
-					write( W, ' ident = ');
-					IF debugmode THEN
-						write( ' ident = ');
-						printId( id);
-			END
-
-			ELSE BEGIN
-				writeln( W, sym);
-				IF debugmode THEN
-					writeln( sym);
-			END;
-			getSymbol( sym);
-		END;
-		writeln( W, sym);
-		IF debugmode THEN
-			writeln( sym);
-			close( R); 
-			close( W);
-	END;
-
-	BEGIN
-	    debugmode := debug;
-		IF ParamCount < 2 THEN
-			BEGIN
-				writeln('Not enough parameters given. Usage: ' + ParamStr(0) + ' input.pas output.out');
-				halt(1);
-			END
-		ELSE BEGIN
-			scan( ParamStr(1), ParamStr(2) );
-		END;
-
-  END.
+	End;
