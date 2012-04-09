@@ -22,6 +22,11 @@ test.scanner.terminals :
 	diff test.out tests/scan_terminals.should
 	@echo "test.scanner.terminals ok"
 
+test.scanner.keywords :
+	./ScanWrapper tests/scan_keywords.pas >test.out
+	diff test.out tests/scan_keywords.should
+	@echo "test.scanner.terminals ok"
+
 test.scanner.comment :
 	./ScanWrapper tests/scan_comment.pas >test.out
 	diff test.out tests/scan_comment.should
