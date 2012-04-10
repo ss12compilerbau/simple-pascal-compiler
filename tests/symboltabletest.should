@@ -1,0 +1,19 @@
+Error: Type not defined! NOTDEFINED
+
+Symbol Name: I, Class: VAR, Type object: 
+    TypeObj Form: LONGINT, Fields: Empty.
+Symbol Name: J, Class: VAR, Type object: 
+    TypeObj Form: LONGINT, Fields: Empty.
+Symbol Name: TKWS, Class: TYPE, Type object: 
+    TypeObj Form: RECORD, Field objects:
+        Symbol Name: SYM, Class: VAR, Type object: 
+            TypeObj Form: LONGINT, Fields: Empty.
+        Symbol Name: ID, Class: VAR, Type object: 
+            TypeObj Form: STRING, Fields: Empty.
+Symbol Name: XY, Class: VAR, Type object: 
+    TypeObj Form: RECORD, Field objects:
+        Symbol Name: SYM, Class: VAR, Type object: 
+            TypeObj Form: LONGINT, Fields: Empty.
+        Symbol Name: ID, Class: VAR, Type object: 
+            TypeObj Form: STRING, Fields: Empty.
+Symbol Name: ASDF, Class: VAR, Type object: Nil

@@ -53,7 +53,9 @@ build.symboltable :
 	fpc STWrapper.pas
 	@echo "Symboltable build successful!"
 
-test.symboltable:
+test.symboltable: build.symboltable
+	./STWrapper >test.out
+	diff test.out tests/symboltabletest.should
 	@echo "Symboltable tests ok."
 
 clean :
