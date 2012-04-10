@@ -13,6 +13,7 @@ test : build test.scanner test.parser
 # Scanner
 build.scanner :
 	fpc ScanWrapper.pas
+	@echo "Scanner build successful"
 
 test.scanner : test.selfScanning test.scanner.terminals test.scanner.comment
 	@echo "Scanner tests ok."
@@ -50,11 +51,12 @@ test.selfParsing :
 # Symboltable
 build.symboltable :
 	fpc STWrapper.pas
+	@echo "Symboltable build successful!"
 
 test.symboltable:
 	@echo "Symboltable tests ok."
 
 clean :
-	rm -rf *.s *.o hello ScanWrapper SPC *.out tests/*.out
+	rm -rf *.s *.o hello ScanWrapper STWrapper SPC *.out tests/*.out
 	@echo "Clean succesful"
 
