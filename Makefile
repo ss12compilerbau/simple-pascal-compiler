@@ -7,7 +7,7 @@ build:  clean build.scanner build.parser
 	@echo "Build successful!"
 
 # Test runs all the tests.
-test : build test.scanner test.parser
+test : build test.scanner test.parser test.symboltable
 	@echo "Tests successful!"
 
 # Scanner
