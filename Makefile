@@ -15,25 +15,25 @@ build.scanner :
 	fpc ScanWrapper.pas
 	@echo "Scanner build successful"
 
-test.scanner : test.selfScanning test.scanner.terminals test.scanner.comment
+test.scanner : build.scanner test.selfScanning test.scanner.terminals test.scanner.comment
 	@echo "Scanner tests ok."
 
-test.scanner.terminals :
+test.scanner.terminals : build.scanner
 	./ScanWrapper tests/scan_terminals.pas >test.out
 	diff test.out tests/scan_terminals.should
 	@echo "test.scanner.terminals ok"
 
-test.scanner.keywords :
+test.scanner.keywords : build.scanner
 	./ScanWrapper tests/scan_keywords.pas >test.out
 	diff test.out tests/scan_keywords.should
 	@echo "test.scanner.terminals ok"
 
-test.scanner.comment :
+test.scanner.comment : build.scanner
 	./ScanWrapper tests/scan_comment.pas >test.out
 	diff test.out tests/scan_comment.should
 	@echo "test.scanner.comment ok"
 
-test.selfScanning :
+test.selfScanning : build.scanner
 	./ScanWrapper scanner.pas >/dev/null
 	@echo "selfscanning ok"
 
