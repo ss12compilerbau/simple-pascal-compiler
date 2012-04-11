@@ -262,11 +262,11 @@
 
 	(* falls beim Lesen erkannt wurde, dass es sich um einen Kommentar handelt *)
 	Procedure comment;
-		var inComment: BOOLEAN;
+		var inComment: Longint;
 	BEGIN
-		inComment := TRUE;
+		inComment := cTrue;
 		NextChar;
-		WHILE inComment DO
+		WHILE inComment = cTrue DO
 		BEGIN
 			if eof( R) THEN
 			BEGIN
@@ -281,7 +281,11 @@
 					Mark('ERROR: comment not terminated');
 					EXIT
 				END;
-				inComment := (ch <> ')')
+				if ch <> ')' then begin
+					inComment := cTrue;
+				end else begin
+					inComment := cFalse;
+				End;
 			END;
 			nextChar;
 		END;
