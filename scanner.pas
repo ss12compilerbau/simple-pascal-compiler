@@ -191,7 +191,8 @@
 	(* falls beim Lesen erkannt wurde, dass es sich um ein Symbol handelt *)
 	(* z.B. Keyword oder Variable *)
 	PROCEDURE Ident;
-		VAR i, k: Longint;
+		VAR i: Longint;
+		Var k: Longint;
 	BEGIN
 		i := 0;
 		isLetterOrDigit( ch);
