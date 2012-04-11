@@ -1,92 +1,239 @@
+	
+	
+	// TODO
+	(* SCANNER: 
+		Var cPtrRef: LongInt;
+		cPtrRef := 91; // ^
+	*)
+	
+	(* SCANNER: EnterKW "IN" u. "IS" geändert auf "LongInt" u. "String" 
+		EnterKW( cTypeLongint, 'TypeLongint');
+		EnterKW( cTypeString, 'TypeString');
+		
+		Var cTypeLongint: LongInt;
+		Var cTypeString: LongInt; 
+		 
+		cTypeLongint := 90;
+		cTypeString := 91;
+	*)
+	
+	(* SCANNER: Aufruf (P); geht nicht, (P1); schon.
+		liegt daran, da nur 1 Zeichen
+		ging auch bei Variablen nicht
+	*)
+	
+	(* SCANNER: "type t = ^xx" geht nicht. Es geht "type t = ^ xx"
+		nach ^ MUSS Leerzeichen stehen ??
+	*)
+	
+	(* SCANNER: procedure NextChar
+		IF ch = chr(13) THEN BEGIN lineNr := lineNr + 1; colNr := 1; ..
+		damit ZeilenNr funktionieren
+	*)
+	
+	(* SCANNER: <> einbauen
+	ELSE IF ch = '<' THEN BEGIN
+				NextChar;
+				IF ch = '=' THEN
+				BEGIN
+					NextChar;
+					sym := cLeq
+				END
+				else begin
+					if ch = '>' then begin
+						nextchar;
+						sym := cNeq;
+					end
+					ELSE begin 
+						sym := cLss;
+					end;
+			END
+	*)
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	(***************************************************************)
 	(* Beginn Parser *)
 	
-	function parseCodeBlock : longint; forward;
-	function parseDeclaration : longint; forward;
+	procedure parseCodeBlock; forward;
+	procedure parseDeclaration; forward;
+	procedure parseExpression; forward;
   
 	procedure parserErrorStr( errMsg : String);
 	begin
-		writeln( errMsg);
+		(writeln( 'Error: ', errMsg, ' line :', lineNr, ' ', colNr));
 	end;
 	procedure parserErrorInt( errCode : longint);
 	begin
-		writeln( errCode);
+		(writeln( errCode));
+	end;
+	
+	procedure parserInfoStr( infoMsg1 : String; infoMsg2 : String);
+	begin
+		(writeln( '*** Info lineNr: ', lineNr, ' / ', colNr, ': ',	
+			infoMsg1, ' ', infoMsg2));
 	end;
 	
 
 	procedure parserDebugStr( msg: String);
 	begin
-		//writeln( msg);
+		// (writeln( msg));
 	end;
 	procedure parserDebugInt( code: longint);
 	begin
-		//writeln( code);
+		// (writeln( code));
 	end;
 	procedure parserDebugStrInt( msg : String; code: longint);
 	begin
 		(*
-		write( msg);
-		write( ' ');
-		write( code);
-		writeln( );
+		(write( msg));
+		(write( ' '));
+		(write( code));
+		(writeln);
 		*)
 	end;
 	
 	
 	
-	function parseSymbol( s : longint) : longint;
+	
+	
+	procedure PeekIsSymbol( sb : longint);
+	var ret : longint;
+	begin
+		(peekSymbol);
+		ret := cFalse;
+		if sym = sb then begin
+			ret := cTrue;
+		end;
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseSymbol( sb : longint);
 		var symFound : longint; (* ob Symbol in case verarbeitet *)
+		var ret : longint;
 	begin
 		symFound := cFalse;
-		getSymbol;
-		if sym = s then begin
-			parseSymbol := cTrue;
+		(getSymbol);
+		if sym = sb then begin
+			ret := cTrue;
 		end
 		else begin
-			if sym <> s then begin
-				parseSymbol := cFalse;
-				if s = cSemicolon then begin
-					parserErrorStr( '91 121 Semicolon missing');
+			if sym <> sb then begin
+				ret := cFalse;
+				if sb = cSemicolon then begin
+					(parserErrorStr( '91 121 Semicolon missing'));
 					symFound := cTrue;
 				end;
-				if s = cPeriod then begin
-					parserErrorStr( '91 122 Period missing');
+				if sb = cPeriod then begin
+					(parserErrorStr( '91 122 Period missing'));
 					symFound := cTrue;
 				end;
-				if s = cProgram then begin
-					parserErrorStr( '91 123 PROGRAM missing');
+				if sb = cProgram then begin
+					(parserErrorStr( '91 123 PROGRAM missing'));
 					symFound := cTrue;
 				end;
-				if s = cUses then begin
-					parserErrorStr( '91 124 USES missing');
+				if sb = cUses then begin
+					(parserErrorStr( '91 124 USES missing'));
 					symFound := cTrue;
 				end;
-				if s = cType then begin
-					parserErrorStr( '91 125 TYPE missing');
+				if sb = cType then begin
+					(parserErrorStr( '91 125 TYPE missing'));
 					symFound := cTrue;
 				end;
 				if symFound = cFalse then begin
-					parserErrorStr( '91 139 Symbol missing');
-					parserErrorInt( s);
+					(parserErrorStr( '91 139 Symbol missing'));
+					(parserErrorInt( sb));
 				end;
 			end;
 		end;
+		gRetLongInt := ret;
 	end;
 	
-	function parseIsSymbol( s : longint) : longint;
+	
+	procedure PeekIsRelOperator;
+	var ret : longint;
 	begin
-		peekSymbol;
-		parseIsSymbol := cFalse;
-		if sym = s then begin
-			parseIsSymbol := cTrue;
+		(peekSymbol);
+		ret := cFalse;
+		if sym = cEql then begin ret := cTrue; end;
+		if sym = cNeq then begin ret := cTrue; end;
+		if sym = cLss then begin ret := cTrue; end;
+		if sym = cLeq then begin ret := cTrue; end;
+		if sym = cGtr then begin ret := cTrue; end;
+		if sym = cGeq then begin ret := cTrue; end;
+		gRetLongInt := ret;
+	end;
+	
+	procedure PeekIsAddOperator;
+	var ret : longint;
+	begin
+		(peekSymbol);
+		ret := cFalse;
+		if sym = cPlus then begin ret := cTrue; end;
+		if sym = cMinus then begin ret := cTrue; end;
+		if sym = cOr then begin ret := cTrue; end;
+		gRetLongInt := ret;
+	end;
+	
+	procedure PeekIsMultOperator;
+	var ret : longint;
+	begin
+		(peekSymbol);
+		ret := cFalse;
+		if sym = cTimes then begin ret := cTrue; end;
+		if sym = cColon then begin ret := cTrue; end;
+		if sym = cAnd then begin ret := cTrue; end;
+		gRetLongInt := ret;
+	end;
+	
+	procedure PeekIsSign;
+	var ret : longint;
+	begin
+		(parserDebugStr( 'PeekIsSign'));
+		(peekSymbol);
+		ret := cFalse;
+		if sym = cPlus then begin ret := cTrue; end;
+		if sym = cMinus then begin ret := cTrue; end;
+		
+		(parserDebugStrInt( 'PeekIsSign', ret));
+		gRetLongInt := ret;
+	end;
+	
+	procedure PeekIsVarModifier;
+	var ret : longint;
+	begin
+		(parserDebugStr( 'PeekIsVarModifier'));
+		(peekSymbol);
+		ret := cFalse;
+		if sym = cPeriod then begin ret := cTrue; end;
+		if sym = cPtrRef then begin ret := cTrue; end;
+		
+		(parserDebugStrInt( 'PeekIsVarModifier', ret));
+		gRetLongInt := ret;
+	end;
+	
+	procedure PeekIsIdentifier;
+	var ret : longint;
+	begin
+		(peekSymbol);
+		ret := cFalse;
+		if sym = cIdent then begin
+			ret := cTrue;
 		end;
+		gRetLongInt := ret;
 	end;
 
-	(* Identifiers *)
-	function parseIdentifier : longint;
+	procedure parseIdentifier;
 		var ret : longint;
 	begin
-		getSymbol;
+		(getSymbol);
 		if sym = cIdent then begin
 			ret := cTrue;
 		end
@@ -94,113 +241,165 @@
 			ret := cFalse;
 		end;
 		
-		parseIdentifier := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parsePgmIdentifier : longint;
+	procedure parsePgmIdentifier;
 		var ret : longint;
 	begin
-		ret := parseIdentifier;
+		(parseIdentifier);
+		ret :=  gRetLongInt;
 		if ret = cFalse then begin
-			parserErrorStr( '91 101 PgmIdentifier missing');
+			(parserErrorStr( '91 101 PgmIdentifier missing'));
 		end;
-		parsePgmIdentifier := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseUseIdentifier : longint;
+	procedure parseUseIdentifier;
 		var ret : longint;
 	begin
-		ret := parseIdentifier;
+		(parseIdentifier);
+		ret :=  gRetLongInt;
 		if ret = cFalse then begin
-			parserErrorStr( '91 103 UseIdentifier missing');
+			(parserErrorStr( '91 103 UseIdentifier missing'));
 		end;
-		parseUseIdentifier := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseUnitIdentifier : longint;
+	procedure parseUnitIdentifier;
 		var ret : longint;
 	begin
-		ret := parseIdentifier;
+		(parseIdentifier);
+		ret :=  gRetLongInt;
 		if ret = cFalse then begin
-			parserErrorStr( '91 103 UseIdentifier missing');
+			(parserErrorStr( '91 103 UseIdentifier missing'));
 		end;
-		parseUnitIdentifier := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseVarIdentifier : longint;
+	procedure parseVarIdentifierTry;
 		var ret : longint;
 	begin
-
-		ret := parseIdentifier;
-		if ret = cFalse then begin
-			parserErrorStr( '91 105 VarIdentifier missing');
-		end;
-		parseVarIdentifier := ret;
-
-	end;
-	
-	function parseTypeIdentifier : longint;
-		var ret : longint;
-	begin
-		ret := parseIdentifier;
-		if ret = cFalse then begin
-			parserErrorStr( '91 107 TypeIdentifier missing');
-		end;
-		parseTypeIdentifier := ret;
-	end;
-	
-	function parseProcIdentifier : longint;
-		var ret : longint;
-	begin
-		ret := parseIdentifier;
-		if ret = cFalse then begin
-			parserErrorStr( '91 109 ProcIdentifier missing');
-		end;
-		parseProcIdentifier := ret;
-	end;
-	
-	function parseFuncIdentifier : longint;
-		var ret : longint;
-	begin
-		ret := parseIdentifier;
-		if ret = cFalse then begin
-			parserErrorStr( '91 111 FuncIdentifier missing');
-		end;
-		parseFuncIdentifier := ret;
-	end;
-	
-	
-
+		(parserDebugStr( 'parseVarIdentifierTry'));
+		(PeekIsIdentifier);
+		ret :=  gRetLongInt;
 		
+		(parserDebugStrInt( 'parseVarIdentifierTry', ret));
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseVarIdentifier;
+		var ret : longint;
+	begin
+		(parseIdentifier);
+		ret :=  gRetLongInt;
+		if ret = cFalse then begin
+			(parserErrorStr( '91 105 VarIdentifier missing'));
+		end;
+		gRetLongInt := ret;
+
+	end;
+	
+	procedure parseTypeIdentifierTry;
+		var ret : longint;
+	begin
+		(parserDebugStr( 'parseTypeIdentifierTry'));
+		(PeekIsIdentifier);
+		ret :=  gRetLongInt;
+		
+		(parserDebugStrInt( 'parseTypeIdentifierTry', ret));
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseTypeIdentifier;
+		var ret : longint;
+	begin
+		(parserDebugStr( 'parseTypeIdentifier'));
+		(parseIdentifier);
+		ret :=  gRetLongInt;
+		if ret = cFalse then begin
+			(parserErrorStr( '91 107 TypeIdentifier missing'));
+		end;
+		
+		(parserDebugStrInt( 'parseTypeIdentifier', ret));
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseProcIdentifier;
+		var ret : longint;
+	begin
+		(parseIdentifier);
+		// writeln( '*** ProcIdentifier ', sym, ' ', id);
+		ret :=  gRetLongInt;
+		if ret = cFalse then begin
+			parserErrorStr(( '91 109 ProcIdentifier missing'));
+		end;
+		gRetLongInt := ret;
+	end;
 	
 	
-	function parseDefParameters : longint;
+	procedure parseSimpleTypeTry;
+		var ret : longint;
+	begin
+		parserDebugStr(( 'parseSimpleTypeTry'));
+		(peekSymbol);
+		ret := cFalse;
+		
+		if sym = cTypeLongint then begin
+			ret :=  cTrue;
+		end;
+		if sym = cTypeString then begin
+			ret :=  cTrue;
+		end;
+		
+		(parserDebugStrInt( 'parseSimpleTypeTry', ret));
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseSimpleType;
+		var ret : longint;
+	begin
+		(parserDebugStr( 'parseSimpleType'));
+		
+		(parseSimpleTypeTry);
+		ret :=  gRetLongInt;
+		
+		(getSymbol);
+		
+		(parserDebugStrInt( 'parseSimpleType', ret));
+		gRetLongInt := ret;
+	end;
+	
+	
+	
+	
+	procedure parseVarExtIdentifier;
 		var ret : longint;
 		var again : longint;
 		var bTry : longint;
 		var bParse : longint;
 	begin
-		parserDebugStr( 'parseDefParameters');
-		ret := parseIsSymbol( cLParen);
+		parserDebugStr( 'parseVarExtIdentifier');
 		
+		(parseVarIdentifier);
+		ret :=  gRetLongInt;
 		if ret = cTrue then begin
-			getSymbol; // ist '('
-			
-			
-			
-			ret := parseDeclaration;
-			
-			bTry := parseIsSymbol( cSemicolon); 
+			peekIsSymbol( cLBrak); 
+			bTry :=  gRetLongInt;
 			again := bTry;
 			while (again = cTrue) do begin
 				if bTry = cTrue then begin
-					bParse := parseSymbol( cSemicolon);
+					(getSymbol); // "["
+					(parseExpression);
+					bParse :=  gRetLongInt;
 					if bParse = cTrue then begin
-						bParse := parseDeclaration;
+						parseSymbol( cRBrak);
+						bParse :=  gRetLongInt;
 					end;
 				end;
 				if bParse = cTrue then begin
-					bTry := parseIsSymbol( cSemicolon);
+					PeekIsSymbol( cLBrak);
+					bTry :=  gRetLongInt;
 					again := bTry;
 				end
 				else begin
@@ -214,10 +413,395 @@
 			else begin
 				ret := bParse;
 			end;
+		end;
+		
+		parserDebugStrInt( 'parseVarExtIdentifier', ret);
+		gRetLongInt := ret;
+	end;
+	
+	
+	procedure parseVarModifier;
+	var ret : longint;
+	begin
+		parserDebugStr( 'parseVarModifier');
+		
+		(peekSymbol);
+		if sym = cPtrRef then begin
+			(getSymbol); // '^'
+		end;
+		
+		parseSymbol( cPeriod);
+		ret := gRetLongInt;
+		
+		if ret = cTrue then begin
+			parseVarExtIdentifier;
+			ret := gRetLongInt;
+		end;
+		
+		parserDebugStrInt( 'parseVarModifier', ret);
+		gRetLongInt := ret;
+	end;
+	
+	
+	procedure parseVariableTry;
+		var ret : longint;
+	begin
+		parserDebugStr( 'parseVariableTry');
+		parseVarIdentifierTry;
+		ret :=  gRetLongInt;
+		
+		parserDebugStrInt( 'parseVariableTry', ret);
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseVariable;
+		var ret : longint;
+		var again : longint;
+		var bTry : longint;
+		var bParse : longint;
+		(*
+		var ret : longint;
+		*)
+	begin
+		parserDebugStr( 'parseVariable');
+		
+		(parseVarExtIdentifier);
+		ret :=  gRetLongInt;
+		if ret = cTrue then begin
+			(PeekIsVarModifier); 
+			bTry :=  gRetLongInt;
+			again := bTry;
+			while (again = cTrue) do begin
+				if bTry = cTrue then begin
+					(parseVarModifier);
+					bParse :=  gRetLongInt;
+				end;
+				if bParse = cTrue then begin
+					(PeekIsVarModifier);
+					bTry :=  gRetLongInt;
+					again := bTry;
+				end
+				else begin
+					again := cFalse;
+				end;
+			end;
+		
+			if bTry = cFalse then begin
+				ret := cTrue;
+			end
+			else begin
+				ret := bParse;
+			end;
+		end;
+		
+		parserDebugStrInt( 'parseVariable', ret);
+		gRetLongInt := ret;
+	
+	
+	
+		(*
+		parserDebugStr( 'parseVariable');
+		(parseVarIdentifier);
+		ret :=  gRetLongInt;
+		
+		parserDebugStrInt( 'parseVariable', ret);
+		gRetLongInt := ret;
+		*)
+	end;
+	
+	
+	procedure parseFactor;
+		var ret : longint;
+		var bTry: longint;
+	begin
+		parserDebugStr( 'parseFactor');
+		ret := cFalse;
+		
+		peekIsSign;
+		bTry :=  gRetLongInt;
+		if bTry = cTrue then begin
+			(getSymbol); // sign
 			
+			(getSymbol); // sollte Nummer sein
+			if sym = cNumber then begin
+				ret := cTrue;
+			end
+			else begin
+				ret := cFalse;
+			end;
+		end
+		
+		else begin // expression ?
+			peekIsSymbol( cLParen);
+			bTry :=  gRetLongInt;
+			if bTry = cTrue then begin
+				(getSymbol); // LParen
+				(parseExpression);
+				ret := gRetLongInt;
+				if ret = cTrue then begin
+					parseSymbol( cRParen);
+					ret := gRetLongInt;
+				end
+			end
+			else begin // string
+				(peekSymbol);
+				if sym = cString then begin
+					(getSymbol);
+					ret := cTrue;
+				end
+				else begin // longint
+					(peekSymbol);
+					if sym = cNumber then begin
+						(getSymbol);
+						ret := cTrue;
+					end
+					else begin // not factor
+						(peekSymbol);
+						if sym = cNot then begin
+							(getSymbol); // not
+							(parseFactor);
+							ret := gRetLongInt;
+						end
+						else begin // Variable
+							parseVariableTry;
+							bTry :=  gRetLongInt;
+							if bTry = cTrue then begin
+								(parseVariable);
+								ret :=  gRetLongInt;
+							end;
+						end;
+					end;
+				end;
+			end;
+		end;
+		
+		parserDebugStrInt( 'parseFactor', ret);
+		gRetLongInt := ret;
+	end;
+	
+	
+	procedure parseTerm;
+		var ret : longint;
+		var again : longint;
+		var bTry : longint;
+		var bParse : longint;
+	begin
+		parserDebugStr( 'parseTerm');
+		
+		(parseFactor);
+		ret :=  gRetLongInt;
+		
+		(peekIsMultOperator);
+		bTry :=  gRetLongInt;
+		again := bTry;
+		while (again = cTrue) do begin
+			if bTry = cTrue then begin
+				(getSymbol); // multOperator
+				(parseFactor);
+				bParse :=  gRetLongInt;
+			end;
+			if bParse = cTrue then begin
+				(PeekIsMultOperator);
+				bTry :=  gRetLongInt;
+				again := bTry;
+			end
+			else begin
+				again := cFalse;
+			end;
+		end;
+	
+		if bTry = cFalse then begin
+			ret := cTrue;
+		end
+		else begin
+			ret := bParse;
+		end;
+		
+		parserDebugStrInt( 'parseTerm', ret);
+		gRetLongInt := ret;
+	end;
+	
+	
+	procedure parseSimpleExpression;
+		var ret : longint;
+		var again : longint;
+		var bTry : longint;
+		var bParse : longint;
+	begin
+		parserDebugStr( 'parseSimpleExpression');
+		
+		(parseTerm);
+		ret :=  gRetLongInt;
+		
+		(peekIsAddOperator);
+		bTry :=  gRetLongInt;
+		again := bTry;
+		while (again = cTrue) do begin
+			if bTry = cTrue then begin
+				(getSymbol); // addOperator
+				(parseTerm);
+				bParse :=  gRetLongInt;
+			end;
+			if bParse = cTrue then begin
+				(PeekIsAddOperator);
+				bTry :=  gRetLongInt;
+				again := bTry;
+			end
+			else begin
+				again := cFalse;
+			end;
+		end;
+	
+		if bTry = cFalse then begin
+			ret := cTrue;
+		end
+		else begin
+			ret := bParse;
+		end;
+		
+		parserDebugStrInt( 'parseSimpleExpression', ret);
+		gRetLongInt := ret;
+	end;
+	
+	
+	procedure parseExpression;
+		var ret : longint;
+		var bTry : longint;
+	begin
+		parserDebugStr( 'parseExpression');
+		(parseSimpleExpression);
+		ret :=  gRetLongInt;
+		
+		if ret = cTrue then begin
+			(peekIsRelOperator);
+			bTry :=  gRetLongInt;
+			
+			if bTry = cTrue then begin
+				(getSymbol); // relOperator 
+				(parseSimpleExpression);
+				ret :=  gRetLongInt;
+			end;
+		end;
+		
+		parserDebugStrInt( 'parseExpression', ret);
+		gRetLongInt := ret;
+	end;
+	
+	
+
+
+
+	
+
+
+
+
+
+		
+	procedure parseCallParameters;
+		var ret : longint;
+		var again : longint;
+		var bTry : longint;
+		var bParse : longint;
+	begin
+		parserDebugStr( 'parseCallParameters');
+		(PeekIsSymbol( cLParen));
+		ret :=  gRetLongInt;
+		
+		if ret = cTrue then begin
+			(getSymbol); // ist '('
+			
+			(parseExpression);
+			ret :=  gRetLongInt;
 			if ret = cTrue then begin
-				ret := parseSymbol( cRParen); 
-			end	
+				(PeekIsSymbol( cComma)); 
+				bTry :=  gRetLongInt;
+				again := bTry;
+				while (again = cTrue) do begin
+					if bTry = cTrue then begin
+						(getSymbol); // ","
+						(parseExpression);
+						bParse :=  gRetLongInt;
+					end;
+					if bParse = cTrue then begin
+						(PeekIsSymbol( cComma));
+						bTry :=  gRetLongInt;
+						again := bTry;
+					end
+					else begin
+						again := cFalse;
+					end;
+				end;
+			
+				if bTry = cFalse then begin
+					ret := cTrue;
+				end
+				else begin
+					ret := bParse;
+				end;
+				
+				if ret = cTrue then begin
+					(parseSymbol( cRParen)); 
+					ret :=  gRetLongInt;
+				end	
+			end
+		end
+		
+		else begin
+			ret := cTrue;
+		end;
+		
+		parserDebugStrInt( 'parseCallParameters', ret);
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseDefParameters;
+		var ret : longint;
+		var again : longint;
+		var bTry : longint;
+		var bParse : longint;
+	begin
+		parserDebugStr( 'parseDefParameters');
+		(PeekIsSymbol( cLParen));
+		ret :=  gRetLongInt;
+		
+		if ret = cTrue then begin
+			(getSymbol); // ist '('
+			
+			(parseDeclaration);
+			ret :=  gRetLongInt;
+			if ret = cTrue then begin
+				(PeekIsSymbol( cSemicolon)); 
+				bTry :=  gRetLongInt;
+				again := bTry;
+				while (again = cTrue) do begin
+					if bTry = cTrue then begin
+						(getSymbol); // ";"
+						(parseDeclaration);
+						bParse :=  gRetLongInt;
+					end;
+					if bParse = cTrue then begin
+						(PeekIsSymbol( cSemicolon));
+						bTry :=  gRetLongInt;
+						again := bTry;
+					end
+					else begin
+						again := cFalse;
+					end;
+				end;
+			
+				if bTry = cFalse then begin
+					ret := cTrue;
+				end
+				else begin
+					ret := bParse;
+				end;
+				
+				if ret = cTrue then begin
+					(parseSymbol( cRParen)); 
+					ret :=  gRetLongInt;
+				end	
+			end
 		end
 		
 		else begin
@@ -225,64 +809,105 @@
 		end;
 		
 		parserDebugStrInt( 'parseDefParameters', ret);
-		parseDefParameters := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseType : longint;
+	procedure parseType;
 		var ret : longint;
+		var bTry : longint;
 	begin
-		getSymbol;
+		parserDebugStr( 'parseType');
+		
+		(peekSymbol);
+		if sym = cPtrRef then begin
+			(getSymbol);
+		end;
+		
 		ret := cTrue;
-		parseType := ret;
+		(parseSimpleTypeTry);
+		bTry := gRetLongInt;
+		if bTry = cTrue then begin // string oder longint
+			(parseSimpleType);
+			ret :=  gRetLongInt;
+		end
+		else begin // typeIdentifier
+			(parseTypeIdentifier);
+			ret :=  gRetLongInt;
+		end;
+		
+		parserDebugStrInt( 'parseType', ret);
+		gRetLongInt := ret;
 	end;
 	
 	
 	
-	function parseDeclaration : longint;
+	
+	procedure parseDeclaration;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseDeclaration');
-		ret := parseVarIdentifier;
-		write( ' *** VAR ', id);
+		(parseVarIdentifier);
+		ret :=  gRetLongInt;
+		write( '*** VAR ', id);
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cColon);
+			(parseSymbol( cColon));
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseType;
+			(parseType);
+			ret :=  gRetLongInt;
 			writeln( ' ', id);
 		end;
 		
 		parserDebugStrInt( 'parseDeclaration', ret);
-		parseDeclaration := ret;
+		gRetLongInt := ret;
 	end;
 	
 	
-	function parseRecordType : longint;
+	procedure parseRecordTypeTry;
+		var ret : longint;
+	begin
+		parserDebugStr( 'parseRecordTypeTry');
+		(PeekIsSymbol( cRecord));
+		ret :=  gRetLongInt;
+		
+		parserDebugStrInt( 'parseRecordTypeTry', ret);
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseRecordType;
 		var ret : longint;
 		var again : longint;
 		var bTry : longint;
 		var bParse : longint;
 	begin
 		parserDebugStr( 'parseRecordType');
-		ret := parseSymbol( cRecord);
+		(parseSymbol( cRecord));
+		ret :=  gRetLongInt;
 		
 		if ret = cTrue then begin
-			ret := parseDeclaration;
+			(parseDeclaration);
+			ret :=  gRetLongInt;
 		end;
 
-		bTry := parseIsSymbol( cSemicolon); 
+		(PeekIsSymbol( cSemicolon)); 
+		bTry :=  gRetLongInt;
 		again := bTry;
 		while (again = cTrue) do begin
 			if bTry = cTrue then begin
-				bParse := parseSymbol( cSemicolon);
+				(parseSymbol( cSemicolon));
+				bParse :=  gRetLongInt;
+				
 				if bParse = cTrue then begin
-					bParse := parseDeclaration;
+					(parseDeclaration);
+					bParse :=  gRetLongInt;
 				end;
 			end;
 			if bParse = cTrue then begin
-				bTry := parseIsSymbol( cSemicolon);
+				(PeekIsSymbol( cSemicolon));
+				bTry :=  gRetLongInt;
 				again := bTry;
 			end
 			else begin
@@ -298,15 +923,12 @@
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cEnd); 
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon); 
+			(parseSymbol( cEnd)); 
+			ret :=  gRetLongInt;
 		end;
 		
 		parserDebugStrInt( 'parseRecordType', ret);
-		parseRecordType := ret;
+		gRetLongInt := ret;
 	end;
 
 
@@ -317,152 +939,234 @@
 	
 	
 	
-	function parseProcCallTry : longint;
+	procedure parseProcCallTry;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseProcCallTry');
-		ret := cFalse;
+		(PeekIsSymbol( cLParen));
+		ret :=  gRetLongInt;
 		
 		parserDebugStrInt( 'parseProcCallTry', ret);
-		parseProcCallTry := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseProcCall : longint;
+	procedure parseProcCall;
 		var ret : longint;
 	begin
-		ret := cFalse;
+		parserDebugStr( 'parseProcCall');
+		(parseSymbol( cLParen));
+		ret :=  gRetLongInt;
 		
-		parseProcCall := ret;
+		if ret = cTrue then begin
+			(parseProcIdentifier);
+			ret :=  gRetLongInt;
+		end;
+		
+		if ret = cTrue then begin
+			(parseCallParameters);
+			ret :=  gRetLongInt;
+		end;
+		
+		if ret = cTrue then begin
+			(parseSymbol( cRParen));
+			ret :=  gRetLongInt;
+		end;
+		
+		if ret = cTrue then begin
+			(parseSymbol( cSemicolon));
+			ret :=  gRetLongInt;
+		end;
+		
+		parserDebugStrInt( 'parseProcCall', ret);
+		gRetLongInt := ret;
 	end;
 
 
-	function parseWhileStatementTry : longint;
+	procedure parseWhileStatementTry;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseWhileStatementTry');
-		ret := parseIsSymbol( cWhile);
+		(PeekIsSymbol( cWhile));
+		ret :=  gRetLongInt;
 		
 		parserDebugStrInt( 'parseWhileStatementTry', ret);
-		parseWhileStatementTry := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseWhileStatement : longint;
+	procedure parseWhileStatement;
 		var ret : longint;
 	begin
-		ret := parseSymbol( cWhile);
+		(parseSymbol( cWhile));
+		ret :=  gRetLongInt;
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cDo);
+			(parseExpression);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseCodeBlock;
+			(parseSymbol( cDo));
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon);
+			(parseCodeBlock);
+			ret :=  gRetLongInt;
 		end;
 		
-		parseWhileStatement := ret;
+		if ret = cTrue then begin
+			(parseSymbol( cSemicolon));
+			ret :=  gRetLongInt;
+		end;
+		
+		gRetLongInt := ret;
 	end;
 	
 
-	function parseIfStatementTry : longint;
+	procedure parseIfStatementTry;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseIfStatementTry');
-		ret := parseIsSymbol( cIf);
+		(PeekIsSymbol( cIf));
+		ret :=  gRetLongInt;
 		
 		parserDebugStrInt( 'parseIfStatementTry', ret);
-		parseIfStatementTry := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseIfStatement : longint;
+	procedure parseIfStatement;
 		var ret : longint;
 	begin
-		ret := parseSymbol( cIf);
+		(parseSymbol( cIf));
+		ret :=  gRetLongInt;
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cThen);
+			(parseExpression);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseCodeBlock;
+			(parseSymbol( cThen));
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon);
+			(parseCodeBlock);
+			ret :=  gRetLongInt;
 		end;
 		
-		parseIfStatement := ret;
+		if ret = cTrue then begin // else
+			(peekSymbol);
+			if sym = cElse then begin
+				(getSymbol); // else
+				(parseCodeBlock);
+				ret :=  gRetLongInt;
+			end;
+		end;
+		
+		if ret = cTrue then begin
+			(parseSymbol( cSemicolon));
+			ret :=  gRetLongInt;
+		end;
+		
+		gRetLongInt := ret;
 	end;
 
 
-	function parseSimpleStatementTry : longint;
+	procedure parseSimpleStatementTry;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseSimpleStatementTry');
-		ret := cFalse;
+		(parseVariableTry);
+		ret :=  gRetLongInt;
 		
 		parserDebugStrInt( 'parseSimpleStatementTry', ret);
-		parseSimpleStatementTry := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseSimpleStatement : longint;
+	procedure parseSimpleStatement;
 		var ret : longint;
 	begin
-		ret := cFalse;
+		(parseVariable);
+		ret :=  gRetLongInt;
 		
-		parseSimpleStatement := ret;
+		if ret = cTrue then begin
+			(parseSymbol( cBecomes));
+			ret :=  gRetLongInt;
+		end;
+		
+		if ret = cTrue then begin
+			(parseExpression);
+			ret :=  gRetLongInt;
+		end;
+		
+		if ret = cTrue then begin
+			(parseSymbol( cSemicolon));
+			ret :=  gRetLongInt;
+		end;
+		
+		gRetLongInt := ret;
 	end;
 
 
-	function parseStatementTry : longint;
+	procedure parseStatementTry;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseStatementTry');
-		ret := parseSimpleStatementTry;
+		(parseSimpleStatementTry);
+		ret :=  gRetLongInt;
 		
 		if ret = cFalse then begin
-			ret := parseIfStatementTry;
+			(parseIfStatementTry);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cFalse then begin
-			ret := parseWhileStatementTry;
+			(parseWhileStatementTry);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cFalse then begin
-			ret := parseProcCallTry;
+			(parseProcCallTry);
+			ret :=  gRetLongInt;
 		end;
 		
 		parserDebugStrInt( 'parseStatementTry', ret);
-		parseStatementTry := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseStatement : longint;
+	procedure parseStatement;
 		var ret : longint;
 		var bTry : longint;
 	begin
 		parserDebugStr( 'parseStatement');
 		ret := cTrue;
-		bTry := parseSimpleStatementTry;
+		(parseSimpleStatementTry);
+		bTry :=  gRetLongInt;
 		if bTry = cTrue then begin
-			ret := parseSimpleStatement;
+			(parseSimpleStatement);
+			ret :=  gRetLongInt;
 		end
 		else begin
-			bTry := parseIfStatementTry;
+			(parseIfStatementTry);
+			bTry :=  gRetLongInt;
 			if bTry = cTrue then begin
-				ret := parseIfStatement;
+				(parseIfStatement);
+				ret :=  gRetLongInt;
 			end
 			else begin
-				bTry := parseWhileStatementTry;
+				(parseWhileStatementTry);
+				bTry :=  gRetLongInt;
 				if bTry = cTrue then begin
-					ret := parseWhileStatement;
+					(parseWhileStatement);
+					ret :=  gRetLongInt;
 				end
 				else begin
-					bTry := parseProcCallTry;
+					(parseProcCallTry);
+					bTry :=  gRetLongInt;
 					if bTry = cTrue then begin
-						ret := parseProcCall;
+						(parseProcCall);
+						ret :=  gRetLongInt;
 					end
 					else begin
 						parserErrorStr( 'parseStatement');
@@ -473,25 +1177,28 @@
 		end;
 		
 		parserDebugStrInt( 'parseStatement', ret);
-		parseStatement := ret;
+		gRetLongInt := ret;
 	end;
 	
 	
-	function parseStatements : longint;
+	procedure parseStatements;
 		var ret : longint;
 		var again : longint;
 		var bTry : longint;
 		var bParse : longint;
 	begin
 		parserDebugStr( 'parseStatements');
-		bTry := parseStatementTry; 
+		(parseStatementTry); 
+		bTry :=  gRetLongInt;
 		again := bTry;
 		while (again = cTrue) do begin
 			if bTry = cTrue then begin
-				bParse := parseStatement;
+				(parseStatement);
+				bParse :=  gRetLongInt;
 			end;
 			if bParse = cTrue then begin
-				bTry := parseStatementTry;
+				(parseStatementTry);
+				bTry :=  gRetLongInt;
 				again := bTry;
 			end
 			else begin
@@ -506,101 +1213,189 @@
 		end;
 		
 		parserDebugStrInt( 'parseStatements', ret);
-		parseStatements := ret;
+		gRetLongInt := ret;
 	end;
 
 	
-	function parseCodeBlock : longint;
+	procedure parseCodeBlock;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseCodeBlock');
-		ret := parseSymbol( cBegin);
+		(parseSymbol( cBegin));
+		ret :=  gRetLongInt;
 		
 		if ret = cTrue then begin
-			ret := parseStatements;
+			(parseStatements);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cEnd); 
+			(parseSymbol( cEnd)); 
+			ret :=  gRetLongInt;
 		end;
 		
-		parseCodeBlock := ret;
+		gRetLongInt := ret;
 		parserDebugStrInt( 'parseCodeBlock', ret);
 	end;
 	
 		
-	function parseTypeDeclarationTry : longint;
+	procedure parseOneTypeDeclarationTry;
+		var ret : longint;
+	begin
+		parserDebugStr( 'parseOneTypeDeclarationTry');
+		(parseTypeIdentifierTry);
+		ret :=  gRetLongInt;
+		
+		parserDebugStrInt( 'parseOneTypeDeclarationTry', ret);
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseOneTypeDeclaration;
+		var ret : longint;
+	begin
+		parserDebugStr( 'parseOneTypeDeclaration');
+		(parseTypeIdentifier);
+		ret :=  gRetLongInt;
+		
+		if ret = cTrue then begin
+			(parseSymbol( cEql));
+			ret :=  gRetLongInt;
+		end;
+		
+		if ret = cTrue then begin
+			(parseRecordTypeTry);
+			ret :=  gRetLongInt;
+			if ret = cTrue then begin
+				(parseRecordType);
+				ret :=  gRetLongInt;
+			end
+			else begin
+				parseSymbol( cPtrRef);
+				ret :=  gRetLongInt;
+				if ret = cTrue then begin
+					(parseTypeIdentifier);
+					ret :=  gRetLongInt;
+				end;
+			end;
+		end;
+		
+		if ret = cTrue then begin
+			(parseSymbol( cSemicolon)); 
+			ret :=  gRetLongInt;
+		end;
+		
+		parserDebugStrInt( 'parseOneTypeDeclaration', ret);
+		gRetLongInt := ret;
+	end;
+	
+	
+	procedure parseTypeDeclarationTry;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseTypeDeclarationTry');
-		ret := parseIsSymbol( cType);
+		(PeekIsSymbol( cType));
+		ret :=  gRetLongInt;
 		
 		parserDebugStrInt( 'parseTypeDeclarationTry', ret);
-		parseTypeDeclarationTry := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseTypeDeclaration : longint;
-		var ret : longint;
-	begin
-		ret := parseSymbol( cType);
-		
-		if ret = cTrue then begin
-			ret := parseTypeIdentifier;
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseSymbol( cEql);
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseRecordType;
-		end;
-		
-		parseTypeDeclaration := ret;
-	end;
-	
-	
-	function parseVarDeclarationTry : longint;
-		var ret : longint;
-	begin
-		parserDebugStr( 'parseVarDeclarationTry');
-		ret := parseIsSymbol( cVar);
-		
-		parserDebugStrInt( 'parseVarDeclarationTry', ret);
-		parseVarDeclarationTry := ret;
-	end;
-	
-	function parseVarDeclaration : longint;
-		var ret : longint;
-	begin
-		ret := parseSymbol( cVar);
-		
-		if ret = cTrue then begin
-			ret := parseDeclaration;
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon);
-		end;
-		
-		parseVarDeclaration := ret;
-	end;
-	
-	
-	function parseVarDeclarations : longint;
+	procedure parseTypeDeclaration;
 		var ret : longint;
 		var again : longint;
 		var bTry : longint;
 		var bParse : longint;
 	begin
-		bTry := parseVarDeclarationTry; 
+		parserDebugStr( 'parseTypeDeclaration');
+		
+		parseSymbol( cType);
+		ret :=  gRetLongInt;
+		
+		if ret = cTrue then begin
+			(parseOneTypeDeclaration);
+			ret :=  gRetLongInt;
+			
+			if ret = cTrue then begin
+				(parseOneTypeDeclarationTry); 
+				bTry :=  gRetLongInt;
+				again := bTry;
+				while (again = cTrue) do begin
+					if bTry = cTrue then begin
+						(parseOneTypeDeclaration);
+						bParse :=  gRetLongInt;
+					end;
+					if bParse = cTrue then begin
+						(parseOneTypeDeclarationTry); 
+						bTry :=  gRetLongInt;
+						again := bTry;
+					end
+					else begin
+						again := cFalse;
+					end;
+				end;
+			
+				if bTry = cFalse then begin
+					ret := cTrue;
+				end
+				else begin
+					ret := bParse;
+				end;
+			end;
+		end;
+		
+		parserDebugStrInt( 'parseTypeDeclaration', ret);
+		gRetLongInt := ret;
+	end;
+	
+	
+	procedure parseVarDeclarationTry;
+		var ret : longint;
+	begin
+		parserDebugStr( 'parseVarDeclarationTry');
+		(PeekIsSymbol( cVar));
+		ret :=  gRetLongInt;
+		
+		parserDebugStrInt( 'parseVarDeclarationTry', ret);
+		gRetLongInt := ret;
+	end;
+	
+	procedure parseVarDeclaration;
+		var ret : longint;
+	begin
+		(parseSymbol( cVar));
+		ret :=  gRetLongInt;
+		
+		if ret = cTrue then begin
+			(parseDeclaration);
+			ret :=  gRetLongInt;
+		end;
+		
+		if ret = cTrue then begin
+			(parseSymbol( cSemicolon));
+			ret :=  gRetLongInt;
+		end;
+		
+		gRetLongInt := ret;
+	end;
+	
+	
+	procedure parseVarDeclarations;
+		var ret : longint;
+		var again : longint;
+		var bTry : longint;
+		var bParse : longint;
+	begin
+		(parseVarDeclarationTry); 
+		bTry :=  gRetLongInt;
 		again := bTry;
 		while (again = cTrue) do begin
 			if bTry = cTrue then begin
-				bParse := parseVarDeclaration;
+				(parseVarDeclaration);
+				bParse :=  gRetLongInt;
 			end;
 			if bParse = cTrue then begin
-				bTry := parseVarDeclarationTry; 
+				(parseVarDeclarationTry); 
+				bTry :=  gRetLongInt;
 				again := bTry;
 			end
 			else begin
@@ -614,203 +1409,162 @@
 			ret := bParse;
 		end;
 		
-		parseVarDeclarations := ret;
-	end;
-	
-
-	function parseFuncHeading : longint;
-		var ret : longint;
-	begin	
-		ret := parseSymbol( cFunction);
-		
-		if ret = cTrue then begin
-			ret := parseFuncIdentifier;
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseDefParameters; 
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseSymbol( cColon); 
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseType; 
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon); 
-		end;
-		
-		parseFuncHeading := ret;
+		gRetLongInt := ret;
 	end;
 	
 	
-	function parseFuncDeclarationTry : longint;
-		var ret : longint;
-	begin
-		parserDebugStr( 'parseFuncDeclarationTry');
-		ret := parseIsSymbol( cFunction);
-		
-		parserDebugStrInt( 'parseFuncDeclarationTry', ret);
-		parseFuncDeclarationTry := ret;
-	end;
-	
-	function parseFuncDeclaration : longint;
-		var ret : longint;
-	begin
-		ret := parseFuncHeading;
-		
-		if ret = cTrue then begin
-			ret := parseVarDeclarations;
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseCodeBlock;
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon);
-		end;
-		
-		parseFuncDeclaration := ret;
-	end;
-
-
-	
-	function parseProcHeading : longint;
+	procedure parseProcHeading;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseProcHeading');
-		ret := parseSymbol( cProcedure);
+		(parseSymbol( cProcedure));
+		ret :=  gRetLongInt;
 		
 		if ret = cTrue then begin
-			ret := parseProcIdentifier;
+			(parseProcIdentifier);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseDefParameters; 
+			(parserInfoStr( 'Prozedurdefinition', id));
+			(parseDefParameters); 
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon); 
+			(parseSymbol( cSemicolon)); 
+			ret :=  gRetLongInt;
 		end;
 		
 		parserDebugStrInt( 'parseProcHeading', ret);
-		parseProcHeading := ret;
+		gRetLongInt := ret;
 	end;
 	
 	
-	function parseProcDeclarationTry : longint;
+	procedure parseProcDeclarationTry;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parseProcDeclarationTry');
-		ret := parseIsSymbol( cProcedure);
+		(PeekIsSymbol( cProcedure));
+		ret := gRetLongInt;
 		
 		parserDebugStrInt( 'parseProcDeclarationTry', ret);
-		parseProcDeclarationTry := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parseProcDeclaration : longint;
+	procedure parseProcDeclaration;
 		var ret : longint;
+		var fwd : longint;
 	begin
 		parserDebugStr( 'parseProcDeclaration');
-		ret := parseProcHeading;
+		(parseProcHeading);
+		ret :=  gRetLongInt;
 		
 		if ret = cTrue then begin
-			ret := parseVarDeclarations;
+			(PeekIsSymbol( cForward));
+			fwd := gRetLongInt;
+			if fwd = cTrue then begin
+				(parseSymbol( cForward));
+			end
+			else begin
+				(parseVarDeclarations);
+				ret :=  gRetLongInt;
+		
+				if ret = cTrue then begin
+					(parseCodeBlock);
+					ret := gRetLongInt;
+				end;
+			end
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseCodeBlock;
-		end;
-		
-		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon);
+			(parseSymbol( cSemicolon));
+			ret :=  gRetLongInt;
 		end;
 		
 		parserDebugStrInt( 'parseProcDeclaration', ret);
-		parseProcDeclaration := ret;
+		gRetLongInt := ret;
 	end;
 	
 	
-	function parsePgmDeclarationTry : longint;
+	procedure parsePgmDeclarationTry;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parsePgmDeclarationTry');
-		ret := parseVarDeclarationTry;
+		(parseVarDeclarationTry);
+		ret :=  gRetLongInt;
 		
 		if ret = cFalse then begin
-			ret := parseTypeDeclarationTry;
+			(parseTypeDeclarationTry);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cFalse then begin
-			ret := parseProcDeclarationTry;
-		end;
-		
-		if ret = cFalse then begin
-			ret := parseFuncDeclarationTry;
+			(parseProcDeclarationTry);
+			ret :=  gRetLongInt;
 		end;
 		
 		parserDebugStrInt( 'parsePgmDeclarationTry', ret);
-		parsePgmDeclarationTry := ret;
+		gRetLongInt := ret;
 	end;
 	
-	function parsePgmDeclaration : longint;
+	procedure parsePgmDeclaration;
 		var ret : longint;
 		var bTry : longint;
 	begin
 		parserDebugStr( 'parsePgmDeclaration');
 		ret := cTrue;
-		bTry := parseVarDeclarationTry;
+		(parseVarDeclarationTry);
+		bTry := gRetLongInt;
 		if bTry = cTrue then begin
-			ret := parseVarDeclaration;
+			(parseVarDeclaration);
+			ret :=  gRetLongInt;
 		end
 		else begin
-			bTry := parseTypeDeclarationTry;
+			(parseTypeDeclarationTry);
+			bTry :=  gRetLongInt;
 			if bTry = cTrue then begin
-				ret := parseTypeDeclaration;
+				(parseTypeDeclaration);
+				ret :=  gRetLongInt;
 			end
 			else begin
-				bTry := parseProcDeclarationTry;
+				(parseProcDeclarationTry);
+				bTry :=  gRetLongInt;
 				if bTry = cTrue then begin
-					ret := parseProcDeclaration;
+					(parseProcDeclaration);
+					ret :=  gRetLongInt;
 				end
 				else begin
-					bTry := parseFuncDeclarationTry;
-					if bTry = cTrue then begin
-						ret := parseFuncDeclaration;
-					end
-					else begin
-						parserErrorStr( 'parsePgmDeclaration');
-						ret := cFalse;
-					end;
+					parserErrorStr( 'parsePgmDeclaration');
+					ret := cFalse;
 				end;
 			end;
 		end;
 		
 		parserDebugStrInt( 'parsePgmDeclaration', ret);
-		parsePgmDeclaration := ret;
+		gRetLongInt := ret;
 	end;
 	
 	
-	function parsePgmDeclarations : longint;
+	procedure parsePgmDeclarations;
 		var ret : longint;
 		var again : longint;
 		var bTry : longint;
 		var bParse : longint;
 	begin
 		parserDebugStr( 'parsePgmDeclarations');
-		bTry := parsePgmDeclarationTry; 
+		(parsePgmDeclarationTry);
+		bTry := gRetLongInt; 
 		again := bTry;
 		while (again = cTrue) do begin
 			if bTry = cTrue then begin
-				bParse := parsePgmDeclaration;
+				(parsePgmDeclaration);
+				bParse := gRetLongInt;
 			end;
 			if bParse = cTrue then begin
 				(* procDeclaration is parsable *)
-				bTry := parsePgmDeclarationTry;
+				(parsePgmDeclarationTry);
+				bTry := gRetLongInt;
 				again := bTry;
 			end
 			else begin
@@ -825,100 +1579,51 @@
 		end;
 		
 		parserDebugStrInt( 'parsePgmDeclarations', ret);
-		parsePgmDeclarations := ret;
+		gRetLongInt := ret;
 	end;
 	
 	
-	function parsePgmHeading : longint;
+	procedure parsePgmHeading;
 		var ret : longint;
 	begin
 		parserDebugStr( 'parsePgmHeading');
-		ret := parseSymbol( cProgram);
+		(parseSymbol( cProgram));
+		ret := gRetLongInt;
 		
 		if ret = cTrue then begin
-			ret := parsePgmIdentifier;
+			(parsePgmIdentifier);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseSymbol( cSemicolon); 
+			(parseSymbol( cSemicolon)); 
+			ret :=  gRetLongInt;
 		end;
 		
-		parsePgmHeading := ret;
+		
+		
+		gRetLongInt := ret;
 		parserDebugStrInt( 'parsePgmHeading', ret);
 	end;
 	
-	(*
-	function parsePgmUsesTry : longint;
-		var ret : longint;
-	begin
-		ret := parseIsSymbol( cUses);
-		parsePgmUsesTry := ret;
-	end;
 	
-	function parsePgmUses : longint;
+	procedure parsePgm;
 		var ret : longint;
-		var again : longint;
-		var bTry : longint;
-		var bParse : longint;
 	begin
-		ret := parseSymbol( cUses);
+		(parsePgmHeading);
+		ret := gRetLongInt;
 		
 		if ret = cTrue then begin
-			ret := parseUseIdentifier;
-		end;
-		
-		bTry := parseIsSymbol( cComma); 
-		again := bTry;
-		while (again = cTrue) do begin
-			if bTry = cTrue then begin
-				bParse := parseSymbol( cComma);
-				if bParse = cTrue then begin
-					bParse := parseUseIdentifier;
-				end;
-			end;
-			if bParse = cTrue then begin
-				bTry := parseIsSymbol( cComma);;
-				again := bTry;
-			end
-			else begin
-				again := cFalse;
-			end;
-		end;
-		if bTry = cFalse then begin
-			ret := cTrue;
-		end
-		else begin
-			ret := bParse;
-		end;
-		
-		parsePgmUses := ret;
-	end;
-	*)
-	
-	function parsePgm : longint;
-		var ret : longint;
-		(*var pgmUsesTry : longint;*)
-	begin
-		ret := parsePgmHeading;
-		
-		(*
-		if ret = cTrue then begin
-			pgmUsesTry := parsePgmUsesTry;
-			if pgmUsesTry = cTrue then begin
-				ret := parsePgmUses;
-			end;
-		end;
-		*)
-		
-		if ret = cTrue then begin
-			ret := parsePgmDeclarations;
+			(parsePgmDeclarations);
+			ret :=  gRetLongInt;
 		end;
 		
 		if ret = cTrue then begin
-			ret := parseCodeBlock;
+			(parseCodeBlock);
+			ret :=  gRetLongInt;
 		end;
 		
-		parsePgm := ret;
+		gRetLongInt := ret;
 	end;
 	
 	
@@ -931,7 +1636,10 @@
 		// Assign( W, outputFile);
 		// Rewrite( W);
 		
-		writeln( parsePgm);
+		parsePgm;
+		writeln( 'Returncode: ', gRetLongInt);
+		writeln( 'Zeilen: ', LineNr, ' ', colNr);
+		
 		
 		close( R); 
 		// close( W);
