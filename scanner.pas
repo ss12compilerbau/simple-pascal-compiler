@@ -59,9 +59,8 @@
 	Var cImplementation: Longint;
 	Var cForward: Longint;
 
-	TYPE
-		tStrId = ARRAY [0..32 (* cIdLen *) - 1] OF CHAR;
-		tStr = ARRAY [0..1024 (* cStrLen *) - 1] OF CHAR;
+	TYPE tStrId = ARRAY [0..32 (* cIdLen *) - 1] OF CHAR;
+	TYPE tStr = ARRAY [0..1024 (* cStrLen *) - 1] OF CHAR;
 
 	(* Konstanten *)
 	Var cTrue : longint;
@@ -95,7 +94,7 @@
 	BEGIN
 		Read(R, ch);
 		colNr := colNr + 1;
-		IF ch = '' THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
+		IF ch = chr(10) THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
 	END;
 
 	PROCEDURE Mark(msg: STRING);
@@ -146,10 +145,11 @@
 	Var UCaseRet: Char;
 	Procedure UCase(c: CHAR);
 	BEGIN
-		IF( (c >= 'a') AND ( c <= 'z')) THEN
+		IF( (c >= 'a') AND ( c <= 'z')) THEN begin
 			UCaseRet := chr( ord('A') + ord(c) - ord('a'))
-		ELSE
+		end ELSE begin
 			UCaseRet := c;
+		end;
 	END;
 
 	(* true, falls beide ID's gleich sind *)
@@ -212,10 +212,11 @@
 		WHILE (k < nKW) AND (isEquStrIdRet = cFalse) DO
 		BEGIN
 			k := k + 1; (* INC(k); *)
+			isEquStrId(id, KWs[k].id);
 		END;
 
-		IF k < nKW THEN	sym := KWs[k].sym
-		ELSE BEGIN sym := cIdent;	END
+		IF k < nKW THEN Begin	sym := KWs[k].sym
+		end ELSE BEGIN sym := cIdent; END
 	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um ein String handelt *)
@@ -225,18 +226,20 @@
 		(* komsumiere "'" am Anfang *)
 		NextChar;
 		i := 0;
-		While ( ch <> '''' ) do begin
+		While ( (ch <> '''') AND (not eof(R))) do begin
 			IF i < cStrLen THEN
 			BEGIN
 				str[i] := ch;
 				i := i + 1; (* INC(i); *)
-				if ch = '''' then
-				begin
+				if ch = '''' then begin
 					NextChar;
 				end;
 			END;
 			NextChar;
 		End;
+		if eof(R) then begin
+			Mark('String not closed!');
+		end;
 		str[i] := cChr0;
 		sym := cString;
 		NextChar;
@@ -249,9 +252,9 @@
 		sym := cNumber;
 
 		While  ( IsDigitRet <> cFalse) do begin
-			IF val <= (cMaxNumber - ORD( ch) + ORD( '0')) DIV 10 THEN
+			IF val <= (cMaxNumber - ORD( ch) + ORD( '0')) DIV 10 THEN begin
 				val := 10 * val + ( ORD( ch) - ORD( '0'))
-			ELSE BEGIN
+			end ELSE BEGIN
 				Mark( 'number too large');
 				val := 0
 			END ;
@@ -303,7 +306,7 @@
 		isDigit(ch);
 		isLetter(ch);
 		(* IF R.eot THEN sym := eof *)
-		IF EOF( R) THEN sym := cEof
+		IF EOF( R) THEN begin sym := cEof end
 
 		ELSE IF ch = '&' THEN BEGIN NextChar; sym := cAnd END
 		ELSE IF ch = '*' THEN BEGIN NextChar; sym := cTimes END
@@ -361,7 +364,7 @@
 		BEGIN
 			NextChar;
 			IF ch = '/' THEN BEGIN
-				While (ch <> #10) Do Begin
+				While (ch <> chr(10)) Do Begin
 					NextChar;
 				End;
 				getSymbol;

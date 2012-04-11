@@ -11,11 +11,11 @@ test : build test.scanner test.parser test.symboltable
 	@echo "Tests successful!"
 
 # Scanner
-build.scanner :
+build.scanner : clean
 	fpc ScanWrapper.pas
 	@echo "Scanner build successful"
 
-test.scanner : build.scanner test.selfScanning test.scanner.terminals test.scanner.comment
+test.scanner : build.scanner test.selfScanning test.scanner.terminals test.scanner.comment test.scanner.commentfail test.scanner.keywords test.scanner.string test.scanner.stringfail
 	@echo "Scanner tests ok."
 
 test.scanner.terminals : build.scanner
@@ -26,12 +26,27 @@ test.scanner.terminals : build.scanner
 test.scanner.keywords : build.scanner
 	./ScanWrapper tests/scan_keywords.pas >test.out
 	diff test.out tests/scan_keywords.should
-	@echo "test.scanner.terminals ok"
+	@echo "test.scanner.keywords ok"
 
 test.scanner.comment : build.scanner
 	./ScanWrapper tests/scan_comment.pas >test.out
 	diff test.out tests/scan_comment.should
 	@echo "test.scanner.comment ok"
+
+test.scanner.commentfail : build.scanner
+	./ScanWrapper tests/scan_commentfail.pas >test.out
+	diff test.out tests/scan_commentfail.should
+	@echo "test.scanner.commentfail ok"
+
+test.scanner.string : build.scanner
+	./ScanWrapper tests/scan_string.pas >test.out
+	diff test.out tests/scan_string.should
+	@echo "test.scanner.string ok"
+
+test.scanner.stringfail : build.scanner
+	./ScanWrapper tests/scan_stringfail.pas >test.out
+	diff test.out tests/scan_stringfail.should
+	@echo "test.scanner.stringfail ok"
 
 test.selfScanning : build.scanner
 	./ScanWrapper scanner.pas >/dev/null
