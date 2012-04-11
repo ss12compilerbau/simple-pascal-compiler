@@ -109,46 +109,79 @@
 	END;
 
 	(* true, falls ch eine Ziffer *)
-	FUNCTION isDigit( ch: CHAR): BOOLEAN;
+	Var isDigitRet: Longint;
+	Procedure isDigit( ch: CHAR);
 	BEGIN
-		isDigit := ( ch >= '0') AND ( ch <= '9');
+		If (ch >= '0') AND ( ch <= '9') then begin
+			isDigitRet := cTrue;
+		end else begin
+			isDigitRet := cFalse;
+		end;
 	END;
 
 	(* true, falls ch ein Buchstabe *)
-	FUNCTION isLetter( ch: CHAR): BOOLEAN;
+	Var isLetterRet: Longint;
+	Procedure isLetter( ch: CHAR);
 	BEGIN
-		isLetter := ((ch >= 'a') AND (ch <= 'z')) OR ((ch >= 'A') AND (ch <= 'Z'));
+		If ((ch >= 'a') AND (ch <= 'z')) OR ((ch >= 'A') AND (ch <= 'Z')) then begin
+			isLetterRet := cTrue;
+		end else begin
+			isLetterRet := cFalse;
+		end;
 	END;
 
 	(* true, falls ch letter oder digit *)
-	FUNCTION isLetterOrDigit( ch: CHAR): BOOLEAN;
+	Var isLetterOrDigitRet: Longint;
+	Procedure isLetterOrDigit( ch: CHAR);
 	BEGIN
-		isLetterOrDigit := isLetter( ch) or isDigit( ch);
+		isLetter(ch);
+		isDigit(ch);
+		If (isLetterRet = cTrue) or (isDigitRet = cTrue) then Begin
+			isLetterOrDigitRet := cTrue;
+		end else begin
+			isLetterOrDigitRet := cFalse;
+		end;
 	END;
 
-	FUNCTION UCase(c: CHAR) : CHAR;
+	Var UCaseRet: Char;
+	Procedure UCase(c: CHAR);
 	BEGIN
 		IF( (c >= 'a') AND ( c <= 'z')) THEN
-			UCase := chr( ord('A') + ord(c) - ord('a'))
+			UCaseRet := chr( ord('A') + ord(c) - ord('a'))
 		ELSE
-			UCase := c;
+			UCaseRet := c;
 	END;
 
 	(* true, falls beide ID's gleich sind *)
 	(* nicht case sensitiv *)
-	FUNCTION isEquStrId( id1: tStrId; id2: tStrId): BOOLEAN;
+	Var isEquStrIdRet: Longint;
+	Procedure isEquStrId( id1: tStrId; id2: tStrId);
 		VAR i: Longint;
-		equal: BOOLEAN;
+		Var equal: Longint;
+		var t: Char;
 	BEGIN
-		equal := TRUE; i := 1;
-		WHILE isLetterOrDigit( id1[i]) AND equal DO
+		equal := cTrue; i := 1;
+		isLetterOrDigit( id1[i]);
+		WHILE (isLetterOrDigitRet = cTrue) AND (equal = cTrue) DO
 		BEGIN
-			equal := ( UCase(id1[i]) = UCASE(id2[i]));
+			UCase(id1[i]);
+			t := UCaseRet;
+			UCASE(id2[i]);
+			If (t = UCaseRet) then begin
+				equal := cTrue;
+			end else begin
+				equal := cFalse;
+			End;
 			i := i + 1;
+			isLetterOrDigit( id1[i]);
 		END;
-
-		equal := equal AND ( NOT isLetterOrDigit(id2[i]));
-		isEquStrId := equal;
+		isLetterOrDigit(id2[i]);
+		If (equal = cTrue) AND (isLetterOrDigitRet = cFalse) then begin
+			equal := cTrue;
+		end else begin
+			equal := cFalse;
+		End;
+		isEquStrIdRet := equal;
 	END;
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
@@ -161,21 +194,22 @@
 		VAR i, k: Longint;
 	BEGIN
 		i := 0;
-		REPEAT
+		isLetterOrDigit( ch);
+		While(isLetterOrDigitRet = cTrue) Do begin
 			IF i < cIdLen THEN
 			BEGIN
 				id[i] := ch;
 				i := i + 1; (* INC(i); *)
 			END;
 			NextChar;
-
-		(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
-		UNTIL ( NOT isLetterOrDigit( ch));
+			isLetterOrDigit( ch);
+		End;
 
 		id[i] := cChr0;
 		k := 0;
 
-		WHILE (k < nKW) AND (NOT isEquStrId(id, KWs[k].id)) DO
+		isEquStrId(id, KWs[k].id);
+		WHILE (k < nKW) AND (isEquStrIdRet = cFalse) DO
 		BEGIN
 			k := k + 1; (* INC(k); *)
 		END;
@@ -191,7 +225,7 @@
 		(* komsumiere "'" am Anfang *)
 		NextChar;
 		i := 0;
-		REPEAT
+		While ( ch <> '''' ) do begin
 			IF i < cStrLen THEN
 			BEGIN
 				str[i] := ch;
@@ -202,9 +236,7 @@
 				end;
 			END;
 			NextChar;
-
-		(* ??? UNTIL (ch < '0') OR (ch > '9') AND (CAP(ch) < 'A') OR (CAP(ch) > 'Z'); *)
-		UNTIL ( ch = '''' );
+		End;
 		str[i] := cChr0;
 		sym := cString;
 		NextChar;
@@ -216,7 +248,7 @@
 		val := 0;
 		sym := cNumber;
 
-		REPEAT
+		While  ( IsDigitRet <> cFalse) do begin
 			IF val <= (cMaxNumber - ORD( ch) + ORD( '0')) DIV 10 THEN
 				val := 10 * val + ( ORD( ch) - ORD( '0'))
 			ELSE BEGIN
@@ -224,7 +256,8 @@
 				val := 0
 			END ;
 			NextChar;
-		UNTIL ( NOT IsDigit(ch))
+			IsDigit(ch);
+		End;
 	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um einen Kommentar handelt *)
@@ -263,6 +296,8 @@
 		(* WHILE ~R.eof & (ch <= " ") DO Texts.Read(R, ch) END; *)
 		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN NextChar; END;
 
+		isDigit(ch);
+		isLetter(ch);
 		(* IF R.eot THEN sym := eof *)
 		IF EOF( R) THEN sym := cEof
 
@@ -315,16 +350,16 @@
 		ELSE IF ch = '[' THEN BEGIN NextChar; sym := cLbrak; END
 		ELSE IF ch = ']' THEN BEGIN NextChar; sym := cRbrak; END
 		ELSE IF ch = '''' THEN Begin getString; END
-		ELSE IF isDigit(  ch) THEN Begin Number; END
-		ELSE IF isLetter( ch) THEN Begin Ident; END
+		ELSE IF isDigitRet = cTrue THEN Begin Number; END
+		ELSE IF isLetterRet = cTrue THEN Begin Ident; END
 		ELSE IF ch = '~' THEN BEGIN NextChar; sym := cNot END
 		ELSE IF ch = '/' THEN
 		BEGIN
 			NextChar;
 			IF ch = '/' THEN BEGIN
-				REPEAT
+				While (ch <> #10) Do Begin
 					NextChar;
-				UNTIL (ch = #10);
+				End;
 				getSymbol;
 			END
 			ELSE
@@ -361,10 +396,12 @@
 		VAR i : Longint;
 	BEGIN
 		i := 0;
-		WHILE isLetterOrDigit( fromString[i]) DO
+		isLetterOrDigit(fromString[i]);
+		WHILE isLetterOrDigitRet = cTrue DO
 		BEGIN
 			id[i] := fromString[i];
 			i := i + 1;
+			isLetterOrDigit(fromString[i]);
 		END;
 	END;
 
