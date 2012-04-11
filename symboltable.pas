@@ -99,36 +99,34 @@
 	var found : Longint;
 	Begin
 		// Is it one of the predefined types (Longint, String, etc) then set fType to the constant pointer
-		if typeName = 'LONGINT' then 
-		Begin
+		if typeName = 'LONGINT' then Begin
 			symbol^.fType := stTypeLongint;
-		end 
-		else if typeName = 'STRING' then Begin
-			symbol^.fType := stTypeString;
-		End
-		Else Begin
-			// Find typeName among the Symbols
-			symbolIterator := stSymbolTable;
-			found := cFalse;
-			While((symbolIterator^.fNext <> Nil) and (found = cFalse)) Do Begin
-				symbolIterator := symbolIterator^.fNext;
-				if symbolIterator^.fName = typeName then Begin
-					found := cTrue;
+		end else begin 
+			if typeName = 'STRING' then Begin
+				symbol^.fType := stTypeString;
+			end Else Begin
+				// Find typeName among the Symbols
+				symbolIterator := stSymbolTable;
+				found := cFalse;
+				While((symbolIterator^.fNext <> Nil) and (found = cFalse)) Do Begin
+					symbolIterator := symbolIterator^.fNext;
+					if symbolIterator^.fName = typeName then Begin
+						found := cTrue;
+					End;
+				End;
+				if found = cTrue then Begin
+					if symbolIterator^.fClass = stType then Begin
+						symbol^.fType := symbolIterator^.fType;
+					end else begin
+						// If it's not a Type, error!
+						Mark(typeName + ' isn''t a TYPE!');
+					end
+				End else begin
+					// Type not defined
+					Mark('Error: Type not defined! ' + typeName);
 				End;
 			End;
-			if found = cTrue then Begin
-				if symbolIterator^.fClass = stType then Begin
-					symbol^.fType := symbolIterator^.fType;
-				end else begin
-					// If it's not a Type, error!
-					Mark(typeName + ' isn''t a TYPE!');
-				end
-			End else begin
-				// Type not defined
-				Mark('Error: Type not defined! ' + typeName);
-			End;
 		End;
-
 	End;
 
 	// Beginning of a record

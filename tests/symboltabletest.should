@@ -1,4 +1,4 @@
-Error: Type not defined! NOTDEFINED
+Hey! Error at Pos 1:1, Error: Type not defined! NOTDEFINED
 
 Symbol Name: I, Class: VAR, Type object: 
     TypeObj Form: LONGINT, Fields: Empty.
