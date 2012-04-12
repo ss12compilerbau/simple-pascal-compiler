@@ -36,7 +36,7 @@ BEGIN
 	// Type qwer: ^Longint;
 	stInsertSymbol('ptLongint', stType, cTrue, 'LONGINT');
 
-
+(*
 	// Procedure isEquStrId( id1: String);
 	stBeginProcedure('isEquStrId');
 	stInsertSymbol('id1', stVar, cFalse, 'String');
@@ -46,7 +46,7 @@ BEGIN
 
 	// BEGIN END;
 	stEndProcedure();
-
+*)
 	Writeln;
 	printSymbolTable(stSymbolTable, '');
 

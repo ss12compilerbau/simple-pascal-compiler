@@ -1,16 +1,9 @@
 		(* größte Zahl, die im Source angegeben werden darf *)
 	Var cMaxNumber: Longint;
-		(* weder letter noch digit, um Ende eines Keywords zu kennzeichnen *)
-	Var cChr0: Char;
-	Var cIdLen: Longint; (* maximale Länge von Schlüsselwörter und Variablen etc. *)
-	// Var cKWMaxNumber: Longint; (* Anzahl der Key- Wörter *)
-	Var cStrLen: Longint; (* maximale Länge von Strings *)
 
 		(* symbols *)
 	Var cNull: Longint; // Unknown
 	Var cTimes: Longint; // *
-	Var cDiv: Longint; // DIV
-	Var cMod: Longint;// MOD
 	Var cAnd: Longint; // &
 	Var cPlus: Longint; // +
 	Var cMinus: Longint; // -
@@ -26,7 +19,6 @@
 	Var cColon: Longint; // :
 	Var cRparen: Longint; // )
 	Var cRbrak: Longint; // ]
-	Var cOf: Longint; // OF
 	Var cThen: Longint; // THEN
 	Var cDo: Longint; // DO
 	Var cLparen: Longint; // (
@@ -38,33 +30,21 @@
 	Var cSemicolon: Longint;
 	Var cEnd: Longint; // END
 	Var cElse: Longint; // ELSE
-	Var cElsif: Longint; // ELSIF
 	Var cIf: Longint; // IF
 	Var cWhile: Longint; // WHILE
-	Var cArray: Longint; // ARRAY
 	Var cRecord: Longint; // RECORD
-	Var cConst: Longint; // CONST
 	Var cType: Longint; // TYPE
 	Var cVar: Longint; // VAR
 	Var cProcedure: Longint; // PROCEDURE
 	Var cBegin: Longint; // BEGIN
 	Var cProgram: Longint; // PROGRAM
-	Var cModule: Longint; // MODULE
 	Var cEof: Longint; // EOF
-	Var cFunction: Longint;
 	Var cString: Longint; (* Strings beginnen und enden mit ' *)
-	Var cUses: Longint;
-	Var cUnit: Longint;
-	Var cInterface: Longint;
-	Var cImplementation: Longint;
 	Var cForward: Longint;
 	Var cPtrRef: LongInt;
 	Var cTypeLongint: LongInt;
 	Var cTypeString: LongInt; 
 	Var cNil: LongInt; 
-
-	TYPE tStrId = ARRAY [0..32 (* cIdLen *) - 1] OF CHAR;
-	TYPE tStr = ARRAY [0..1024 (* cStrLen *) - 1] OF CHAR;
 
 	(* Konstanten *)
 	Var cTrue : longint;
@@ -75,21 +55,15 @@
 
 	Var sym: Longint; (* speichert das nächste Symbol des Scanners *)
 	Var val: Longint; (* wenn sym = cNumber, dann speichert val den longint- Wert *)
-	Var id: tStrId; (* wenn sym = cIdent, dann speichert id den Identifier *)
-	Var str: tStr; (* wenn sym = cString, dann speichert str den string- Wert *)
+	Var id: String; (* wenn sym = cIdent, dann speichert id den Identifier *)
+	Var str: String; (* wenn sym = cString, dann speichert str den string- Wert *)
 		(* error: BOOLEAN; *)
 
 	Var lastSymWasPeek : longint; (* cTrue, falls sym durch Aufruf peekSymbol *)
 
 	Var ch: CHAR; (* UCase *)
-	Var nKW: Longint;
 		(*errpos: LONGINT;*) (* never used *)
 	Var R: Text;
-	Var KWs: ARRAY [1..100 (* cKWMaxNumber *)] OF
-			RECORD
-				sym: Longint;
-				id: tStrId;
-			END;
 
 	(***************************************************
 	* IO
@@ -158,47 +132,37 @@
 		end;
 	END;
 
-	Var UCaseRet: Char;
-	Procedure UCase(c: CHAR);
+	Var UCaseRet: String;
+	Procedure UCase(str: String);
 	BEGIN
-		IF( (c >= 'a') AND ( c <= 'z')) THEN begin
-			UCaseRet := chr( ord('A') + ord(c) - ord('a'))
-		end ELSE begin
-			UCaseRet := c;
-		end;
+		uCaseRet := upcase(str);
 	END;
 
-	(* true, falls beide ID's gleich sind *)
-	(* nicht case sensitiv *)
-	Var isEquStrIdRet: Longint;
-	Procedure isEquStrId( id1: tStrId; id2: tStrId);
-		VAR i: Longint;
-		Var equal: Longint;
-		var t: Char;
-	BEGIN
-		equal := cTrue; i := 1;
-		isLetterOrDigit( id1[i]);
-		WHILE (isLetterOrDigitRet = cTrue) AND (equal = cTrue) DO
-		BEGIN
-			UCase(id1[i]);
-			t := UCaseRet;
-			UCASE(id2[i]);
-			If (t = UCaseRet) then begin
-				equal := cTrue;
-			end else begin
-				equal := cFalse;
-			End;
-			i := i + 1;
-			isLetterOrDigit( id1[i]);
-		END;
-		isLetterOrDigit(id2[i]);
-		If (equal = cTrue) AND (isLetterOrDigitRet = cFalse) then begin
-			equal := cTrue;
-		end else begin
-			equal := cFalse;
-		End;
-		isEquStrIdRet := equal;
-	END;
+	Procedure setSymToKeywordOrIdent;
+	var idUC: String;
+	Begin
+		sym := cIdent;
+		(UCase(id));
+		idUC := UCaseRet;
+		if idUC = 'DO' then begin sym := cDo end;
+		if idUC = 'IF' then begin sym := cIf end;
+		if idUC = 'TypeLongint' then begin sym := cTypeLongint end;
+		if idUC = 'TypeString' then begin sym := cTypeString end;
+		if idUC = 'OR' then begin sym := cOr end;
+		if idUC = 'END' then begin sym := cEnd end;
+//		if idUC = cNil, 'NIL' then begin sym :=  end;
+		if idUC = 'VAR' then begin sym := cVar end;
+		if idUC = 'ELSE' then begin sym := cElse end;
+		if idUC = 'THEN' then begin sym := cThen end;
+		if idUC = 'TYPE' then begin sym := cType end;
+		if idUC = 'BEGIN' then begin sym := cBegin end;
+		if idUC = 'FORWARD' then begin sym := cForward end;
+		if idUC = 'WHILE' then begin sym := cWhile end;
+		if idUC = 'RECORD' then begin sym := cRecord end;
+		if idUC = 'PROCEDURE' then begin sym := cProcedure end;
+		if idUC = 'PROGRAM' then begin sym := cProgram end;
+
+	End;
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
 	(* PROCEDURE getSym(VAR sym: Longint); *)
@@ -207,57 +171,34 @@
 	(* falls beim Lesen erkannt wurde, dass es sich um ein Symbol handelt *)
 	(* z.B. Keyword oder Variable *)
 	PROCEDURE Ident;
-		VAR i: Longint;
-		Var k: Longint;
 	BEGIN
-		i := 0;
+		id := '';
 		isLetterOrDigit( ch);
 		While(isLetterOrDigitRet = cTrue) Do begin
-			IF i < cIdLen THEN
-			BEGIN
-				id[i] := ch;
-				i := i + 1; (* INC(i); *)
-			END;
+			id := id + ch;
 			NextChar;
 			isLetterOrDigit( ch);
 		End;
 
-		id[i] := cChr0;
-		k := 0;
-
-		isEquStrId(id, KWs[k].id);
-		WHILE (k < nKW) AND (isEquStrIdRet = cFalse) DO
-		BEGIN
-			k := k + 1; (* INC(k); *)
-			isEquStrId(id, KWs[k].id);
-		END;
-
-		IF k < nKW THEN Begin	sym := KWs[k].sym
-		end ELSE BEGIN sym := cIdent; END
+		(setSymToKeywordOrIdent);
 	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um ein String handelt *)
 	PROCEDURE getString;
-		var i: Longint;
 	BEGIN
+		str := '';
 		(* komsumiere "'" am Anfang *)
 		NextChar;
-		i := 0;
 		While ( (ch <> '''') AND (not eof(R))) do begin
-			IF i < cStrLen THEN
-			BEGIN
-				str[i] := ch;
-				i := i + 1; (* INC(i); *)
-				if ch = '''' then begin
-					NextChar;
-				end;
-			END;
+			str := str + ch;
+			if ch = '''' then begin
+				NextChar;
+			end;
 			NextChar;
 		End;
 		if eof(R) then begin
 			infoMsg('String not closed!');
 		end;
-		str[i] := cChr0;
 		sym := cString;
 		NextChar;
 	END;
@@ -426,26 +367,6 @@
 		end;
 	end;
 
-	PROCEDURE copyKW( fromString: tStrID; VAR id: tStrID);
-		VAR i : Longint;
-	BEGIN
-		i := 0;
-		isLetterOrDigit(fromString[i]);
-		WHILE isLetterOrDigitRet = cTrue DO
-		BEGIN
-			id[i] := fromString[i];
-			i := i + 1;
-			isLetterOrDigit(fromString[i]);
-		END;
-	END;
-
-	PROCEDURE EnterKW( sym: Longint; name: tStrID);
-	BEGIN
-		KWs[nKW].sym := sym;
-		copyKW( name, KWs[nKW].id);
-		nKW := nKW + 1; (* INC(nKW); *)
-	END;
-
 	Procedure scanInitFile(inputFile: String);
 	Begin
 		Assign( R, inputFile);
@@ -467,16 +388,11 @@
 		(* größte Zahl, die im Source angegeben werden darf *)
 		cMaxNumber := 1000000;
 		(* weder letter noch digit, um Ende eines Keywords zu kennzeichnen *)
-		cChr0 := #0;
-		cIdLen := 32; (* maximale Länge von Schlüsselwörter und Variablen etc. *)
-		// cKWMaxNumber := 100; (* Anzahl der Key- Wörter *)
-		cStrLen := 1024; (* maximale Länge von Strings *)
+		// cChr0 := #0;
 
 		(* symbols *)
 		cNull := 0; // Unknown
 		cTimes := 1; // *
-		cDiv := 3; // DIV
-		cMod := 4;// MOD
 		cAnd := 5; // &
 		cPlus := 6; // +
 		cMinus := 7; // -
@@ -492,7 +408,6 @@
 		cColon := 20; // :
 		cRparen := 22; // )
 		cRbrak := 23; // ]
-		cOf := 25; // OF
 		cThen := 26; // THEN
 		cDo := 27; // DO
 		cLparen := 29; // (
@@ -504,74 +419,20 @@
 		cSemicolon := 38; // ;
 		cEnd := 40; // END
 		cElse := 41; // ELSE
-		cElsif := 42; // ELSIF
 		cIf := 44; // IF
 		cWhile := 46; // WHILE
-		cArray := 54; // ARRAY
 		cRecord := 55; // RECORD
-		cConst := 57; // CONST
 		cType := 58; // TYPE
 		cVar := 59; // VAR
 		cProcedure := 60; // PROCEDURE
 		cBegin := 61; // BEGIN
 		cProgram := 62; // PROGRAM
-		cModule := 63; // MODULE
 		cEof := 64; // EOF
-		cFunction := 97;
 		cString := 98; (* Strings beginnen und enden mit ' *)
-		cUses := 96;
-		cUnit := 95;
-		cInterface := 94;
-		cImplementation := 93;
 		cForward := 92;
 		cPtrRef := 91; // ^
 		cTypeLongint := 90;
 		cTypeString := 89;
 		cNil := 88;
-		
-
-
-		// Counter für KeyWords
-		nKW := 0;
-		EnterKW( cNull, 'BY');
-		EnterKW( cDo, 'DO');
-		EnterKW( cIf, 'IF');
-		EnterKW( cTypeLongint, 'TypeLongint');
-		EnterKW( cTypeString, 'TypeString');
-		EnterKW( cOf, 'OF');
-		EnterKW( cOr, 'OR');
-		EnterKW( cNull, 'TO');
-		EnterKW( cEnd, 'END');
-		EnterKW( cNull, 'FOR');
-		EnterKW( cMod, 'MOD');
-//		EnterKW( cNil, 'NIL');
-		EnterKW( cVar, 'VAR');
-		EnterKW( cNull, 'CASE');
-		EnterKW( cElse, 'ELSE');
-		EnterKW( cNull, 'EXIT');
-		EnterKW( cThen, 'THEN');
-		EnterKW( cType, 'TYPE');
-		EnterKW( cNull, 'WITH');
-		EnterKW( cArray, 'ARRAY');
-		EnterKW( cBegin, 'BEGIN');
-		EnterKW( cConst, 'CONST');
-		EnterKW( cElsif, 'ELSIF');
-		EnterKW( cNull, 'IMPORT');
-		EnterKW( cForward, 'FORWARD');
-		EnterKW( cWhile, 'WHILE');
-		EnterKW( cRecord, 'RECORD');
-		EnterKW( cFunction, 'FUNCTION');
-		EnterKW( cNull, 'RETURN');
-		EnterKW( cNull, 'POINTER');
-		EnterKW( cProcedure, 'PROCEDURE');
-		EnterKW( cProgram, 'PROGRAM');
-		EnterKW( cDiv, 'DIV');
-		EnterKW( cNull, 'LOOP');
-		EnterKW( cModule, 'MODULE');
-
-		EnterKW( cUses, 'USES');
-		EnterKW( cUnit, 'UNIT');
-		EnterKW( cInterface, 'INTERFACE');
-		EnterKW( cImplementation, 'IMPLEMENTATION');
 	End;
 

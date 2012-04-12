@@ -4,37 +4,15 @@ PROGRAM SPC;
 	{$include 'scanner.pas';}
 
 	(* druckt ID aus *)
-	PROCEDURE printId(str: tStrId);
-		VAR i: Longint;
+	PROCEDURE printId(str: String);
 	BEGIN
-		i := 0;
-		(* WHILE isLetterOrDigit( str[i]) DO *)
-		while not ( str[i] = cChr0 ) DO
-		BEGIN
-			// WRITE( W, str[i]);
-			WRITE( str[i]);
-			i := i + 1;
-		END;
-		// writeln( W);
-		//IF debugmode then 
-		writeln;
+		writeln( str);
 	END;
 
 	(* druckt ID aus *)
-	PROCEDURE printStr(str: tStr);
-		VAR i: Longint;
+	PROCEDURE printStr(str: String);
 	BEGIN
-		i := 0;
-		(* WHILE isLetterOrDigit( str[i]) DO *)
-		while not ( str[i] = cChr0 ) DO
-		BEGIN
-			// WRITE( W, str[i]);
-			// if debugmode then 
-			WRITE( str[i]);
-			i := i + 1;
-		END;
-		//writeln( W);
-		Writeln;
+		printId( str);
 	END;
 
 	PROCEDURE Scan( inputFile: String );
