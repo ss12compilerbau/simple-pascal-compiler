@@ -1,4 +1,4 @@
-// Program safdas;
+ Program safdas;
     
 
     
@@ -1221,7 +1221,7 @@
                 ret :=  gRetLongInt;
             end
             else begin
-                parseSymbol( cPtrRef);
+                (parseSymbol( cPtrRef));
                 ret :=  gRetLongInt;
                 if ret = cTrue then begin
                     (parseTypeIdentifier);
@@ -1426,7 +1426,7 @@
                     (parseCodeBlock);
                     ret := gRetLongInt;
                 end;
-            end
+            end;
         end;
         
         if ret = cTrue then begin
@@ -1549,7 +1549,7 @@
                 // Versuch, cProcedure zu finden
                 (parseNextSymbol( cProcedure));
                 if gRetLongInt = cTrue then begin
-                    again := cTrue
+                    again := cTrue;
                 end;
             end;
         end;
@@ -1630,15 +1630,14 @@
     end;
 
     (* end Parser *)
-    (***************************************************************)
-    Procedure ParserInit();
+    Procedure ParserInit;
     Begin
         parserErrorCount := 0;
-        (* 
+        (*
         All die Initialisierung, die auf jeden Fall ausgeführt werden muss am Anfang,
         damit der Parser benutzt werden kann. Egal ob für Testing oder Compiling.
         *)
     End;
 
-// begin
-// end.
+ begin
+ end.
