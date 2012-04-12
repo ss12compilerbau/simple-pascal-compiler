@@ -1,3 +1,4 @@
+// Program asdf;
 		(* größte Zahl, die im Source angegeben werden darf *)
 	Var cMaxNumber: Longint;
 
@@ -101,12 +102,12 @@
 		if c = 'z' then begin uCaseChrRet := 'Z'; end;
 	END;
 
-	PROCEDURE NextChar();
+	PROCEDURE NextChar;
 	var c: Char;
 	BEGIN
-		Read(R, c);
+		(Read(R, c));
 		chOrig := c;
-		UCaseChr(c);
+		(UCaseChr(c));
 		ch := UCaseChrRet;
 		colNr := colNr + 1;
 		IF ch = chr(10) THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
@@ -138,10 +139,11 @@
 	Var isDigitRet: Longint;
 	Procedure isDigit( ch: String);
 	BEGIN
-		If (ch >= '0') AND ( ch <= '9') then begin
-			isDigitRet := cTrue;
-		end else begin
-			isDigitRet := cFalse;
+		isDigitRet := cFalse;
+		if ch >= '0' then begin
+			if ch <= '9' then begin
+				isDigitRet := cTrue;
+			end;
 		end;
 	END;
 
@@ -149,10 +151,16 @@
 	Var isLetterRet: Longint;
 	Procedure isLetter( ch: String);
 	BEGIN
-		If ((ch >= 'a') AND (ch <= 'z')) OR ((ch >= 'A') AND (ch <= 'Z')) then begin
-			isLetterRet := cTrue;
-		end else begin
-			isLetterRet := cFalse;
+		isLetterRet := cFalse;
+		if ch >= 'a' then begin
+			if ch <= 'z' then begin
+				isLetterRet := cTrue;
+			end;
+		end;
+		if ch >= 'A' then begin
+			if ch <= 'Z' then begin
+				isLetterRet := cTrue;
+			end;
 		end;
 	END;
 
@@ -160,52 +168,54 @@
 	Var isLetterOrDigitRet: Longint;
 	Procedure isLetterOrDigit( ch: String);
 	BEGIN
-		isLetter(ch);
-		isDigit(ch);
-		If (isLetterRet = cTrue) or (isDigitRet = cTrue) then Begin
+		isLetterOrDigitRet := cFalse;
+		(isLetter(ch));
+		if isLetterRet = cTrue then begin
 			isLetterOrDigitRet := cTrue;
-		end else begin
-			isLetterOrDigitRet := cFalse;
+		end;
+		(isDigit(ch));
+		if isDigitRet = cTrue then begin
+			isLetterOrDigitRet := cTrue;
 		end;
 	END;
 
 	Procedure setSymToKeywordOrIdent;
 	Begin
 		sym := cIdent;
-		if id = 'DO' then begin sym := cDo end;
-		if id = 'IF' then begin sym := cIf end;
-		if id = 'TypeLongint' then begin sym := cTypeLongint end;
-		if id = 'TypeString' then begin sym := cTypeString end;
-		if id = 'OR' then begin sym := cOr end;
-		if id = 'END' then begin sym := cEnd end;
-//		if id = cNil, 'NIL' then begin sym :=  end;
-		if id = 'VAR' then begin sym := cVar end;
-		if id = 'ELSE' then begin sym := cElse end;
-		if id = 'THEN' then begin sym := cThen end;
-		if id = 'TYPE' then begin sym := cType end;
-		if id = 'BEGIN' then begin sym := cBegin end;
-		if id = 'FORWARD' then begin sym := cForward end;
-		if id = 'WHILE' then begin sym := cWhile end;
-		if id = 'RECORD' then begin sym := cRecord end;
-		if id = 'PROCEDURE' then begin sym := cProcedure end;
-		if id = 'PROGRAM' then begin sym := cProgram end;
+		if id = 'DO' then begin sym := cDo; end;
+		if id = 'IF' then begin sym := cIf; end;
+		if id = 'TypeLongint' then begin sym := cTypeLongint; end;
+		if id = 'TypeString' then begin sym := cTypeString; end;
+		if id = 'OR' then begin sym := cOr; end;
+		if id = 'END' then begin sym := cEnd; end;
+//		if id = cNil, 'NIL' then begin sym := ; end;
+		if id = 'VAR' then begin sym := cVar; end;
+		if id = 'ELSE' then begin sym := cElse; end;
+		if id = 'THEN' then begin sym := cThen; end;
+		if id = 'TYPE' then begin sym := cType; end;
+		if id = 'BEGIN' then begin sym := cBegin; end;
+		if id = 'FORWARD' then begin sym := cForward; end;
+		if id = 'WHILE' then begin sym := cWhile; end;
+		if id = 'RECORD' then begin sym := cRecord; end;
+		if id = 'PROCEDURE' then begin sym := cProcedure; end;
+		if id = 'PROGRAM' then begin sym := cProgram; end;
 
 	End;
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
 	(* PROCEDURE getSym(VAR sym: Longint); *)
-	PROCEDURE getSymSub();forward;
+	PROCEDURE getSymSub;forward;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um ein Symbol handelt *)
 	(* z.B. Keyword oder Variable *)
 	PROCEDURE Ident;
 	BEGIN
 		id := '';
-		isLetterOrDigit( ch);
+		(isLetterOrDigit(ch));
 		While(isLetterOrDigitRet = cTrue) Do begin
 			id := id + ch;
-			NextChar;
-			isLetterOrDigit( ch);
+			(NextChar);
+			(isLetterOrDigit( ch));
 		End;
 
 		(setSymToKeywordOrIdent);
@@ -213,22 +223,34 @@
 
 	(* falls beim Lesen erkannt wurde, dass es sich um ein String handelt *)
 	PROCEDURE getString;
+	var nextWhile: Longint;
 	BEGIN
 		str := '';
 		(* komsumiere "'" am Anfang *)
-		NextChar;
-		While ( (chOrig <> '''') AND (not eof(R))) do begin
-			str := str + chOrig;
-			if chOrig = '''' then begin
-				NextChar;
+		(NextChar);
+		nextWhile := cFalse;
+
+		if chOrig <> '''' then begin
+			if not (eof(R)) then begin
+				nextWhile := cTrue;
 			end;
-			NextChar;
+		end;
+
+		While nextWhile = cTrue do begin
+			str := str + chOrig;
+			(NextChar);
+			if chOrig = '''' then begin
+				nextWhile := cFalse;
+			end;
+			if eof(R) then begin
+				nextWhile := cFalse;
+			end;
 		End;
 		if eof(R) then begin
-			infoMsg('String not closed!');
+			(infoMsg('String not closed!'));
 		end;
 		sym := cString;
-		NextChar;
+		(NextChar);
 	END;
 
 	var chToNumberRet : LongInt;
@@ -252,7 +274,7 @@
 	BEGIN
 		val := 0;
 		sym := cNumber;
-		IsDigit(ch);
+		(IsDigit(ch));
 		While  ( IsDigitRet = cTrue) do begin
 			(chToNumber( ch));
 			val1 := 10 * val + chToNumberRet; 
@@ -261,7 +283,7 @@
 			end
 			ELSE BEGIN
 				(infoMsg( 'number too large'));
-				val := 0
+				val := 0;
 			END;
 			(NextChar);
 			(IsDigit(ch));
@@ -273,17 +295,17 @@
 		var inComment: Longint;
 	BEGIN
 		inComment := cTrue;
-		NextChar;
+		(NextChar);
 		WHILE inComment = cTrue DO
 		BEGIN
 			if eof( R) THEN
 			BEGIN
 				(infoMsg('ERROR: comment not terminated'));
-				EXIT
+				(EXIT)
 			END;
 			IF( ch = '*') THEN
 			BEGIN
-				nextChar;
+				(nextChar);
 				if eof( R) THEN
 				BEGIN
 					infoMsg('ERROR: comment not terminated');
@@ -482,4 +504,5 @@
 		cTypeString := 89;
 		cNil := 88;
 	End;
-
+// begin
+// end.
