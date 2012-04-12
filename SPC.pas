@@ -1,6 +1,8 @@
 PROGRAM SPC;
 
 	Var debugmode: boolean;
+	var gRetLongInt : longint;
+	var parserErrorCount : longint;
 
 {$include 'scanner.pas';}
 {$include 'parser.pas';}

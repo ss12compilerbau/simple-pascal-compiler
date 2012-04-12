@@ -58,6 +58,9 @@
 	Var cInterface: Longint;
 	Var cImplementation: Longint;
 	Var cForward: Longint;
+	Var cPtrRef: LongInt;
+	Var cTypeLongint: LongInt;
+	Var cTypeString: LongInt; 
 
 	TYPE tStrId = ARRAY [0..32 (* cIdLen *) - 1] OF CHAR;
 	TYPE tStr = ARRAY [0..1024 (* cStrLen *) - 1] OF CHAR;
@@ -310,6 +313,7 @@
 		IF EOF( R) THEN begin sym := cEof end
 
 		ELSE IF ch = '&' THEN BEGIN NextChar; sym := cAnd END
+		ELSE IF ch = '^' THEN BEGIN NextChar; sym := cPtrRef END
 		ELSE IF ch = '*' THEN BEGIN NextChar; sym := cTimes END
 		ELSE IF ch = '+' THEN BEGIN NextChar;; sym := cPlus END
 		ELSE IF ch = '-' THEN BEGIN NextChar; sym := cMinus END
@@ -322,8 +326,16 @@
 					NextChar;
 					sym := cLeq
 				END
-				ELSE sym := cLss;
-			END
+				else begin
+					if ch = '>' then begin
+						nextchar;
+						sym := cNeq;
+					end
+					ELSE begin 
+						sym := cLss;
+					end;
+				end;
+			END	
 		ELSE IF ch = '>' THEN BEGIN
 				NextChar;
 				IF ch = '=' THEN
@@ -498,6 +510,10 @@
 		cInterface := 94;
 		cImplementation := 93;
 		cForward := 92;
+		cPtrRef := 91; // ^
+		cTypeLongint := 90;
+		cTypeString := 89;
+		
 
 
 		// Counter für KeyWords
@@ -505,8 +521,8 @@
 		EnterKW( cNull, 'BY');
 		EnterKW( cDo, 'DO');
 		EnterKW( cIf, 'IF');
-		EnterKW( cNull, 'IN');
-		EnterKW( cNull, 'IS');
+		EnterKW( cTypeLongint, 'TypeLongint');
+		EnterKW( cTypeString, 'TypeString');
 		EnterKW( cOf, 'OF');
 		EnterKW( cOr, 'OR');
 		EnterKW( cNull, 'TO');
