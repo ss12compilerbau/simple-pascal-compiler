@@ -1,4 +1,4 @@
- Program safdas;
+// Program safdas;
     
 
     
@@ -1639,5 +1639,5 @@
         *)
     End;
 
- begin
- end.
+// begin
+// end.
