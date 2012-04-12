@@ -1,10 +1,9 @@
 PROGRAM SPC;
 
 	Var debugmode: boolean;
-	var gRetLongInt : longint;
-	var parserErrorCount : longint;
 
 {$include 'scanner.pas';}
+{$include 'symboltable.pas';}
 {$include 'parser.pas';}
  
 
@@ -13,16 +12,18 @@ PROGRAM SPC;
 
 	    scannerInit();
 	    parserInit();
+    	STInit();
 
 
-    if ParamCount < 2 then
+    if ParamCount < 1 then
     begin
         writeln('Not enough parameters given. Usage: ' + ParamStr(0) + ' input.pas output.out');
         halt(1);
     end
     else begin
 		(* scan( ParamStr(1), ParamStr(2) ) *)
-		parse( ParamStr(1), ParamStr(2) );
+		parse( ParamStr(1));
+		printSymbolTable(stSymbolTable, '');
     end;
 
   END.

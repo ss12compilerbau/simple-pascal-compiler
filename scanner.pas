@@ -61,6 +61,7 @@
 	Var cPtrRef: LongInt;
 	Var cTypeLongint: LongInt;
 	Var cTypeString: LongInt; 
+	Var cNil: LongInt; 
 
 	TYPE tStrId = ARRAY [0..32 (* cIdLen *) - 1] OF CHAR;
 	TYPE tStr = ARRAY [0..1024 (* cStrLen *) - 1] OF CHAR;
@@ -401,6 +402,7 @@
 		end
 		else begin
 			getSymSub;
+			// writeln(sym);
 		end;
 	end;
 
@@ -513,6 +515,7 @@
 		cPtrRef := 91; // ^
 		cTypeLongint := 90;
 		cTypeString := 89;
+		cNil := 88;
 		
 
 
@@ -529,7 +532,7 @@
 		EnterKW( cEnd, 'END');
 		EnterKW( cNull, 'FOR');
 		EnterKW( cMod, 'MOD');
-		EnterKW( cNull, 'NIL');
+//		EnterKW( cNil, 'NIL');
 		EnterKW( cVar, 'VAR');
 		EnterKW( cNull, 'CASE');
 		EnterKW( cElse, 'ELSE');

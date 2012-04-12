@@ -53,9 +53,8 @@ test.selfScanning : build.scanner
 	@echo "selfscanning ok"
 
 # Parser
-build.parser :
-	@echo "TODO: build the parser"
-	# fpc ParserWrapper.pas
+build.parser : clean
+	fpc ParseWrapper.pas
 
 test.parser : test.selfParsing
 	@echo "TODO: to test the parser"
@@ -74,6 +73,6 @@ test.symboltable: build.symboltable
 	@echo "Symboltable tests ok."
 
 clean :
-	rm -rf *.s *.o hello ScanWrapper STWrapper SPC *.out tests/*.out
+	rm -rf *.s *.o hello ScanWrapper ParseWrapper STWrapper SPC *.out tests/*.out
 	@echo "Clean succesful"
 

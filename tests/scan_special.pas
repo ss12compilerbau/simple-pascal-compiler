@@ -1,0 +1,2 @@
+symbol^.fType := stTypeLongint;
+
