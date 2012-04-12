@@ -62,17 +62,52 @@
 	Var lastSymWasPeek : longint; (* cTrue, falls sym durch Aufruf peekSymbol *)
 
 	Var ch: String; (* UCase *)
+	Var chOrig: String; (* UCase *)
 		(*errpos: LONGINT;*) (* never used *)
 	Var R: Text;
 
 	(***************************************************
 	* IO
 	***************************************************)
+	Var UCaseChrRet: String;
+	Procedure UCaseChr(c: String);
+	BEGIN
+		uCaseChrRet := c;
+		if c = 'a' then begin uCaseChrRet := 'A'; end;
+		if c = 'b' then begin uCaseChrRet := 'B'; end;
+		if c = 'c' then begin uCaseChrRet := 'C'; end;
+		if c = 'd' then begin uCaseChrRet := 'D'; end;
+		if c = 'e' then begin uCaseChrRet := 'E'; end;
+		if c = 'f' then begin uCaseChrRet := 'F'; end;
+		if c = 'g' then begin uCaseChrRet := 'G'; end;
+		if c = 'h' then begin uCaseChrRet := 'H'; end;
+		if c = 'i' then begin uCaseChrRet := 'I'; end;
+		if c = 'j' then begin uCaseChrRet := 'J'; end;
+		if c = 'k' then begin uCaseChrRet := 'K'; end;
+		if c = 'l' then begin uCaseChrRet := 'L'; end;
+		if c = 'm' then begin uCaseChrRet := 'M'; end;
+		if c = 'n' then begin uCaseChrRet := 'N'; end;
+		if c = 'o' then begin uCaseChrRet := 'O'; end;
+		if c = 'p' then begin uCaseChrRet := 'P'; end;
+		if c = 'q' then begin uCaseChrRet := 'Q'; end;
+		if c = 'r' then begin uCaseChrRet := 'R'; end;
+		if c = 's' then begin uCaseChrRet := 'S'; end;
+		if c = 't' then begin uCaseChrRet := 'T'; end;
+		if c = 'u' then begin uCaseChrRet := 'U'; end;
+		if c = 'v' then begin uCaseChrRet := 'V'; end;
+		if c = 'w' then begin uCaseChrRet := 'W'; end;
+		if c = 'x' then begin uCaseChrRet := 'X'; end;
+		if c = 'y' then begin uCaseChrRet := 'Y'; end;
+		if c = 'z' then begin uCaseChrRet := 'Z'; end;
+	END;
+
 	PROCEDURE NextChar();
 	var c: Char;
 	BEGIN
 		Read(R, c);
-		ch := c;
+		chOrig := c;
+		UCaseChr(c);
+		ch := UCaseChrRet;
 		colNr := colNr + 1;
 		IF ch = chr(10) THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
 	END;
@@ -134,35 +169,26 @@
 		end;
 	END;
 
-	Var UCaseRet: String;
-	Procedure UCase(str: String);
-	BEGIN
-		uCaseRet := upcase(str);
-	END;
-
 	Procedure setSymToKeywordOrIdent;
-	var idUC: String;
 	Begin
 		sym := cIdent;
-		(UCase(id));
-		idUC := UCaseRet;
-		if idUC = 'DO' then begin sym := cDo end;
-		if idUC = 'IF' then begin sym := cIf end;
-		if idUC = 'TypeLongint' then begin sym := cTypeLongint end;
-		if idUC = 'TypeString' then begin sym := cTypeString end;
-		if idUC = 'OR' then begin sym := cOr end;
-		if idUC = 'END' then begin sym := cEnd end;
-//		if idUC = cNil, 'NIL' then begin sym :=  end;
-		if idUC = 'VAR' then begin sym := cVar end;
-		if idUC = 'ELSE' then begin sym := cElse end;
-		if idUC = 'THEN' then begin sym := cThen end;
-		if idUC = 'TYPE' then begin sym := cType end;
-		if idUC = 'BEGIN' then begin sym := cBegin end;
-		if idUC = 'FORWARD' then begin sym := cForward end;
-		if idUC = 'WHILE' then begin sym := cWhile end;
-		if idUC = 'RECORD' then begin sym := cRecord end;
-		if idUC = 'PROCEDURE' then begin sym := cProcedure end;
-		if idUC = 'PROGRAM' then begin sym := cProgram end;
+		if id = 'DO' then begin sym := cDo end;
+		if id = 'IF' then begin sym := cIf end;
+		if id = 'TypeLongint' then begin sym := cTypeLongint end;
+		if id = 'TypeString' then begin sym := cTypeString end;
+		if id = 'OR' then begin sym := cOr end;
+		if id = 'END' then begin sym := cEnd end;
+//		if id = cNil, 'NIL' then begin sym :=  end;
+		if id = 'VAR' then begin sym := cVar end;
+		if id = 'ELSE' then begin sym := cElse end;
+		if id = 'THEN' then begin sym := cThen end;
+		if id = 'TYPE' then begin sym := cType end;
+		if id = 'BEGIN' then begin sym := cBegin end;
+		if id = 'FORWARD' then begin sym := cForward end;
+		if id = 'WHILE' then begin sym := cWhile end;
+		if id = 'RECORD' then begin sym := cRecord end;
+		if id = 'PROCEDURE' then begin sym := cProcedure end;
+		if id = 'PROGRAM' then begin sym := cProgram end;
 
 	End;
 
@@ -191,9 +217,9 @@
 		str := '';
 		(* komsumiere "'" am Anfang *)
 		NextChar;
-		While ( (ch <> '''') AND (not eof(R))) do begin
-			str := str + ch;
-			if ch = '''' then begin
+		While ( (chOrig <> '''') AND (not eof(R))) do begin
+			str := str + chOrig;
+			if chOrig = '''' then begin
 				NextChar;
 			end;
 			NextChar;
@@ -234,11 +260,11 @@
 				val := val1;
 			end
 			ELSE BEGIN
-				infoMsg( 'number too large');
+				(infoMsg( 'number too large'));
 				val := 0
 			END;
-			NextChar;
-			IsDigit(ch);
+			(NextChar);
+			(IsDigit(ch));
 		End;
 	END;
 
@@ -252,7 +278,7 @@
 		BEGIN
 			if eof( R) THEN
 			BEGIN
-				infoMsg('ERROR: comment not terminated');
+				(infoMsg('ERROR: comment not terminated'));
 				EXIT
 			END;
 			IF( ch = '*') THEN
