@@ -15,7 +15,7 @@ build.scanner : clean
 	fpc ScanWrapper.pas
 	@echo "Scanner build successful"
 
-test.scanner : build.scanner test.selfScanning test.scanner.terminals test.scanner.comment test.scanner.commentfail test.scanner.keywords test.scanner.string test.scanner.stringfail
+test.scanner : build.scanner test.scanner.terminals test.scanner.comment test.scanner.commentfail test.scanner.keywords test.scanner.string  test.scanner.stringfail test.selfScanning
 	@echo "Scanner tests ok."
 
 test.scanner.terminals : build.scanner

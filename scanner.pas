@@ -61,7 +61,7 @@
 
 	Var lastSymWasPeek : longint; (* cTrue, falls sym durch Aufruf peekSymbol *)
 
-	Var ch: CHAR; (* UCase *)
+	Var ch: String; (* UCase *)
 		(*errpos: LONGINT;*) (* never used *)
 	Var R: Text;
 
@@ -69,8 +69,10 @@
 	* IO
 	***************************************************)
 	PROCEDURE NextChar();
+	var c: Char;
 	BEGIN
-		Read(R, ch);
+		Read(R, c);
+		ch := c;
 		colNr := colNr + 1;
 		IF ch = chr(10) THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
 	END;
@@ -99,7 +101,7 @@
 
 	(* true, falls ch eine Ziffer *)
 	Var isDigitRet: Longint;
-	Procedure isDigit( ch: CHAR);
+	Procedure isDigit( ch: String);
 	BEGIN
 		If (ch >= '0') AND ( ch <= '9') then begin
 			isDigitRet := cTrue;
@@ -110,7 +112,7 @@
 
 	(* true, falls ch ein Buchstabe *)
 	Var isLetterRet: Longint;
-	Procedure isLetter( ch: CHAR);
+	Procedure isLetter( ch: String);
 	BEGIN
 		If ((ch >= 'a') AND (ch <= 'z')) OR ((ch >= 'A') AND (ch <= 'Z')) then begin
 			isLetterRet := cTrue;
@@ -121,7 +123,7 @@
 
 	(* true, falls ch letter oder digit *)
 	Var isLetterOrDigitRet: Longint;
-	Procedure isLetterOrDigit( ch: CHAR);
+	Procedure isLetterOrDigit( ch: String);
 	BEGIN
 		isLetter(ch);
 		isDigit(ch);
@@ -203,19 +205,38 @@
 		NextChar;
 	END;
 
+	var chToNumberRet : LongInt;
+	procedure chToNumber( ch : String);
+	begin
+		if ch = '0' then begin chToNumberRet := 0; end;
+		if ch = '1' then begin chToNumberRet := 1; end;
+		if ch = '2' then begin chToNumberRet := 2; end;
+		if ch = '3' then begin chToNumberRet := 3; end;
+		if ch = '4' then begin chToNumberRet := 4; end;
+		if ch = '5' then begin chToNumberRet := 5; end;
+		if ch = '6' then begin chToNumberRet := 6; end;
+		if ch = '7' then begin chToNumberRet := 7; end;
+		if ch = '8' then begin chToNumberRet := 8; end;
+		if ch = '9' then begin chToNumberRet := 9; end;
+	end;
+
 	(* falls beim Lesen erkannt wurde, dass es sich um eine Zahl handelt *)
 	PROCEDURE Number;
+		var val1 : longint;
 	BEGIN
 		val := 0;
 		sym := cNumber;
-
-		While  ( IsDigitRet <> cFalse) do begin
-			IF val <= (cMaxNumber - ORD( ch) + ORD( '0')) DIV 10 THEN begin
-				val := 10 * val + ( ORD( ch) - ORD( '0'))
-			end ELSE BEGIN
+		IsDigit(ch);
+		While  ( IsDigitRet = cTrue) do begin
+			(chToNumber( ch));
+			val1 := 10 * val + chToNumberRet; 
+			if val1 < cMaxNumber then begin
+				val := val1;
+			end
+			ELSE BEGIN
 				infoMsg( 'number too large');
 				val := 0
-			END ;
+			END;
 			NextChar;
 			IsDigit(ch);
 		End;
