@@ -22,6 +22,8 @@ PROGRAM SPC;
     end
     else begin
 		(* scan( ParamStr(1), ParamStr(2) ) *)
+		printSymbolTable(stSymbolTable, '');
+		stInsertSymbol('I', stVar, cFalse, 'LONGINT');
 		parse( ParamStr(1));
 		printSymbolTable(stSymbolTable, '');
     end;

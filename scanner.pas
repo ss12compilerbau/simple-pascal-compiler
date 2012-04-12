@@ -101,15 +101,27 @@
 		IF ch = chr(10) THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
 	END;
 
-	PROCEDURE Mark(msg: STRING);
+	PROCEDURE Mark(msgType: String; msg: STRING);
 	BEGIN
-		Write('Hey! Error at Pos ');
-		Write(lineNr);
-		Write(':');
-		Write(colNr);
-		Write(', ');
-		Writeln(msg);
+		(Write(msgType, ' at Pos ', lineNr, ':', colNr, ', ', msg));
 	END;
+
+	PROCEDURE MarkLn(msgType: String; msg: STRING);
+	BEGIN
+		(Mark(msgType, msg));
+		(Writeln);
+	END;
+
+
+	Procedure errorMsg(msg: STRING);
+	Begin
+		(Markln('Error', msg));
+	End;
+
+	Procedure infoMsg(msg: STRING);
+	Begin
+		(Markln('Info', msg));
+	End;
 
 	(* true, falls ch eine Ziffer *)
 	Var isDigitRet: Longint;
@@ -243,7 +255,7 @@
 			NextChar;
 		End;
 		if eof(R) then begin
-			Mark('String not closed!');
+			infoMsg('String not closed!');
 		end;
 		str[i] := cChr0;
 		sym := cString;
@@ -260,7 +272,7 @@
 			IF val <= (cMaxNumber - ORD( ch) + ORD( '0')) DIV 10 THEN begin
 				val := 10 * val + ( ORD( ch) - ORD( '0'))
 			end ELSE BEGIN
-				Mark( 'number too large');
+				infoMsg( 'number too large');
 				val := 0
 			END ;
 			NextChar;
@@ -278,7 +290,7 @@
 		BEGIN
 			if eof( R) THEN
 			BEGIN
-				Mark('ERROR: comment not terminated');
+				infoMsg('ERROR: comment not terminated');
 				EXIT
 			END;
 			IF( ch = '*') THEN
@@ -286,7 +298,7 @@
 				nextChar;
 				if eof( R) THEN
 				BEGIN
-					Mark('ERROR: comment not terminated');
+					infoMsg('ERROR: comment not terminated');
 					EXIT
 				END;
 				if ch <> ')' then begin
@@ -384,10 +396,10 @@
 				getSymbol;
 			END
 			ELSE
-				Mark('Unrecognized "/"');
+				infoMsg('Unrecognized "/"');
 			END
 		ELSE Begin
-			Mark('Unrecognized Symbol "' + ch + '"');
+			infoMsg('Unrecognized Symbol "' + ch + '"');
 			NextChar;
 			sym := cNull
 		END;

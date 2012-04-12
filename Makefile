@@ -3,11 +3,11 @@
 
 # The default task is 'all'.
 all : build
-build:  clean build.scanner build.parser
+build:  clean build.scanner build.symboltable build.parser
 	@echo "Build successful!"
 
 # Test runs all the tests.
-test : build test.scanner test.parser test.symboltable
+test : build test.scanner test.symboltable test.parser 
 	@echo "Tests successful!"
 
 # Scanner

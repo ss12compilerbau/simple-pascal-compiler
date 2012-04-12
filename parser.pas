@@ -37,20 +37,19 @@
     procedure parserErrorStr( errMsg : String);
     begin
         parserErrorCount := parserErrorCount +1 ;
-        (writeln( '*** Error ', lineNr, '/', colNr, ': ', errMsg));
+        (errorMsg( 'Parser: ' + errMsg));
     end;
     
     procedure parserErrorSymbol( isSym : longint; shouldSym : longint);
     begin
         parserErrorCount := parserErrorCount +1 ;
-        (writeln( '*** Error ', lineNr, '/', colNr, ': ', 
-            'wrong Symbol ', isSym, ' should be ', shouldSym));
+        (errorMsg( 'Parser: wrong Symbol: '));
+        (Writeln(isSym, ' should be ', shouldSym));
     end;
     
-    
-    procedure parserInfoStr( infoMsg : String);
+    procedure parserInfoStr( msg : String);
     begin
-        (writeln( 'Info ', lineNr, '/', colNr, ': ', infoMsg));
+        (infoMsg( 'Parser: ' + msg));
     end;
     
     procedure parserInfoCRLF;
@@ -810,7 +809,7 @@
             str := str + ' ' + id;
             typeId := id;
             (parserInfoStr( str));
-            stInsertSymbol(name, stVar, cFalse, typeId);
+            // stInsertSymbol(name, stVar, cFalse, typeId);
         end;
         
         (parserDebugStrInt( 'parseDeclaration', ret));

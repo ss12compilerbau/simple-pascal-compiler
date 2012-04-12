@@ -19,7 +19,7 @@ BEGIN
 	stInsertSymbol('J', stVar, cTrue, 'LONGINT');
 
 	// Type tKWs = record 
-	stBeginRecord('TKWS');
+	stBeginRecord('tKWs');
 	//	sym: Longint;
 		stInsertSymbol('SYM', stVar, cFalse, 'LONGINT');
 	//	id: tStrId;
@@ -28,10 +28,24 @@ BEGIN
 	stEndRecord();
 
 	// Var xy: tKWs;
-	stInsertSymbol('XY', stVar, cFalse, 'TKWS');
+	stInsertSymbol('XY', stVar, cFalse, 'tKWs');
 
-	// Var asdf: Notdefined;
-	stInsertSymbol('ASDF', stVar, cFalse, 'NOTDEFINED');
+	// Var asdf: NichtdefinierterTyp;
+	stInsertSymbol('ASDF', stVar, cFalse, 'NichtdefinierterTyp');
+
+	// Type qwer: ^Longint;
+	stInsertSymbol('ptLongint', stType, cTrue, 'LONGINT');
+
+
+	// Procedure isEquStrId( id1: String);
+	stBeginProcedure('isEquStrId');
+	stInsertSymbol('id1', stVar, cFalse, 'String');
+
+	//	VAR i: Longint;
+		stInsertSymbol('i', stVar, cFalse, 'Longint');
+
+	// BEGIN END;
+	stEndProcedure();
 
 	Writeln;
 	printSymbolTable(stSymbolTable, '');

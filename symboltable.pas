@@ -44,11 +44,11 @@
 			// stRecordPointer mustn't be Nil
 			if(stRecordPointer = Nil) then begin
 				error := cTrue;
-				(Mark('Error: in a Record declaration and stRecordPointer is Nil! This should not ever happen!'));
+				(infoMsg('Error: in a Record declaration and stRecordPointer is Nil! This should not ever happen!'));
 			End;
 			if stRecordPointer^.fType = Nil then begin
 				error := cTrue;
-				(Mark('Error: stRecordPointer^.fType mus not be Nil! This should not ever happen!'));
+				(infoMsg('Error: stRecordPointer^.fType mus not be Nil! This should not ever happen!'));
 			End else begin
 				if stRecordPointer^.fType^.fFields = Nil then Begin
 					New(stRecordPointer^.fType^.fFields);
@@ -75,7 +75,7 @@
 
 			While (lastSymbol^.fNext <> Nil) Do Begin
 				If(lastSymbol^.fName = name) then Begin
-					(Mark('Symboltable Error: Duplicate Entry: ' + name));
+					(infoMsg('Symboltable Error: Duplicate Entry: ' + name));
 				end Else Begin
 					lastSymbol := lastSymbol^.fNext;
 					// write(' -> ' + lastSymbol^.fName);
@@ -135,11 +135,11 @@
 						symbol^.fType := symbolIterator^.fType;
 					end else begin
 						// If it's not a Type, error!
-						(Mark(typeName + ' is not a TYPE!'));
+						(infoMsg(typeName + ' is not a TYPE!'));
 					end;
 				End else begin
 					// Type not defined
-					(Mark('Error: Type not defined! ' + typeName));
+					(infoMsg('Error: Type not defined! ' + typeName));
 				End;
 			End;
 		End;
@@ -152,7 +152,7 @@
 		lastSymbol := stSymbolTable;
 		While (lastSymbol^.fNext <> Nil) Do Begin
 			If(lastSymbol^.fName = name) then Begin
-				(Mark('Symboltable Error: Duplicate Entry: ' + name));
+				(infoMsg('Symboltable Error: Duplicate Entry: ' + name));
 			end Else Begin
 				lastSymbol := lastSymbol^.fNext;
 			End;
