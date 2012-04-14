@@ -1,2 +1,2 @@
-Info at Pos 4:1, ERROR: comment not terminated
+Info at Pos 4:1 in tests/scan_commentfail.pas, ERROR: comment not terminated
 64

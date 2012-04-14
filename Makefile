@@ -15,7 +15,7 @@ build.scanner : clean
 	fpc ScanWrapper.pas
 	@echo "Scanner build successful"
 
-test.scanner : build.scanner test.scanner.terminals test.scanner.comment test.scanner.commentfail test.scanner.keywords test.scanner.string  test.scanner.stringfail test.selfScanning
+test.scanner : build.scanner test.scanner.terminals test.scanner.comment test.scanner.commentfail test.scanner.keywords test.scanner.string  test.scanner.stringfail test.scanner.include test.selfScanning
 	@echo "Scanner tests ok."
 
 test.scanner.terminals : build.scanner
@@ -47,6 +47,11 @@ test.scanner.stringfail : build.scanner
 	./ScanWrapper tests/scan_stringfail.pas >test.out
 	diff test.out tests/scan_stringfail.should
 	@echo "test.scanner.stringfail ok"
+
+test.scanner.include : build.scanner
+	./ScanWrapper tests/scan_include.pas >test.out
+	diff test.out tests/scan_include.should
+	@echo "test.scanner.string ok"
 
 test.selfScanning : build.scanner
 	./ScanWrapper scanner.pas >/dev/null

@@ -53,6 +53,7 @@
 
 	Var lineNr: Longint;
 	Var colNr: Integer;
+	var filename: String;
 
 	Var sym: Longint; (* speichert das nächste Symbol des Scanners *)
 	Var val: Longint; (* wenn sym = cNumber, dann speichert val den longint- Wert *)
@@ -66,6 +67,13 @@
 	Var chOrig: String; (* UCase *)
 		(*errpos: LONGINT;*) (* never used *)
 	Var R: Text;
+
+	// for {$include...} implementation
+	Var lineNrTemp: Longint;
+	Var colNrTemp: Integer;
+	Var RTemp: Text;
+	var filenameTemp: String;
+	Var includeMode: Longint;
 
 	(***************************************************
 	* IO
@@ -111,11 +119,21 @@
 		ch := UCaseChrRet;
 		colNr := colNr + 1;
 		IF ch = chr(10) THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
+		If eof(R) then begin
+			if includeMode = cTrue then begin
+				R := RTemp;
+				colNr := colNrTemp;
+				lineNr := lineNrTemp;
+				filename := filenameTemp;
+				includeMode := cFalse;
+				NextChar;
+			end;
+		end;
 	END;
 
 	PROCEDURE Mark(msgType: String; msg: STRING);
 	BEGIN
-		(Write(msgType, ' at Pos ', lineNr, ':', colNr, ', ', msg));
+		(Write(msgType, ' at Pos ', lineNr, ':', colNr, ' in ' + filename + ', ', msg));
 	END;
 
 	PROCEDURE MarkLn(msgType: String; msg: STRING);
@@ -323,6 +341,31 @@
 
 	procedure getSymbol; forward;
 
+	// Include instructions look like {$include 'filename';}
+	Procedure include;
+	Begin
+		NextChar;
+		// consume the 'include' identifier, the next one has to be the string
+		// with the file name (in str)
+		getSymbol;
+		writeln('cur sym: ', sym);
+		// consume ';}'
+		NextChar;NextChar;
+		// Initialize file swap
+		RTemp := R;
+		lineNrTemp := lineNr;
+		colNrTemp := colNr;
+		includeMode := cTrue;
+		filenameTemp := filename;
+		lineNr := 0;
+		colNr := 0;
+		filename := str;
+		Assign( R, str);
+		Reset( R);
+		// recall getSymbol
+		getSymbol;
+	END;
+
 	(* Liefert das nächste Symbol aus der Input- Datei *)
 	(* PROCEDURE getSym(VAR sym: Longint); *)
 	PROCEDURE getSymSub;
@@ -396,6 +439,16 @@
 		ELSE IF isDigitRet = cTrue THEN Begin Number; END
 		ELSE IF isLetterRet = cTrue THEN Begin Ident; END
 		ELSE IF ch = '~' THEN BEGIN NextChar; sym := cNot END
+		ELSE IF ch = '{' THEN BEGIN
+			NextChar;
+			If ch = '$' then begin
+				NextChar;
+				getSymbol;
+				if id = 'INCLUDE' then begin
+					include;
+				end;
+			end;
+		end
 		ELSE IF ch = '/' THEN
 		BEGIN
 			NextChar;
@@ -438,8 +491,9 @@
 
 	Procedure scanInitFile(inputFile: String);
 	Begin
-		Assign( R, inputFile);
-		Reset( R); 
+		(Assign( R, inputFile));
+		(Reset( R)); 
+		filename := inputFile;
 		NextChar;
 	End;
 
@@ -448,6 +502,7 @@
 
 		lineNr := 1;
 		colNr := 1;
+		includeMode := cFalse;
 
 		cTrue := 1;
 		cFalse := 0;

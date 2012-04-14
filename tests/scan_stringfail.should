@@ -1,5 +1,5 @@
 98  str = this string is closed
 18
-Info at Pos 5:1, String not closed!
+Info at Pos 5:1 in tests/scan_stringfail.pas, String not closed!
 98  str = This string is not closed
 64
