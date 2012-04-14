@@ -1,34 +1,13 @@
-// Program safdas;
+//program parser;
     
 
-    
-    (* SCANNER: Aufruf (P); geht nicht, (P1); schon.
-        liegt daran, da nur 1 Zeichen
-        ging auch bei Variablen nicht
-    *)
-    
-    (* SCANNER: "type t = ^xx" geht nicht. Es geht "type t = ^ xx"
-        nach ^ MUSS Leerzeichen stehen ??
-    *)
-    
-    (* PARSER
-        Der Scanner erkennt cOr  nicht richtig, d.h. Scanner glaubt,
-        cOr ist das Schlüsselwort OR.
-        ToDo: 8 durch cOr ersetzen
-        if sym = 8 then begin ret := cTrue; end;
-    *)
-    
-    
-    
-    
-    
-    
     
     
     (***************************************************************)
     (* Beginn Parser *)
     var gRetLongInt : longint;
     var parserErrorCount : longint;
+    var parserIsPtrType : longInt; // wird von parseType gesetzt
 
     procedure parseCodeBlock; forward;
     procedure parseDeclaration; forward;
@@ -503,13 +482,19 @@
                             (parseFactor);
                             ret := gRetLongInt;
                         end
-                        else begin // Variable
-                            (parseVariableTry);
-                            bTry :=  gRetLongInt;
-                            if bTry = cTrue then begin
-                                (parseVariable);
-                                ret :=  gRetLongInt;
-                            end;
+                        else begin
+							if sym = cNil then begin
+								(getSymbol); // nil
+								ret := gRetLongInt;
+							end
+							else begin // Variable
+								(parseVariableTry);
+								bTry :=  gRetLongInt;
+								if bTry = cTrue then begin
+									(parseVariable);
+									ret :=  gRetLongInt;
+								end;
+							end;
                         end;
                     end;
                 end;
@@ -759,8 +744,10 @@
     begin
         (parserDebugStr( 'parseType'));
         
+        parserIsPtrType := cFalse;
         (peekSymbol);
         if sym = cPtrRef then begin
+			parserIsPtrType := cTrue;
             (getSymbol);
         end;
         
@@ -788,6 +775,7 @@
         var name: String;
         var typeId: String;
         var str : string;
+        var isPtrType : longint;
     begin
         (parserDebugStr( 'parseDeclaration'));
         (parseVarIdentifier);
@@ -802,6 +790,7 @@
         
         if ret = cTrue then begin
             (parseType);
+            isPtrType := parserIsPtrType;
             ret :=  gRetLongInt;
         end;
 
@@ -809,7 +798,7 @@
             str := str + ' ' + id;
             typeId := id;
             (parserInfoStr( str));
-            // stInsertSymbol(name, stVar, cFalse, typeId);
+            (stInsertSymbol(name, stVar, isPtrType, typeId));
         end;
         
         (parserDebugStrInt( 'parseDeclaration', ret));
@@ -1639,5 +1628,4 @@
         *)
     End;
 
-// begin
-// end.
+//begin  end.
