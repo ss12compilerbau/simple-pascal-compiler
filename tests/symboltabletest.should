@@ -1,19 +1,70 @@
-Hey! Error at Pos 1:1, Error: Type not defined! NOTDEFINED
+var i: Longint;
+Info at Pos 1:1 in , Symboltable: Adding new symbol I
+Info at Pos 1:1 in , Symboltable: Set type to Longint
+var i: Longint;
+Info at Pos 1:1 in , Symboltable: Adding new symbol I
+Error at Pos 1:1 in , Symboltable: Duplicate Entry: I
+var j: ^longint;
+Info at Pos 1:1 in , Symboltable: Adding new symbol J
+Info at Pos 1:1 in , Symboltable: Set type to longint
+var j: ^longint;
+Info at Pos 1:1 in , Symboltable: Adding new symbol J
+Error at Pos 1:1 in , Symboltable: Duplicate Entry: J
+var j: ^longint;
+Info at Pos 1:1 in , Symboltable: Adding new symbol J
+Error at Pos 1:1 in , Symboltable: Duplicate Entry: J
+Type tKWs = record
+Info at Pos 1:1 in , Symboltable: Beginning new record tKWs
+	sym: Longint;
+Info at Pos 1:1 in , Symboltable: Adding new symbol SYM
+Info at Pos 1:1 in , Symboltable: Set type to Longint
+	id: String;
+Info at Pos 1:1 in , Symboltable: Adding new symbol ID
+Info at Pos 1:1 in , Symboltable: Set type to String
+END;
+Info at Pos 1:1 in , Symboltable: Ending record
+
+Var xy: tKWs;
+Info at Pos 1:1 in , Symboltable: Adding new symbol XY
+Info at Pos 1:1 in , Symboltable: Set type to tKWs
+Var asdf: NichtdefinierterTyp;
+Info at Pos 1:1 in , Symboltable: Adding new symbol ASDF
+Info at Pos 1:1 in , Symboltable: Set type to NichtdefinierterTyp
+Error at Pos 1:1 in , Symboltable: Type not defined! NichtdefinierterTyp
+Type qwer: ^Longint;
+Info at Pos 1:1 in , Symboltable: Adding new symbol ptLongint
+Info at Pos 1:1 in , Symboltable: Set type to Longint
+Procedure isEquStrId( id1: String);
+Info at Pos 1:1 in , Symboltable: Beginning new procedure isEquStrId
+Info at Pos 1:1 in , Symboltable: Adding new symbol id1
+Info at Pos 1:1 in , Symboltable: Set type to String
+    VAR i: Longint;
+Info at Pos 1:1 in , Symboltable: Adding new symbol i
+Info at Pos 1:1 in , Symboltable: Set type to Longint
+.. END;
+Info at Pos 1:1 in , Symboltable: Ending procedure
 
 Symbol Name: I, Class: VAR, Type object: 
-    TypeObj Form: LONGINT, Fields: Empty.
+    TypeObj Form: LONGINT, Base: Nil, Fields: Empty.
 Symbol Name: J, Class: VAR, Type object: 
-    TypeObj Form: LONGINT, Fields: Empty.
-Symbol Name: TKWS, Class: TYPE, Type object: 
-    TypeObj Form: RECORD, Field objects:
+    TypeObj Form: LONGINT, Base: Nil, Fields: Empty.
+Symbol Name: tKWs, Class: TYPE, Type object: 
+    TypeObj Form: RECORD, Base: Nil, Field objects:
         Symbol Name: SYM, Class: VAR, Type object: 
-            TypeObj Form: LONGINT, Fields: Empty.
+            TypeObj Form: LONGINT, Base: Nil, Fields: Empty.
         Symbol Name: ID, Class: VAR, Type object: 
-            TypeObj Form: STRING, Fields: Empty.
+            TypeObj Form: STRING, Base: Nil, Fields: Empty.
 Symbol Name: XY, Class: VAR, Type object: 
-    TypeObj Form: RECORD, Field objects:
+    TypeObj Form: RECORD, Base: Nil, Field objects:
         Symbol Name: SYM, Class: VAR, Type object: 
-            TypeObj Form: LONGINT, Fields: Empty.
+            TypeObj Form: LONGINT, Base: Nil, Fields: Empty.
         Symbol Name: ID, Class: VAR, Type object: 
-            TypeObj Form: STRING, Fields: Empty.
-Symbol Name: ASDF, Class: VAR, Type object: Nil
+            TypeObj Form: STRING, Base: Nil, Fields: Empty.
+Symbol Name: ptLongint, Class: VAR, Type object: 
+    TypeObj Form: LONGINT, Base: Nil, Fields: Empty.
+Symbol Name: isEquStrId, Class: PROCEDURE, Type object: 
+    TypeObj Form: PROCEDURE, Base: Nil, Field objects:
+        Symbol Name: id1, Class: VAR, Type object: 
+            TypeObj Form: STRING, Base: Nil, Fields: Empty.
+        Symbol Name: i, Class: VAR, Type object: 
+            TypeObj Form: LONGINT, Base: Nil, Fields: Empty.
