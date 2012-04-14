@@ -22,6 +22,8 @@
 			fNext: ptObject
 		End;
 
+	Procedure printSymbolTable(symbolTable: ptObject; prefix: String);forward;
+
 	// The first symbol in the symbol table
 	Var stSymbolTable: ptObject;
 	// boolean marking if declaration is inside a Record declaration.
@@ -60,6 +62,7 @@
 				End;
 				lastSymbol := stContextEntryPointer^.fType^.fFields;
 			End;
+		// Global symbol
 		End else begin
 			// write ('Insert global symbol ' + name + ': ');
 
@@ -75,26 +78,28 @@
 		// find the last symbol in the linked list, 
 		// making sure the new one doesn't exist yet!
 		if error = cFalse then Begin
-			// write(lastSymbol^.fName);
-
+			If(upCase(lastSymbol^.fName) = upCase(name)) then Begin
+				(errorMsg('Symboltable: Duplicate Entry: ' + name));
+				error := cTrue;
+			end;
 			While (lastSymbol^.fNext <> Nil) Do Begin
+				lastSymbol := lastSymbol^.fNext;
 				If(upCase(lastSymbol^.fName) = upCase(name)) then Begin
 					(errorMsg('Symboltable: Duplicate Entry: ' + name));
-				end Else Begin
+					error := cTrue;
+				end;
+			End;
+			if error = cFalse then begin
+				If(lastSymbol^.fName <> '') then begin
+					New(lastSymbol^.fNext);
+					lastSymbol^.fNext^.fPrev := lastSymbol;
 					lastSymbol := lastSymbol^.fNext;
-					// write(' -> ' + lastSymbol^.fName);
 				End;
-			End;
-			If(lastSymbol^.fName <> '') then begin
-				New(lastSymbol^.fNext);
-				lastSymbol^.fNext^.fPrev := lastSymbol;
-				lastSymbol := lastSymbol^.fNext;
-			End;
-			// Fill out the Symbol object:
-			lastSymbol^.fName := name;
-			lastSymbol^.fClass := stVar;
-			(stSetType(lastSymbol, varType, isPointer));
-			// writeln(' -> ' + lastSymbol^.fName);
+				// Fill out the Symbol object:
+				lastSymbol^.fName := name;
+				lastSymbol^.fClass := stVar;
+				(stSetType(lastSymbol, varType, isPointer));
+			end;
 		End;
 	End;
 

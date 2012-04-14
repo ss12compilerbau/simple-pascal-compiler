@@ -15,6 +15,15 @@ BEGIN
 	Writeln('var i: Longint;');
 	stInsertSymbol('I', stVar, cFalse, 'Longint');
 
+	Writeln('var i: Longint;');
+	stInsertSymbol('I', stVar, cFalse, 'Longint');
+
+	Writeln('var j: ^longint;');
+	stInsertSymbol('J', stVar, cTrue, 'longint');
+
+	Writeln('var j: ^longint;');
+	stInsertSymbol('J', stVar, cTrue, 'longint');
+
 	Writeln('var j: ^longint;');
 	stInsertSymbol('J', stVar, cTrue, 'longint');
 
