@@ -188,7 +188,7 @@
 		if id = 'TypeString' then begin sym := cTypeString; end;
 		if id = 'OR' then begin sym := cOr; end;
 		if id = 'END' then begin sym := cEnd; end;
-//		if id = cNil, 'NIL' then begin sym := ; end;
+		if id = 'NIL' then begin sym := cNil; end;
 		if id = 'VAR' then begin sym := cVar; end;
 		if id = 'ELSE' then begin sym := cElse; end;
 		if id = 'THEN' then begin sym := cThen; end;
