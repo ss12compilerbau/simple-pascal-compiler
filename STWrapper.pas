@@ -12,41 +12,41 @@ BEGIN
 
 	// Examples:
 
-	// var i: Longint;
-	stInsertSymbol('I', stVar, cFalse, 'LONGINT');
+	Writeln('var i: Longint;');
+	stInsertSymbol('I', stVar, cFalse, 'Longint');
 
-	// var j: ^longint;
-	stInsertSymbol('J', stVar, cTrue, 'LONGINT');
+	Writeln('var j: ^longint;');
+	stInsertSymbol('J', stVar, cTrue, 'longint');
 
-	// Type tKWs = record 
+	Writeln('Type tKWs = record');
 	stBeginRecord('tKWs');
-	//	sym: Longint;
-		stInsertSymbol('SYM', stVar, cFalse, 'LONGINT');
-	//	id: tStrId;
-		stInsertSymbol('ID', stVar, cFalse, 'STRING');
-	// END;
+	Writeln('	sym: Longint;');
+		stInsertSymbol('SYM', stVar, cFalse, 'Longint');
+	Writeln('	id: String;');
+		stInsertSymbol('ID', stVar, cFalse, 'String');
+	Writeln('END;');
 	stEndRecord();
+	Writeln;
 
-	// Var xy: tKWs;
+	Writeln('Var xy: tKWs;');
 	stInsertSymbol('XY', stVar, cFalse, 'tKWs');
 
-	// Var asdf: NichtdefinierterTyp;
+	Writeln('Var asdf: NichtdefinierterTyp;');
 	stInsertSymbol('ASDF', stVar, cFalse, 'NichtdefinierterTyp');
 
-	// Type qwer: ^Longint;
-	stInsertSymbol('ptLongint', stType, cTrue, 'LONGINT');
+	Writeln('Type qwer: ^Longint;');
+	stInsertSymbol('ptLongint', stType, cTrue, 'Longint');
 
-(*
-	// Procedure isEquStrId( id1: String);
+	Writeln('Procedure isEquStrId( id1: String);');
 	stBeginProcedure('isEquStrId');
 	stInsertSymbol('id1', stVar, cFalse, 'String');
 
-	//	VAR i: Longint;
+	Writeln('    VAR i: Longint;');
 		stInsertSymbol('i', stVar, cFalse, 'Longint');
 
-	// BEGIN END;
+	Writeln('.. END;');
 	stEndProcedure();
-*)
+
 	Writeln;
 	printSymbolTable(stSymbolTable, '');
 

@@ -1,6 +1,7 @@
-	Var stVar: String; // Longint;
-	Var stType: String; // Longint;
-	Var stRecord: String; // Longint;
+	Var stVar: String;
+	Var stType: String;
+	Var stRecord: String;
+	Var stProcedure: String;
 
 	Type // forward type declatation, has to be in the same Type block!
 		ptObject = ^tObject;
@@ -15,46 +16,49 @@
 
 		tObject = Record
 			fName: String;
-			fClass: String; // Longint;
+			fClass: String;
 			fType: ptType;
+			fPrev: ptObject;
 			fNext: ptObject
 		End;
 
 	// The first symbol in the symbol table
 	Var stSymbolTable: ptObject;
 	// boolean marking if declaration is inside a Record declaration.
-	Var stInRecord: Longint;
-	// If stInRecord is cTrue stRecordPointer shows at the symbol being defined
-	var stRecordPointer: ptObject;
+	Var stInContext: Longint;
+	// If stInContext is cTrue stContextEntryPointer shows at the symbol being defined
+	var stContextEntryPointer: ptObject;
 
 	var stTypeLongint: ptType;
 	var stTypeString: ptType;
 
-	Procedure stSetType(symbol: ptObject; typeName: String);forward;
+	Procedure stSetType(symbol: ptObject; typeName: String; isPointer: Longint);forward;
 
 	// stInsertSymbol(<name>, <SymbolType>, <isPointer>, <varType>)
 	Procedure stInsertSymbol(name: String; symbolType: String; isPointer: Longint; varType: String);
 	Var lastSymbol: ptObject;
 	Var error: Longint;
 	Begin
+		infoMsg('Symboltable: Adding new symbol ' + name);
 		error := cFalse;
-		if(stInRecord = cTrue) then begin 
+		// If we're in a Context of Record or Procedure
+		if(stInContext = cTrue) then begin 
 			// write ('Insert record symbol ' + name + ': ');
 
-			// stRecordPointer mustn't be Nil
-			if(stRecordPointer = Nil) then begin
+			// stContextEntryPointer mustn't be Nil
+			if(stContextEntryPointer = Nil) then begin
 				error := cTrue;
-				(infoMsg('Error: in a Record declaration and stRecordPointer is Nil! This should not ever happen!'));
+				(errorMsg('Symboltable: in a Record declaration and stContextEntryPointer is Nil! This should not ever happen!'));
 			End;
-			if stRecordPointer^.fType = Nil then begin
+			if stContextEntryPointer^.fType = Nil then begin
 				error := cTrue;
-				(infoMsg('Error: stRecordPointer^.fType mus not be Nil! This should not ever happen!'));
+				(errorMsg('Symboltable: stContextEntryPointer^.fType must not be Nil! This should not ever happen!'));
 			End else begin
-				if stRecordPointer^.fType^.fFields = Nil then Begin
-					New(stRecordPointer^.fType^.fFields);
-					stRecordPointer^.fType^.fFields^.fName := '';
+				if stContextEntryPointer^.fType^.fFields = Nil then Begin
+					New(stContextEntryPointer^.fType^.fFields);
+					stContextEntryPointer^.fType^.fFields^.fName := '';
 				End;
-				lastSymbol := stRecordPointer^.fType^.fFields;
+				lastSymbol := stContextEntryPointer^.fType^.fFields;
 			End;
 		End else begin
 			// write ('Insert global symbol ' + name + ': ');
@@ -74,8 +78,8 @@
 			// write(lastSymbol^.fName);
 
 			While (lastSymbol^.fNext <> Nil) Do Begin
-				If(lastSymbol^.fName = name) then Begin
-					(infoMsg('Symboltable Error: Duplicate Entry: ' + name));
+				If(upCase(lastSymbol^.fName) = upCase(name)) then Begin
+					(errorMsg('Symboltable: Duplicate Entry: ' + name));
 				end Else Begin
 					lastSymbol := lastSymbol^.fNext;
 					// write(' -> ' + lastSymbol^.fName);
@@ -83,27 +87,30 @@
 			End;
 			If(lastSymbol^.fName <> '') then begin
 				New(lastSymbol^.fNext);
+				lastSymbol^.fNext^.fPrev := lastSymbol;
 				lastSymbol := lastSymbol^.fNext;
 			End;
 			// Fill out the Symbol object:
 			lastSymbol^.fName := name;
 			lastSymbol^.fClass := stVar;
-			(stSetType(lastSymbol, varType));
+			(stSetType(lastSymbol, varType, isPointer));
 			// writeln(' -> ' + lastSymbol^.fName);
 		End;
 	End;
 
 	// Set the type on a symbol.
-	Procedure stSetType(symbol: ptObject; typeName: String);
+	Procedure stSetType(symbol: ptObject; typeName: String; isPointer: Longint);
 	Var symbolIterator: ptObject;
 	var found : Longint;
 	var isWhile : Longint;
 	Begin
+		infoMsg('Symboltable: Set type to ' + typeName);
+
 		// Is it one of the predefined types (Longint, String, etc) then set fType to the constant pointer
-		if typeName = 'LONGINT' then Begin
+		if upCase(typeName) = 'LONGINT' then Begin
 			symbol^ .fType := stTypeLongint;
 		end else begin 
-			if typeName = 'STRING' then Begin
+			if upCase(typeName) = 'STRING' then Begin
 				symbol^.fType := stTypeString;
 			end Else Begin
 				// Find typeName among the Symbols
@@ -111,19 +118,19 @@
 				found := cFalse;
 
 				isWhile := cFalse;
-				If symbolIterator^.fNext = Nil then Begin 
+				If symbolIterator^.fNext <> Nil then Begin
 					if found = cFalse then begin
 						isWhile := cTrue;
 					end;
 				end;
 				While isWhile = cTrue Do Begin
 					symbolIterator := symbolIterator^.fNext;
-					if symbolIterator^.fName = typeName then Begin
+					if upCase(symbolIterator^.fName) = upCase(typeName) then Begin
 						found := cTrue;
 					End;
 
 					isWhile := cFalse;
-					If symbolIterator^.fNext = Nil then Begin 
+					If symbolIterator^.fNext <> Nil then Begin
 						if found = cFalse then begin
 							isWhile := cTrue;
 						end;
@@ -138,39 +145,66 @@
 						(infoMsg(typeName + ' is not a TYPE!'));
 					end;
 				End else begin
-					// Type not defined
-					(infoMsg('Error: Type not defined! ' + typeName));
+					// Type not defined, symbol has to be removed.
+					(errorMsg('Symboltable: Type not defined! ' + typeName));
+					symbol^.fPrev^.fNext := Nil;
+					// How to do this? Free(symbol);
 				End;
 			End;
 		End;
 	End;
 
-	// Beginning of a record
-	Procedure stBeginRecord(name: String);
+	Procedure stBeginContext(name: String; form: String);
 	Var lastSymbol: ptObject;
 	Begin
 		lastSymbol := stSymbolTable;
 		While (lastSymbol^.fNext <> Nil) Do Begin
-			If(lastSymbol^.fName = name) then Begin
-				(infoMsg('Symboltable Error: Duplicate Entry: ' + name));
+			If(upCase(lastSymbol^.fName) = upCase(name)) then Begin
+				(errorMsg('Symboltable: Duplicate Entry: ' + name));
 			end Else Begin
 				lastSymbol := lastSymbol^.fNext;
 			End;
 		End;
 		// Create the actual Symbol for the Record
 		New(lastSymbol^.fNext);
-		stRecordPointer := lastSymbol^.fNext;
-		stRecordPointer^.fName := name;
-		New(stRecordPointer^.fType);
-		stRecordPointer^ .fType^ .fForm := 'RECORD';
-		stRecordPointer^.fClass := stType;
-		stInRecord := cTrue;
+		lastSymbol^.fNext^.fPrev := lastSymbol;
+		stContextEntryPointer := lastSymbol^.fNext;
+		stContextEntryPointer^.fName := name;
+		New(stContextEntryPointer^.fType);
+		if form = stRecord then begin
+			stContextEntryPointer^.fClass := stType;
+			stContextEntryPointer^ .fType^ .fForm := stRecord;
+		end else begin
+			stContextEntryPointer^.fClass := stProcedure;
+			stContextEntryPointer^ .fType^ .fForm := stProcedure;
+		end;
+		stInContext := cTrue;
 	End;
+
+	Procedure stBeginProcedure(name: String);
+	begin
+		infoMsg('Symboltable: Beginning new procedure ' + name);
+		(stBeginContext(name, stProcedure));
+	end;
+
+	// Beginning of a record
+	Procedure stBeginRecord(name: String);
+	begin
+		infoMsg('Symboltable: Beginning new record ' + name);
+		(stBeginContext(name, stRecord));
+	end;
 
 	// Ending a record
 	Procedure stEndRecord;
 	Begin
-		stInRecord := cFalse;
+		stInContext := cFalse;
+		infoMsg('Symboltable: Ending record');
+	End;
+
+	Procedure stEndProcedure;
+	Begin
+		stInContext := cFalse;
+		infoMsg('Symboltable: Ending procedure');
 	End;
 
 	Procedure printType(typeObj: tType; prefix: String);forward;
@@ -187,7 +221,7 @@
 				Write(curSym^.fClass);
 				Write(', Type object: ');
 				if curSym^.fType = Nil then Begin
-					Writeln('Nil');
+					Writeln('Nil ');
 				End else begin
 					Writeln();
 					printType(curSym^.fType^, prefix + '    ');
@@ -199,8 +233,13 @@
 
 	Procedure printType(typeObj: tType; prefix: String);
 	Begin
-		Write(prefix + 'TypeObj Form: ' + typeObj.fForm + ', ');
-		If typeObj.fForm = 'RECORD' then Begin
+		Write(prefix + 'TypeObj Form: ' + typeObj.fForm + ', Base: ');
+		if(typeObj.fBase = Nil) then begin
+			(Write('Nil, '));
+		end else begin
+			(Write(typeObj.fBase^.fForm));
+		end;
+		If typeObj.fFields <> Nil then Begin
 			Writeln('Field objects:');
 			printSymbolTable(typeObj.fFields, prefix + '    ');
 		End else begin
@@ -208,14 +247,14 @@
 		End;
 	End;
 
-
 	// Initialize the SymbolTable module
 	procedure stInit;
 	Begin
 		(* Init constants *)
-		stVar := 'VAR'; // 1;
-		stType := 'TYPE'; // 2;
-		stRecord := 'RECORD'; // 3;
+		stVar := 'VAR';
+		stType := 'TYPE';
+		stRecord := 'RECORD';
+		stProcedure := 'PROCEDURE';
 
 		// Init stTypeLongint
 		New(stTypeLongint);
@@ -225,6 +264,6 @@
 		New(stTypeString);
 		stTypeString^.fForm := 'STRING';
 
-		stInRecord := cFalse;
+		stInContext := cFalse;
 	End;
 
