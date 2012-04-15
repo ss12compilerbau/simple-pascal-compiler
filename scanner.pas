@@ -56,12 +56,14 @@
 	var filename: String;
 
 	Var sym: Longint; (* speichert das nächste Symbol des Scanners *)
+	Var sym2: Longint; (* drauffolgendes Symbol falls peek2CallFlag *)
 	Var val: Longint; (* wenn sym = cNumber, dann speichert val den longint- Wert *)
 	Var id: String; (* wenn sym = cIdent, dann speichert id den Identifier *)
 	Var str: String; (* wenn sym = cString, dann speichert str den string- Wert *)
 		(* error: BOOLEAN; *)
 
-	Var lastSymWasPeek : longint; (* cTrue, falls sym durch Aufruf peekSymbol *)
+	Var peekCallFlag : longint; (* cTrue, falls sym durch Aufruf peekSymbol *)
+	Var peek2CallFlag : longint; (* cTrue, 2 Peeks in Zukunft *)
 
 	Var ch: String; (* UCase *)
 	Var chOrig: String; (* UCase *)
@@ -112,13 +114,15 @@
 
 	PROCEDURE NextChar;
 	var c: Char;
+	var c10: Char;
 	BEGIN
 		(Read(R, c));
 		chOrig := c;
 		(UCaseChr(c));
 		ch := UCaseChrRet;
 		colNr := colNr + 1;
-		IF ch = chr(10) THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
+		c10 := chr(10);
+		IF ch = c10 THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
 		If eof(R) then begin
 			if includeMode = cTrue then begin
 				R := RTemp;
@@ -145,7 +149,7 @@
 
 	Procedure errorMsg(msg: STRING);
 	Begin
-		(Markln('Error', msg));
+		(Markln('*** Error', msg));
 	End;
 
 	Procedure infoMsg(msg: STRING);
@@ -296,7 +300,7 @@
 		While  ( IsDigitRet = cTrue) do begin
 			(chToNumber( ch));
 			val1 := 10 * val + chToNumberRet; 
-			if val1 < cMaxNumber then begin
+			if val1 <= cMaxNumber then begin
 				val := val1;
 			end
 			ELSE BEGIN
@@ -316,7 +320,7 @@
 		(NextChar);
 		WHILE inComment = cTrue DO
 		BEGIN
-			if eof( R) THEN
+			if (eof( R)) THEN
 			BEGIN
 				(infoMsg('ERROR: comment not terminated'));
 				(EXIT)
@@ -344,13 +348,13 @@
 	// Include instructions look like {$include 'filename';}
 	Procedure include;
 	Begin
-		NextChar;
+		(NextChar);
 		// consume the 'include' identifier, the next one has to be the string
 		// with the file name (in str)
-		getSymbol;
-		writeln('cur sym: ', sym);
+		(getSymbol);
+		(writeln('cur sym: ', sym));
 		// consume ';}'
-		NextChar;NextChar;
+		(NextChar);(NextChar);
 		// Initialize file swap
 		RTemp := R;
 		lineNrTemp := lineNr;
@@ -360,10 +364,10 @@
 		lineNr := 0;
 		colNr := 0;
 		filename := str;
-		Assign( R, str);
-		Reset( R);
+		(Assign( R, str));
+		(Reset( R));
 		// recall getSymbol
-		getSymbol;
+		(getSymbol);
 	END;
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
@@ -373,8 +377,8 @@
 		(* WHILE ~R.eof & (ch <= " ") DO Texts.Read(R, ch) END; *)
 		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN NextChar; END;
 
-		isDigit(ch);
-		isLetter(ch);
+		(isDigit(ch));
+		(isLetter(ch));
 		(* IF R.eot THEN sym := eof *)
 		IF EOF( R) THEN begin sym := cEof end
 
@@ -471,33 +475,55 @@
 
 	procedure getSymbol;
 	begin
-		if lastSymWasPeek = cTrue then begin
-			(* Symbol steht schon in sym, da letzter Aufruf peekSymbol *)
-			lastSymWasPeek := cFalse; (* nächster Aufruf holt neues Symbol *)
+		if peek2CallFlag = cTrue then begin
+			sym := sym2;
+			peek2CallFlag := cFalse;
 		end
-		else begin
-			getSymSub;
-			// writeln(sym);
+		else begin 
+			if peekCallFlag = cTrue then begin
+				(* Symbol steht schon in sym, da letzter Aufruf peekSymbol *)
+				peekCallFlag := cFalse; (* nächster Aufruf wieder holt neues Symbol *)
+			end
+			else begin
+				(getSymSub);
+				// writeln(sym);
+			end;
 		end;
 	end;
 
 	procedure peekSymbol;
+	// holt nächstes Symbol setzt aber peekCallFlag auf cTrue
+	// damit nächstes GetSymbol erkennt, dass getSymSub bereits aufger.
 	begin
-		if lastSymWasPeek = cFalse then begin
-			getSymbol;
-			lastSymWasPeek := cTrue;
+		if peekCallFlag = cFalse then begin
+			(getSymbol);
+			peekCallFlag := cTrue;
 		end;
 	end;
+	
+	procedure peek2Symbol;
+		var s : longint;
+	begin
+		if peek2CallFlag = cFalse then begin
+			(peekSymbol);
+			s := sym; // Peek Symbol zwischenspeichern
+			(getSymbol);
+			sym2 := sym; // 2. Peek Symbol
+			sym := s;
+			peek2CallFlag := cTrue;
+		end;
+	end;
+
 
 	Procedure scanInitFile(inputFile: String);
 	Begin
 		(Assign( R, inputFile));
 		(Reset( R)); 
 		filename := inputFile;
-		NextChar;
+		(NextChar);
 	End;
 
-	Procedure ScannerInit();
+	Procedure ScannerInit;
 	Begin
 
 		lineNr := 1;
@@ -507,7 +533,8 @@
 		cTrue := 1;
 		cFalse := 0;
 
-		lastSymWasPeek := cFalse;
+		peekCallFlag := cFalse;
+		peek2CallFlag := cFalse;
 
 		(* größte Zahl, die im Source angegeben werden darf *)
 		cMaxNumber := 1000000;

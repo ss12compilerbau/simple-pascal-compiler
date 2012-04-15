@@ -7,7 +7,13 @@
     (* Beginn Parser *)
     var gRetLongInt : longint;
     var parserErrorCount : longint;
-    var parserIsPtrType : longInt; // wird von parseType gesetzt
+    
+    var parserDeclName : string; // name von parseDeclaration gesetzt
+    var parserDeclType : string; // type, von parseDeclaration gesetzt
+    var parserDeclIsPtrType : longInt; // von parseType gesetzt
+    var parserUseSymTab : longint;
+    var parserPrintSymTab : longint;
+    
 
     procedure parseCodeBlock; forward;
     procedure parseDeclaration; forward;
@@ -56,6 +62,18 @@
         *)
     end;
     
+    procedure parserPrintStInsertSymbol( name: String;
+		symbolType: String;	isPointer: Longint; varType: String);
+	begin
+		if isPointer = cTrue then begin
+			(parserInfoStr( 'stInsertSymbol(' + name + 
+				', symbolType, cTrue, ' + varType));
+		end
+		else begin
+			(parserInfoStr( 'stInsertSymbol(' + name + 
+				', symbolType, cFalse, ' + varType));
+		end;
+	end;
     
     
     
@@ -252,6 +270,17 @@
         end;
         
         (parserDebugStrInt( 'parseTypeIdentifier', ret));
+        gRetLongInt := ret;
+    end;
+    
+    procedure parseProcIdentifierTry;
+        var ret : longint;
+    begin
+        (parserDebugStr( 'parseProcIdentifierTry'));
+        (PeekIsIdentifier);
+        ret :=  gRetLongInt;
+        
+        (parserDebugStrInt( 'parseProcIdentifierTry', ret));
         gRetLongInt := ret;
     end;
     
@@ -744,10 +773,10 @@
     begin
         (parserDebugStr( 'parseType'));
         
-        parserIsPtrType := cFalse;
+        parserDeclIsPtrType := cFalse;
         (peekSymbol);
         if sym = cPtrRef then begin
-			parserIsPtrType := cTrue;
+			parserDeclIsPtrType := cTrue;
             (getSymbol);
         end;
         
@@ -772,16 +801,18 @@
     
     procedure parseDeclaration;
         var ret : longint;
-        var name: String;
-        var typeId: String;
         var str : string;
-        var isPtrType : longint;
     begin
         (parserDebugStr( 'parseDeclaration'));
         (parseVarIdentifier);
         ret :=  gRetLongInt;
-        str := 'Declaration ' + id;
-        name := id;
+        
+        parserDeclName := '';
+        if ret = cTrue then begin
+			str := 'Declaration ' + id;
+			parserDeclName := id;
+        end;
+        
         
         if ret = cTrue then begin
             (parseSymbol( cColon));
@@ -790,15 +821,26 @@
         
         if ret = cTrue then begin
             (parseType);
-            isPtrType := parserIsPtrType;
             ret :=  gRetLongInt;
         end;
 
+		parserDeclType := '';
         if ret = cTrue then begin
             str := str + ' ' + id;
-            typeId := id;
+            parserDeclType := id;
             (parserInfoStr( str));
-            (stInsertSymbol(name, stVar, isPtrType, typeId));
+            
+            if parserUseSymTab = cTrue then begin
+				(stInsertSymbol( parserDeclName, stVar, 
+					parserDeclIsPtrType, parserDeclType));
+			end;
+			if parserPrintSymTab = cTrue then begin
+				(parserPrintStInsertSymbol( parserDeclName, stVar, 
+					parserDeclIsPtrType, parserDeclType));
+			end;
+
+			
+			
         end;
         
         (parserDebugStrInt( 'parseDeclaration', ret));
@@ -872,13 +914,6 @@
     end;
 
 
-
-
-
-    
-    
-    
-    
     procedure parseProcCallTry;
         var ret : longint;
     begin
@@ -886,21 +921,35 @@
         (PeekIsSymbol( cLParen));
         ret :=  gRetLongInt;
         
+        if ret = cFalse then begin
+			// überprüfen ob P; oder P(
+			parseProcIdentifierTry;
+			if gRetLongInt = cTrue then begin
+				(peek2Symbol);
+				if sym2 = cLParen then begin ret := cTrue; end;
+				if sym2 = cSemicolon then begin ret := cTrue; end;
+			end;
+        end;
+        
         (parserDebugStrInt( 'parseProcCallTry', ret));
         gRetLongInt := ret;
     end;
     
     procedure parseProcCall;
         var ret : longint;
+        var ProcCallIsInParen : longint;
     begin
         (parserDebugStr( 'parseProcCall'));
-        (parseSymbol( cLParen));
-        ret :=  gRetLongInt;
         
-        if ret = cTrue then begin
-            (parseProcIdentifier);
-            ret :=  gRetLongInt;
-        end;
+        ProcCallIsInParen := cFalse;
+        peekIsSymbol( cLParen);
+        if gRetLongInt = cTrue then begin
+			ProcCallIsInParen := cTrue;
+			(parseSymbol( cLParen));
+		end;
+        
+        (parseProcIdentifier);
+         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
             (parseCallParameters);
@@ -913,8 +962,10 @@
         end;
         
         if ret = cTrue then begin
-            (parseSymbol( cSemicolon));
-            ret :=  gRetLongInt;
+			if ProcCallIsInParen = cTrue then begin
+				(parseSymbol( cSemicolon));
+				ret :=  gRetLongInt;
+			end;
         end;
         
         (parserDebugStrInt( 'parseProcCall', ret));
@@ -1192,12 +1243,15 @@
     
     procedure parseOneTypeDeclaration;
         var ret : longint;
+        var typeId : string;
     begin
         (parserDebugStr( 'parseOneTypeDeclaration'));
         (parseTypeIdentifier);
         ret :=  gRetLongInt;
         
+        typeId := '';
         if ret = cTrue then begin
+			typeId := id;
             (parseSymbol( cEql));
             ret :=  gRetLongInt;
         end;
@@ -1206,8 +1260,24 @@
             (parseRecordTypeTry);
             ret :=  gRetLongInt;
             if ret = cTrue then begin
+				
+				if parserUseSymTab = cTrue then begin
+					(stBeginRecord( typeID));
+				end;
+				if parserPrintSymTab = cTrue then begin
+					(parserInfoStr( 'stBeginRecord( ' + typeID + ') '));
+				end;
+				
                 (parseRecordType);
                 ret :=  gRetLongInt;
+                
+                if parserUseSymTab = cTrue then begin
+					(stEndRecord);
+				end;
+				if parserPrintSymTab = cTrue then begin
+					(parserInfoStr( 'stEndRecord'));
+				end;
+      
             end
             else begin
                 (parseSymbol( cPtrRef));
@@ -1215,6 +1285,16 @@
                 if ret = cTrue then begin
                     (parseTypeIdentifier);
                     ret :=  gRetLongInt;
+                    
+                    if parserUseSymTab = cTrue then begin
+						(stInsertSymbol(typeId, stType, 
+							cTrue, id)); // type = ... nur ^ typeName
+					end;
+					if parserPrintSymTab = cTrue then begin
+						(parserPrintStInsertSymbol(typeId, stType, 
+							cTrue, id));
+					end;
+					
                 end;
             end;
         end;
@@ -1368,6 +1448,14 @@
         if ret = cTrue then begin
             (parserInfoCRLF);
             (parserInfoStr( '---------- Parse Prozedur ' + id));
+            
+            if parserUseSymTab = cTrue then begin
+				(stBeginProcedure( id));
+			end;
+			if parserPrintSymTab = cTrue then begin
+				(parserInfoStr( 'stBeginProcedure( ' + id + ') '));
+			end;
+            
             (parseDefParameters); 
             ret :=  gRetLongInt;
         end;
@@ -1376,6 +1464,13 @@
             (parseSymbol( cSemicolon)); 
             ret :=  gRetLongInt;
         end;
+        
+        if parserUseSymTab = cTrue then begin
+			(stEndProcedure);
+		end;
+		if parserPrintSymTab = cTrue then begin
+			(parserInfoStr( 'stEndProcedure'));
+		end;
         
         (parserDebugStrInt( 'parseProcHeading', ret));
         gRetLongInt := ret;
@@ -1600,7 +1695,6 @@
     BEGIN
         (Assign( R, inputFile));
         (Reset( R)); (NextChar);
-		filename := inputFile;
 
         // (Assign( W, outputFile));
         // (Rewrite( W));
@@ -1623,10 +1717,6 @@
     Procedure ParserInit;
     Begin
         parserErrorCount := 0;
-        (*
-        All die Initialisierung, die auf jeden Fall ausgeführt werden muss am Anfang,
-        damit der Parser benutzt werden kann. Egal ob für Testing oder Compiling.
-        *)
     End;
 
 //begin  end.
