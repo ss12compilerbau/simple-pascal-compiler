@@ -1695,6 +1695,7 @@
     BEGIN
         (Assign( R, inputFile));
         (Reset( R)); (NextChar);
+        filename := inputFile;
 
         // (Assign( W, outputFile));
         // (Rewrite( W));
