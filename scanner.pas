@@ -58,8 +58,11 @@
 	Var sym: Longint; (* speichert das nächste Symbol des Scanners *)
 	Var sym2: Longint; (* drauffolgendes Symbol falls peek2CallFlag *)
 	Var val: Longint; (* wenn sym = cNumber, dann speichert val den longint- Wert *)
+	Var val2: Longint;
 	Var id: String; (* wenn sym = cIdent, dann speichert id den Identifier *)
+	Var id2: String;
 	Var str: String; (* wenn sym = cString, dann speichert str den string- Wert *)
+	Var str2: String;
 		(* error: BOOLEAN; *)
 
 	Var peekCallFlag : longint; (* cTrue, falls sym durch Aufruf peekSymbol *)
@@ -69,6 +72,9 @@
 	Var chOrig: String; (* UCase *)
 		(*errpos: LONGINT;*) (* never used *)
 	Var R: Text;
+	
+	var chr10 : char;
+	var chrQuote : char;
 
 	// for {$include...} implementation
 	Var lineNrTemp: Longint;
@@ -111,19 +117,30 @@
 		if c = 'y' then begin uCaseChrRet := 'Y'; end;
 		if c = 'z' then begin uCaseChrRet := 'Z'; end;
 	END;
+	
+	var isEofRet : longint;
+	procedure isEof;
+		var b : boolean;
+	begin
+		b := eof(R);
+		if b = true then begin isEofRet := cTrue; end
+		else begin isEofRet := cFalse; end;
+	end;
 
 	PROCEDURE NextChar;
 	var c: Char;
-	var c10: Char;
+	//var c10: Char;
 	BEGIN
 		(Read(R, c));
 		chOrig := c;
 		(UCaseChr(c));
 		ch := UCaseChrRet;
 		colNr := colNr + 1;
-		c10 := chr(10);
-		IF ch = c10 THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
-		If eof(R) then begin
+		//c10 := chr10;
+		IF ch = chr10 THEN BEGIN lineNr := lineNr + 1; colNr := 1; END;
+		
+		isEof;
+		If isEofRet = cTrue then begin
 			if includeMode = cTrue then begin
 				R := RTemp;
 				colNr := colNrTemp;
@@ -148,13 +165,17 @@
 
 
 	Procedure errorMsg(msg: STRING);
+		var s : string;
 	Begin
-		(Markln('*** Error', msg));
+		s := '*** Error';
+		Markln(s, msg);
 	End;
 
 	Procedure infoMsg(msg: STRING);
-	Begin
-		(Markln('Info', msg));
+		var s : string;
+	Begin	
+		s := 'Info';
+		Markln(s, msg);
 	End;
 
 	(* true, falls ch eine Ziffer *)
@@ -226,7 +247,7 @@
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
 	(* PROCEDURE getSym(VAR sym: Longint); *)
-	PROCEDURE getSymSub;forward;
+	PROCEDURE getSymHard;forward;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um ein Symbol handelt *)
 	(* z.B. Keyword oder Variable *)
@@ -252,8 +273,9 @@
 		(NextChar);
 		nextWhile := cFalse;
 
-		if chOrig <> '''' then begin
-			if not (eof(R)) then begin
+		if chOrig <> chrQuote then begin
+			isEof;
+			if isEofRet = cFalse then begin
 				nextWhile := cTrue;
 			end;
 		end;
@@ -261,15 +283,19 @@
 		While nextWhile = cTrue do begin
 			str := str + chOrig;
 			(NextChar);
-			if chOrig = '''' then begin
+			if chOrig = chrQuote then begin
 				nextWhile := cFalse;
 			end;
-			if eof(R) then begin
+			
+			isEof;
+			if isEofRet = cTrue then begin
 				nextWhile := cFalse;
 			end;
 		End;
-		if eof(R) then begin
-			(infoMsg('String not closed!'));
+		
+		isEof;
+		if isEofRet = cTrue then begin
+			infoMsg( 'String not closed!');
 		end;
 		sym := cString;
 		(NextChar);
@@ -320,18 +346,20 @@
 		(NextChar);
 		WHILE inComment = cTrue DO
 		BEGIN
-			if (eof( R)) THEN
+			isEof;
+			if isEofRet = cTrue THEN
 			BEGIN
-				(infoMsg('ERROR: comment not terminated'));
-				(EXIT)
+				(infoMsg( 'ERROR: comment not terminated'));
+				EXIT;
 			END;
-			IF( ch = '*') THEN
+			IF ch = '*' THEN
 			BEGIN
 				(nextChar);
-				if eof( R) THEN
+				isEof;
+				if isEofRet = cTrue THEN
 				BEGIN
-					infoMsg('ERROR: comment not terminated');
-					EXIT
+					infoMsg(  'ERROR: comment not terminated');
+					EXIT;
 				END;
 				if ch <> ')' then begin
 					inComment := cTrue;
@@ -352,9 +380,10 @@
 		// consume the 'include' identifier, the next one has to be the string
 		// with the file name (in str)
 		(getSymbol);
-		(writeln('cur sym: ', sym));
+		//(writeln('cur sym: ', sym));
 		// consume ';}'
-		(NextChar);(NextChar);
+		(NextChar);
+		(NextChar);
 		// Initialize file swap
 		RTemp := R;
 		lineNrTemp := lineNr;
@@ -372,120 +401,159 @@
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
 	(* PROCEDURE getSym(VAR sym: Longint); *)
-	PROCEDURE getSymSub;
+	PROCEDURE getSymHard;
+		Var nextWhile : longInt;
+		var symFound: longInt;
 	BEGIN
 		(* WHILE ~R.eof & (ch <= " ") DO Texts.Read(R, ch) END; *)
-		WHILE NOT EOF( R) AND ( ch <= ' ') DO BEGIN NextChar; END;
+		nextWhile := cFalse;
+		isEof;
+		if isEofRet = cFalse then begin	
+			if ch <= ' ' then begin nextWhile := cTrue; end;
+		end;
+		
+		WHILE nextWhile = cTrue DO 
+		BEGIN 
+			NextChar;
+			
+			nextWhile := cFalse;
+			isEof;
+			if isEofRet = cFalse then begin	
+				if ch <= ' ' then begin nextWhile := cTrue; end;
+			end;
+		END;
 
 		(isDigit(ch));
 		(isLetter(ch));
 		(* IF R.eot THEN sym := eof *)
-		IF EOF( R) THEN begin sym := cEof end
-
-		ELSE IF ch = '&' THEN BEGIN NextChar; sym := cAnd END
-		ELSE IF ch = '^' THEN BEGIN NextChar; sym := cPtrRef END
-		ELSE IF ch = '*' THEN BEGIN NextChar; sym := cTimes END
-		ELSE IF ch = '+' THEN BEGIN NextChar;; sym := cPlus END
-		ELSE IF ch = '-' THEN BEGIN NextChar; sym := cMinus END
-		ELSE IF ch = '=' THEN BEGIN NextChar; sym := cEql END
-		ELSE IF ch = '#' THEN BEGIN NextChar; sym := cNeq END
-		ELSE IF ch = '<' THEN BEGIN
+		symFound := cFalse;
+		
+		isEof;
+		IF isEofRet = cTrue THEN begin
+			sym := cEof; 
+		end
+		ELSE BEGIN 
+			IF ch = '&' THEN BEGIN NextChar; sym := cAnd; symFound := cTrue; END;
+			IF ch = '^' THEN BEGIN NextChar; sym := cPtrRef; symFound := cTrue; END;
+			IF ch = '*' THEN BEGIN NextChar; sym := cTimes; symFound := cTrue; END;
+			IF ch = '+' THEN BEGIN NextChar; sym := cPlus; symFound := cTrue; END;
+			IF ch = '-' THEN BEGIN NextChar; sym := cMinus; symFound := cTrue; END;
+			IF ch = '=' THEN BEGIN NextChar; sym := cEql; symFound := cTrue; END;
+			IF ch = '#' THEN BEGIN NextChar; sym := cNeq; symFound := cTrue; END;
+			
+			IF ch = '<' THEN BEGIN
 				NextChar;
-				IF ch = '=' THEN
-				BEGIN
+				IF ch = '=' THEN BEGIN
 					NextChar;
-					sym := cLeq
+					sym := cLeq;
 				END
 				else begin
 					if ch = '>' then begin
 						nextchar;
 						sym := cNeq;
 					end
-					ELSE begin 
-						sym := cLss;
-					end;
+					ELSE begin sym := cLss;	end;
 				end;
-			END	
-		ELSE IF ch = '>' THEN BEGIN
+				symFound := cTrue;
+			END;	
+			
+			IF ch = '>' THEN BEGIN
 				NextChar;
-				IF ch = '=' THEN
-				BEGIN
+				IF ch = '=' THEN BEGIN
 					NextChar;
 					sym := cGeq;
 				END
-				ELSE sym := cGtr;
-			END
-		ELSE IF ch = ';' THEN BEGIN NextChar; sym := cSemicolon; END
-		ELSE IF ch = ',' THEN BEGIN NextChar; sym := cComma; END
-		ELSE IF ch = ':' THEN BEGIN
+				ELSE begin sym := cGtr; END;
+				symFound := cTrue;
+			end;
+				
+			IF ch = ';' THEN BEGIN NextChar; sym := cSemicolon; symFound := cTrue; END;
+			IF ch = ',' THEN BEGIN NextChar; sym := cComma; symFound := cTrue; END;
+			
+			IF ch = ':' THEN BEGIN
 				NextChar;
 				IF ch = '=' THEN
 				BEGIN
 					NextChar;
 					sym := cBecomes;
 				END
-				ELSE sym := cColon;
-			END
-		ELSE IF ch = '.' THEN BEGIN NextChar; sym := cPeriod; END
-		ELSE IF ch = '(' THEN BEGIN
+				ELSE begin sym := cColon; end;
+				symFound := cTrue;
+			END;
+			
+			IF ch = '.' THEN BEGIN NextChar; sym := cPeriod; symFound := cTrue; END;
+			
+			IF ch = '(' THEN BEGIN
 				NextChar;
 				IF ch = '*' THEN
 				BEGIN
 					comment;
-					getSymSub;
+					getSymHard;
 				END
-				ELSE sym := cLparen
-			END
-		ELSE IF ch = ')' THEN BEGIN NextChar; sym := cRparen; END
-		ELSE IF ch = '[' THEN BEGIN NextChar; sym := cLbrak; END
-		ELSE IF ch = ']' THEN BEGIN NextChar; sym := cRbrak; END
-		ELSE IF ch = '''' THEN Begin getString; END
-		ELSE IF isDigitRet = cTrue THEN Begin Number; END
-		ELSE IF isLetterRet = cTrue THEN Begin Ident; END
-		ELSE IF ch = '~' THEN BEGIN NextChar; sym := cNot END
-		ELSE IF ch = '{' THEN BEGIN
-			NextChar;
-			If ch = '$' then begin
+				ELSE begin sym := cLparen; end;
+				symFound := cTrue;
+			END;
+			
+			IF ch = ')' THEN BEGIN NextChar; sym := cRparen; symFound := cTrue; END;
+			IF ch = '[' THEN BEGIN NextChar; sym := cLbrak; symFound := cTrue; END;
+			IF ch = ']' THEN BEGIN NextChar; sym := cRbrak; symFound := cTrue; END;
+			IF ch = chrQuote THEN Begin getString; symFound := cTrue; END;
+			IF isDigitRet = cTrue THEN Begin Number; symFound := cTrue; END;
+			IF isLetterRet = cTrue THEN Begin Ident; symFound := cTrue; END;
+			IF ch = '~' THEN BEGIN NextChar; sym := cNot; symFound := cTrue; END;
+			
+			IF ch = '{' THEN BEGIN
 				NextChar;
-				getSymbol;
-				if id = 'INCLUDE' then begin
-					include;
-				end;
-			end;
-		end
-		ELSE IF ch = '/' THEN
-		BEGIN
-			NextChar;
-			IF ch = '/' THEN BEGIN
-				While (ch <> chr(10)) Do Begin
+				If ch = '$' then begin
 					NextChar;
-				End;
-				getSymbol;
-			END
-			ELSE
-				infoMsg('Unrecognized "/"');
-			END
-		ELSE Begin
-			infoMsg('Unrecognized Symbol "' + ch + '"');
+					getSymbol;
+					if id = 'INCLUDE' then begin
+						include;
+					end;
+				end;
+				symFound := cTrue;
+			end;
+		
+			IF ch = '/' THEN
+			BEGIN
+				NextChar;
+				IF ch = '/' THEN BEGIN
+					While ch <> chr10 Do Begin
+						NextChar;
+					End;
+					getSymbol;
+				END
+				ELSE begin
+					infoMsg( 'Unrecognized "/"');
+				END;
+				symFound := cTrue;
+			End;
+		end;
+			
+		if symFound = cFalse then begin
+			infoMsg( 'Unrecognized Symbol "' + ch + '"');
 			NextChar;
-			sym := cNull
+			sym := cNull;
 		END;
-
-	END;
+	end;
 
 	procedure getSymbol;
 	begin
-		if peek2CallFlag = cTrue then begin
-			sym := sym2;
-			peek2CallFlag := cFalse;
+		if peekCallFlag = cTrue then begin
+			(* Symbol steht schon in sym, da letzter Aufruf peekSymbol *)
+			peekCallFlag := cFalse; (* nächster Aufruf wieder holt neues Symbol *)
 		end
-		else begin 
-			if peekCallFlag = cTrue then begin
-				(* Symbol steht schon in sym, da letzter Aufruf peekSymbol *)
-				peekCallFlag := cFalse; (* nächster Aufruf wieder holt neues Symbol *)
+		else begin
+			if peek2CallFlag = cTrue then begin
+				sym := sym2;
+				id := id2;
+				val := val2;
+				str := str2;
+				peek2CallFlag := cFalse;
+				peekCallFlag := cTrue;
 			end
 			else begin
-				(getSymSub);
+				(getSymHard);
 				// writeln(sym);
 			end;
 		end;
@@ -493,7 +561,7 @@
 
 	procedure peekSymbol;
 	// holt nächstes Symbol setzt aber peekCallFlag auf cTrue
-	// damit nächstes GetSymbol erkennt, dass getSymSub bereits aufger.
+	// damit nächstes GetSymbol erkennt, dass getSymHard bereits aufger.
 	begin
 		if peekCallFlag = cFalse then begin
 			(getSymbol);
@@ -502,14 +570,31 @@
 	end;
 	
 	procedure peek2Symbol;
-		var s : longint;
+		var saveSym : longint;
+		var saveId : string;
+		var saveVal : longint;
+		var saveStr : string;
 	begin
 		if peek2CallFlag = cFalse then begin
 			(peekSymbol);
-			s := sym; // Peek Symbol zwischenspeichern
-			(getSymbol);
+			
+			saveSym := sym; // Peek Symbol zwischenspeichern
+			saveId := id;
+			saveVal := val;
+			saveStr := str;
+			
+			(getSymHard);
+			
 			sym2 := sym; // 2. Peek Symbol
-			sym := s;
+			id2 := id;
+			val2 := val;
+			str2 := str;
+			
+			sym := saveSym;
+			id := saveId;
+			val := saveVal;
+			str := saveStr;
+			
 			peek2CallFlag := cTrue;
 		end;
 	end;

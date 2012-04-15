@@ -41,7 +41,7 @@
 	Var lastSymbol: ptObject;
 	Var error: Longint;
 	Begin
-		infoMsg('Symboltable: Adding new symbol ' + name);
+		(infoMsg('Symboltable: Adding new symbol ' + name));
 		error := cFalse;
 		// If we're in a Context of Record or Procedure
 		if(stInContext = cTrue) then begin 
@@ -109,7 +109,7 @@
 	var found : Longint;
 	var isWhile : Longint;
 	Begin
-		infoMsg('Symboltable: Set type to ' + typeName);
+		(infoMsg('Symboltable: Set type to ' + typeName));
 
 		// Is it one of the predefined types (Longint, String, etc) then set fType to the constant pointer
 		if upCase(typeName) = 'LONGINT' then Begin
@@ -163,8 +163,8 @@
 	Var lastSymbol: ptObject;
 	Begin
 		lastSymbol := stSymbolTable;
-		While (lastSymbol^.fNext <> Nil) Do Begin
-			If(upCase(lastSymbol^.fName) = upCase(name)) then Begin
+		While lastSymbol^.fNext <> Nil Do Begin
+			If upCase(lastSymbol^.fName) = upCase(name) then Begin
 				(errorMsg('Symboltable: Duplicate Entry: ' + name));
 			end Else Begin
 				lastSymbol := lastSymbol^.fNext;
@@ -188,14 +188,14 @@
 
 	Procedure stBeginProcedure(name: String);
 	begin
-		infoMsg('Symboltable: Beginning new procedure ' + name);
+		(infoMsg('Symboltable: Beginning new procedure ' + name));
 		(stBeginContext(name, stProcedure));
 	end;
 
 	// Beginning of a record
 	Procedure stBeginRecord(name: String);
 	begin
-		infoMsg('Symboltable: Beginning new record ' + name);
+		(infoMsg('Symboltable: Beginning new record ' + name));
 		(stBeginContext(name, stRecord));
 	end;
 
@@ -203,13 +203,13 @@
 	Procedure stEndRecord;
 	Begin
 		stInContext := cFalse;
-		infoMsg('Symboltable: Ending record');
+		(infoMsg('Symboltable: Ending record'));
 	End;
 
 	Procedure stEndProcedure;
 	Begin
 		stInContext := cFalse;
-		infoMsg('Symboltable: Ending procedure');
+		(infoMsg('Symboltable: Ending procedure'));
 	End;
 
 	Procedure printType(typeObj: tType; prefix: String);forward;
@@ -218,18 +218,18 @@
 	Var curSym: ptObject;
 	Begin
 		if symbolTable = Nil then begin
-			writeln(prefix + 'Empty Symbol table.');
+			(writeln(prefix + 'Empty Symbol table.'));
 		end else Begin
 			curSym := symbolTable;
-			While(curSym <> Nil) Do Begin
-				Write(prefix + 'Symbol Name: ' + curSym^.fName + ', Class: ');
-				Write(curSym^.fClass);
-				Write(', Type object: ');
+			While curSym <> Nil Do Begin
+				(Write(prefix + 'Symbol Name: ' + curSym^.fName + ', Class: '));
+				(Write(curSym^.fClass));
+				(Write(', Type object: '));
 				if curSym^.fType = Nil then Begin
-					Writeln('Nil ');
+					(Writeln('Nil '));
 				End else begin
-					Writeln();
-					printType(curSym^.fType^, prefix + '    ');
+					(Writeln);
+					(printType(curSym^.fType^, prefix + '    '));
 				end;
 				curSym := curSym^.fNext;
 			End;
@@ -238,17 +238,17 @@
 
 	Procedure printType(typeObj: tType; prefix: String);
 	Begin
-		Write(prefix + 'TypeObj Form: ' + typeObj.fForm + ', Base: ');
+		(Write(prefix + 'TypeObj Form: ' + typeObj.fForm + ', Base: '));
 		if(typeObj.fBase = Nil) then begin
 			(Write('Nil, '));
 		end else begin
 			(Write(typeObj.fBase^.fForm));
 		end;
 		If typeObj.fFields <> Nil then Begin
-			Writeln('Field objects:');
-			printSymbolTable(typeObj.fFields, prefix + '    ');
+			(Writeln('Field objects:'));
+			(printSymbolTable(typeObj.fFields, prefix + '    '));
 		End else begin
-			Writeln('Fields: Empty.');
+			(Writeln('Fields: Empty.'));
 		End;
 	End;
 
