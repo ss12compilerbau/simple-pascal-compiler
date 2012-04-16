@@ -37,6 +37,10 @@ BEGIN
 	stEndRecord();
 	Writeln;
 
+	Writeln('Procedure isEquStrId( id1: String);forward;');
+	stBeginProcedure('isEquStrId');
+	stEndProcedure();
+
 	Writeln('Var xy: tKWs;');
 	stInsertSymbol('XY', stVar, cFalse, 'tKWs');
 

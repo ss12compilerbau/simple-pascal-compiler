@@ -109,6 +109,50 @@
 		End;
 	End;
 
+	Procedure stBeginContext(name: String; form: String);
+	Var lastSymbol: ptObject;
+	var error: Longint;
+	var UCFName : String;
+	var UCName : String;
+	Begin
+		lastSymbol := stSymbolTable;
+
+		UCFName := upCase(lastSymbol^.fName);
+		UCName := upCase(Name);
+		If UCFName = UCName then Begin
+			(errorMsg( 'Symboltable: Duplicate Entry: ' + name));
+			error := cTrue;
+		end;
+		While lastSymbol^.fNext <> Nil Do Begin
+			lastSymbol := lastSymbol^.fNext;
+			UCFName := upCase(lastSymbol^.fName);
+			UCName := upCase(name);
+			If UCFName = UCName then Begin
+				(errorMsg( 'Symboltable: Duplicate Entry: ' + name));
+				error := cTrue;
+			end;
+		End;
+		if error = cFalse then begin
+			If lastSymbol^.fName <> '' then begin
+				// Create the actual Symbol for the Record
+				New(lastSymbol^.fNext);
+				lastSymbol^.fNext^.fPrev := lastSymbol;
+				stContextEntryPointer := lastSymbol^.fNext;
+				stContextEntryPointer^.fName := name;
+				New(stContextEntryPointer^.fType);
+
+				if form = stRecord then begin
+					stContextEntryPointer^.fClass := stType;
+					stContextEntryPointer^ .fType^ .fForm := stRecord;
+				end else begin
+					stContextEntryPointer^.fClass := stProcedure;
+					stContextEntryPointer^ .fType^ .fForm := stProcedure;
+				end;
+				stInContext := cTrue;
+			end;
+		end;
+	End;
+
 	// Set the type on a symbol.
 	Procedure stSetType(symbol: ptObject; typeName: String; isPointer: Longint);
 	Var symbolIterator: ptObject;
@@ -169,37 +213,6 @@
 				End;
 			End;
 		End;
-	End;
-
-	Procedure stBeginContext(name: String; form: String);
-	Var lastSymbol: ptObject;
-	var UCFName : String;
-	var UCName : String;
-	Begin
-		lastSymbol := stSymbolTable;
-		While lastSymbol^.fNext <> Nil Do Begin
-			UCFName := upCase(lastSymbol^.fName);
-			UCName := upCase(name);
-			If UCFName = UCName then Begin
-				( errorMsg( 'Symboltable: Duplicate Entry: ' + name));
-			end Else Begin
-				lastSymbol := lastSymbol^.fNext;
-			End;
-		End;
-		// Create the actual Symbol for the Record
-		New(lastSymbol^.fNext);
-		lastSymbol^.fNext^.fPrev := lastSymbol;
-		stContextEntryPointer := lastSymbol^.fNext;
-		stContextEntryPointer^.fName := name;
-		New(stContextEntryPointer^.fType);
-		if form = stRecord then begin
-			stContextEntryPointer^.fClass := stType;
-			stContextEntryPointer^ .fType^ .fForm := stRecord;
-		end else begin
-			stContextEntryPointer^.fClass := stProcedure;
-			stContextEntryPointer^ .fType^ .fForm := stProcedure;
-		end;
-		stInContext := cTrue;
 	End;
 
 	Procedure stBeginProcedure(name: String);
