@@ -40,8 +40,10 @@
 	Procedure stInsertSymbol(name: String; symbolType: String; isPointer: Longint; varType: String);
 	Var lastSymbol: ptObject;
 	Var error: Longint;
+	var UCFName : String;
+	var UCName : String;
 	Begin
-		(infoMsg('Symboltable: Adding new symbol ' + name));
+		(infoMsg( 'Symboltable: Adding new symbol ' + name));
 		error := cFalse;
 		// If we're in a Context of Record or Procedure
 		if(stInContext = cTrue) then begin 
@@ -50,11 +52,11 @@
 			// stContextEntryPointer mustn't be Nil
 			if(stContextEntryPointer = Nil) then begin
 				error := cTrue;
-				(errorMsg('Symboltable: in a Record declaration and stContextEntryPointer is Nil! This should not ever happen!'));
+				(errorMsg( 'Symboltable: in a Record declaration and stContextEntryPointer is Nil! This should not ever happen!'));
 			End;
 			if stContextEntryPointer^.fType = Nil then begin
 				error := cTrue;
-				(errorMsg('Symboltable: stContextEntryPointer^.fType must not be Nil! This should not ever happen!'));
+				(errorMsg( 'Symboltable: stContextEntryPointer^.fType must not be Nil! This should not ever happen!'));
 			End else begin
 				if stContextEntryPointer^.fType^.fFields = Nil then Begin
 					New(stContextEntryPointer^.fType^.fFields);
@@ -78,19 +80,23 @@
 		// find the last symbol in the linked list, 
 		// making sure the new one doesn't exist yet!
 		if error = cFalse then Begin
-			If(upCase(lastSymbol^.fName) = upCase(name)) then Begin
-				(errorMsg('Symboltable: Duplicate Entry: ' + name));
+			UCFName := upCase(lastSymbol^.fName);
+			UCName := upCase(Name);
+			If UCFName = UCName then Begin
+				(errorMsg( 'Symboltable: Duplicate Entry: ' + name));
 				error := cTrue;
 			end;
-			While (lastSymbol^.fNext <> Nil) Do Begin
+			While lastSymbol^.fNext <> Nil Do Begin
 				lastSymbol := lastSymbol^.fNext;
-				If(upCase(lastSymbol^.fName) = upCase(name)) then Begin
-					(errorMsg('Symboltable: Duplicate Entry: ' + name));
+				UCFName := upCase(lastSymbol^.fName);
+				UCName := upCase(name);
+				If UCFName = UCName then Begin
+					(errorMsg( 'Symboltable: Duplicate Entry: ' + name));
 					error := cTrue;
 				end;
 			End;
 			if error = cFalse then begin
-				If(lastSymbol^.fName <> '') then begin
+				If lastSymbol^.fName <> '' then begin
 					New(lastSymbol^.fNext);
 					lastSymbol^.fNext^.fPrev := lastSymbol;
 					lastSymbol := lastSymbol^.fNext;
@@ -108,14 +114,18 @@
 	Var symbolIterator: ptObject;
 	var found : Longint;
 	var isWhile : Longint;
+	var UCTypeName : string;
+	var UCFName : String;
 	Begin
-		(infoMsg('Symboltable: Set type to ' + typeName));
+		(infoMsg( 'Symboltable: Set type to ' + typeName));
 
 		// Is it one of the predefined types (Longint, String, etc) then set fType to the constant pointer
-		if upCase(typeName) = 'LONGINT' then Begin
+		UCTypeName := upCase(typeName);
+		if UCTypeName = 'LONGINT' then Begin
 			symbol^ .fType := stTypeLongint;
 		end else begin 
-			if upCase(typeName) = 'STRING' then Begin
+			UCTypeName := upCase(typeName);
+			if UCTypeName = 'STRING' then Begin
 				symbol^.fType := stTypeString;
 			end Else Begin
 				// Find typeName among the Symbols
@@ -130,7 +140,9 @@
 				end;
 				While isWhile = cTrue Do Begin
 					symbolIterator := symbolIterator^.fNext;
-					if upCase(symbolIterator^.fName) = upCase(typeName) then Begin
+					UCTypeName := upCase(typeName);
+					UCFName := upCase(symbolIterator^.fName);
+					if UCFName = UCTypeName then Begin
 						found := cTrue;
 					End;
 
@@ -151,7 +163,7 @@
 					end;
 				End else begin
 					// Type not defined, symbol has to be removed.
-					(errorMsg('Symboltable: Type not defined! ' + typeName));
+					(errorMsg( 'Symboltable: Type not defined! ' + typeName));
 					symbol^.fPrev^.fNext := Nil;
 					// How to do this? Free(symbol);
 				End;
@@ -161,11 +173,15 @@
 
 	Procedure stBeginContext(name: String; form: String);
 	Var lastSymbol: ptObject;
+	var UCFName : String;
+	var UCName : String;
 	Begin
 		lastSymbol := stSymbolTable;
 		While lastSymbol^.fNext <> Nil Do Begin
-			If upCase(lastSymbol^.fName) = upCase(name) then Begin
-				(errorMsg('Symboltable: Duplicate Entry: ' + name));
+			UCFName := upCase(lastSymbol^.fName);
+			UCName := upCase(name);
+			If UCFName = UCName then Begin
+				( errorMsg( 'Symboltable: Duplicate Entry: ' + name));
 			end Else Begin
 				lastSymbol := lastSymbol^.fNext;
 			End;
@@ -188,14 +204,14 @@
 
 	Procedure stBeginProcedure(name: String);
 	begin
-		(infoMsg('Symboltable: Beginning new procedure ' + name));
+		(infoMsg( 'Symboltable: Beginning new procedure ' + name));
 		(stBeginContext(name, stProcedure));
 	end;
 
 	// Beginning of a record
 	Procedure stBeginRecord(name: String);
 	begin
-		(infoMsg('Symboltable: Beginning new record ' + name));
+		(infoMsg( 'Symboltable: Beginning new record ' + name));
 		(stBeginContext(name, stRecord));
 	end;
 
@@ -203,13 +219,13 @@
 	Procedure stEndRecord;
 	Begin
 		stInContext := cFalse;
-		(infoMsg('Symboltable: Ending record'));
+		(infoMsg( 'Symboltable: Ending record'));
 	End;
 
 	Procedure stEndProcedure;
 	Begin
 		stInContext := cFalse;
-		(infoMsg('Symboltable: Ending procedure'));
+		(infoMsg( 'Symboltable: Ending procedure'));
 	End;
 
 	Procedure printType(typeObj: tType; prefix: String);forward;
@@ -224,9 +240,9 @@
 			While curSym <> Nil Do Begin
 				(Write(prefix + 'Symbol Name: ' + curSym^.fName + ', Class: '));
 				(Write(curSym^.fClass));
-				(Write(', Type object: '));
+				(Write( ', Type object: '));
 				if curSym^.fType = Nil then Begin
-					(Writeln('Nil '));
+					(Writeln( 'Nil '));
 				End else begin
 					(Writeln);
 					(printType(curSym^.fType^, prefix + '    '));
@@ -240,15 +256,15 @@
 	Begin
 		(Write(prefix + 'TypeObj Form: ' + typeObj.fForm + ', Base: '));
 		if(typeObj.fBase = Nil) then begin
-			(Write('Nil, '));
+			(Write( 'Nil, '));
 		end else begin
 			(Write(typeObj.fBase^.fForm));
 		end;
 		If typeObj.fFields <> Nil then Begin
-			(Writeln('Field objects:'));
+			(Writeln( 'Field objects:'));
 			(printSymbolTable(typeObj.fFields, prefix + '    '));
 		End else begin
-			(Writeln('Fields: Empty.'));
+			(Writeln( 'Fields: Empty.'));
 		End;
 	End;
 

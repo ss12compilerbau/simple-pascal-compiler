@@ -1,7 +1,3 @@
-//program parser;
-    
-
-    
     
     (***************************************************************)
     (* Beginn Parser *)
@@ -67,11 +63,11 @@
 	begin
 		if isPointer = cTrue then begin
 			(parserInfoStr( 'stInsertSymbol(' + name + 
-				', symbolType, cTrue, ' + varType));
+				', ' + symbolType + ', cTrue, ' + varType + ')'));
 		end
 		else begin
 			(parserInfoStr( 'stInsertSymbol(' + name + 
-				', symbolType, cFalse, ' + varType));
+				', ' + symbolType + ', cFalse, ' + varType + ')'));
 		end;
 	end;
 	
@@ -1746,6 +1742,6 @@
     Procedure ParserInit;
     Begin
         parserErrorCount := 0;
+        parserUseSymTab := cTrue;
+		parserPrintSymTab := cTrue; 
     End;
-
-//begin  end.

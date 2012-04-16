@@ -1,4 +1,3 @@
-// Program asdf;
 		(* größte Zahl, die im Source angegeben werden darf *)
 	Var cMaxNumber: Longint;
 
@@ -405,7 +404,6 @@
 		Var nextWhile : longInt;
 		var symFound: longInt;
 	BEGIN
-		(* WHILE ~R.eof & (ch <= " ") DO Texts.Read(R, ch) END; *)
 		nextWhile := cFalse;
 		isEof;
 		if isEofRet = cFalse then begin	
@@ -524,16 +522,17 @@
 					getSymbol;
 				END
 				ELSE begin
-					infoMsg( 'Unrecognized "/"');
+					errorMsg( 'Unrecognized "/"');
 				END;
 				symFound := cTrue;
 			End;
 		end;
 			
 		if symFound = cFalse then begin
-			infoMsg( 'Unrecognized Symbol "' + ch + '"');
+			errorMsg( 'Unrecognized Symbol "' + ch + '"');
 			NextChar;
 			sym := cNull;
+			// halt(1);
 		END;
 	end;
 
@@ -617,6 +616,9 @@
 
 		cTrue := 1;
 		cFalse := 0;
+		
+		chr10 := chr(10);
+		chrQuote := chr(39); // singel Quote
 
 		peekCallFlag := cFalse;
 		peek2CallFlag := cFalse;
@@ -671,5 +673,4 @@
 		cTypeString := 89;
 		cNil := 88;
 	End;
-// begin
-// end.
+

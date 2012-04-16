@@ -1,4 +1,16 @@
+// TODOs
+// (1) lineNr falsch. Eventuell wegen ($ include
+// (2) infoMsg( 'Unrecognized "/"'); funktioniert nicht
+//     infoMsg( 'Unrecognized "/"'); geht schon;
+// (3) (nextChr);(nextChr;) funktioniert nicht  
+// (4) beim parsen von ScanWrapper sagt Scanner "unrecog. Symbol"
+//		in einer Endlosschleife ==> halt(1) eingefügt.
+
+
 PROGRAM SPC;
+
+	var scannerParamStr0 : string;
+	var scannerParamStr1 : string;
 
 
 	{$include 'scanner.pas';}
@@ -20,67 +32,51 @@ PROGRAM SPC;
 
         scanInitFile(inputFile);
 		getSymbol;
-		while( sym <> cEOF) DO
+		while sym <> cEOF DO
 		BEGIN
 			if sym = cIdent then
 			BEGIN
-				// write( W, sym);
-				// if debugmode then 
 				write(sym);
-				// write( W, '  ident = ');
-				// if debugmode then 
 				write( '  ident = ');
 				printId( id);
 			END
 
-			ELSE IF sym = cNumber then
-			BEGIN
-				// write( W, sym);
-				// if debugmode then 
-				write( sym);
-				// write( W, '  ident = ');
-				// if debugmode then 
-				write( '  ident = ');
-				// writeln( W, val);
-				// if debugmode then 
-				writeln(val);
-			END
-
-			ELSE IF sym = cString then
-			BEGIN
-				// write( W, sym);
-				// if debugmode then 
-				write( sym);
-				// write( W, '  str = ');
-				// if debugmode then 
-				write( '  str = ');
-				printStr( str);
-			END
-
-			ELSE BEGIN
-			  	// writeln( W, sym);
-				// if debugmode then 
-				writeln( sym);
-			END;
-			getSymbol;
-		END;
-		// writeln( W, sym);
-		// if debugmode then 
+			ELSE begin
+				IF sym = cNumber then BEGIN
+					write( sym);
+					write( '  ident = ');
+					writeln(val);
+				END
+				ELSE begin
+					IF sym = cString then BEGIN
+						write( sym);
+						write( '  str = ');
+						printStr( str);
+					END
+					ELSE BEGIN
+						writeln( sym);
+					END;
+					
+					getSymbol;
+				END;
+			end;
+		end;
+		
 		writeln( sym);
-
 		close( R);
-		// close( W);
 	END;
 
 
 BEGIN
-    scannerInit();
+    scannerInit;
 	if ParamCount < 1 then begin
-			writeln('Not enough parameters given. Usage: ' + ParamStr(0) + ' input.pas');
+			scannerParamStr0 := ParamStr(0);
+			writeln( 'Not enough parameters given. Usage: ' + scannerParamStr0 + ' input.pas');
 			halt(1);
 		end
 	else begin
-		scan(ParamStr(1));
+		scannerParamStr1 := ParamStr(1);
+		scan(scannerParamStr1);
 	end;
-END.
 
+	END.
