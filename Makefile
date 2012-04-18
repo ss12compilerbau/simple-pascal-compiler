@@ -62,10 +62,10 @@ build.parser : clean
 	fpc ParseWrapper.pas
 
 test.parser : test.selfParsing
-	@echo "TODO: to test the parser"
+	@echo "test.parser successful"
 
-test.selfParsing :
-	# ./ParserWrapper parser.pas
+test.selfParsing : build.parser
+	 ./ParseWrapper ParseWrapper.pas
 
 # Symboltable
 build.symboltable :
