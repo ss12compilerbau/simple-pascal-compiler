@@ -70,10 +70,6 @@
 
 			// If this is the first global Symbol we instantiate it and set the name empty 
 			// so we recognize the situation later
-			if(stSymbolTable = Nil) then begin
-				New(stSymbolTable);
-				stSymbolTable^.fName := '';
-			End;
 			lastSymbol := stSymbolTable;
 		End;
 
@@ -120,16 +116,20 @@
 		UCFName := upCase(lastSymbol^.fName);
 		UCName := upCase(Name);
 		If UCFName = UCName then Begin
-			(errorMsg( 'Symboltable: Duplicate Entry: ' + name));
-			error := cTrue;
+		  if form <> stProcedure then begin
+			  (errorMsg( 'Symboltable: Duplicate Entry: ' + name));
+			  error := cTrue;
+			end;
 		end;
 		While lastSymbol^.fNext <> Nil Do Begin
 			lastSymbol := lastSymbol^.fNext;
 			UCFName := upCase(lastSymbol^.fName);
 			UCName := upCase(name);
 			If UCFName = UCName then Begin
-				(errorMsg( 'Symboltable: Duplicate Entry: ' + name));
-				error := cTrue;
+		    if form <> stProcedure then begin
+			    (errorMsg( 'Symboltable: Duplicate Entry: ' + name));
+			    error := cTrue;
+			  end;
 			end;
 		End;
 		if error = cFalse then begin
@@ -297,6 +297,9 @@
 		// Init stTypeString
 		New(stTypeString);
 		stTypeString^.fForm := 'STRING';
+
+		New(stSymbolTable);
+		stSymbolTable^.fName := '';
 
 		stInContext := cFalse;
 	End;

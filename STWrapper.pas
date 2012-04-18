@@ -11,7 +11,6 @@ BEGIN
     STInit();
 
 	// Examples:
-
 	Writeln('var i: Longint;');
 	stInsertSymbol('I', stVar, cFalse, 'Longint');
 
@@ -39,6 +38,7 @@ BEGIN
 
 	Writeln('Procedure isEquStrId( id1: String);forward;');
 	stBeginProcedure('isEquStrId');
+	stInsertSymbol('id1', stVar, cFalse, 'String');
 	stEndProcedure();
 
 	Writeln('Var xy: tKWs;');
