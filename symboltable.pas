@@ -33,6 +33,9 @@
 
 	var stTypeLongint: ptType;
 	var stTypeString: ptType;
+	var stTypeInteger: ptType;
+	var stTypeText: ptType;
+	var stTypeChar: ptType;
 
 	Procedure stSetType(symbol: ptObject; typeName: String; isPointer: Longint);forward;
 
@@ -171,47 +174,62 @@
 			UCTypeName := upCase(typeName);
 			if UCTypeName = 'STRING' then Begin
 				symbol^.fType := stTypeString;
-			end Else Begin
-				// Find typeName among the Symbols
-				symbolIterator := stSymbolTable;
-				found := cFalse;
+		  end else begin 
+			  UCTypeName := upCase(typeName);
+			  if UCTypeName = 'INTEGER' then Begin
+				  symbol^.fType := stTypeInteger;
+		    end else begin 
+			    UCTypeName := upCase(typeName);
+			    if UCTypeName = 'TEXT' then Begin
+				    symbol^.fType := stTypeText;
+		      end else begin 
+			      UCTypeName := upCase(typeName);
+			      if UCTypeName = 'CHAR' then Begin
+				      symbol^.fType := stTypeChar;
+			      end Else Begin
+				      // Find typeName among the Symbols
+				      symbolIterator := stSymbolTable;
+				      found := cFalse;
 
-				isWhile := cFalse;
-				If symbolIterator^.fNext <> Nil then Begin
-					if found = cFalse then begin
-						isWhile := cTrue;
-					end;
-				end;
-				While isWhile = cTrue Do Begin
-					symbolIterator := symbolIterator^.fNext;
-					UCTypeName := upCase(typeName);
-					UCFName := upCase(symbolIterator^.fName);
-					if UCFName = UCTypeName then Begin
-						found := cTrue;
-					End;
+				      isWhile := cFalse;
+				      If symbolIterator^.fNext <> Nil then Begin
+					      if found = cFalse then begin
+						      isWhile := cTrue;
+					      end;
+				      end;
+				      While isWhile = cTrue Do Begin
+					      symbolIterator := symbolIterator^.fNext;
+					      UCTypeName := upCase(typeName);
+					      UCFName := upCase(symbolIterator^.fName);
+					      if UCFName = UCTypeName then Begin
+						      found := cTrue;
+					      End;
 
-					isWhile := cFalse;
-					If symbolIterator^.fNext <> Nil then Begin
-						if found = cFalse then begin
-							isWhile := cTrue;
-						end;
-					end;
+					      isWhile := cFalse;
+					      If symbolIterator^.fNext <> Nil then Begin
+						      if found = cFalse then begin
+							      isWhile := cTrue;
+						      end;
+					      end;
 
-				End;
-				if found = cTrue then Begin
-					if symbolIterator^.fClass = stType then Begin
-						symbol^.fType := symbolIterator^.fType;
-					end else begin
-						// If it's not a Type, error!
-						(infoMsg(typeName + ' is not a TYPE!'));
-					end;
-				End else begin
-					// Type not defined, symbol has to be removed.
-					(errorMsg( 'Symboltable: Type not defined! ' + typeName));
-					symbol^.fPrev^.fNext := Nil;
-					// How to do this? Free(symbol);
-				End;
-			End;
+				      End;
+				      if found = cTrue then Begin
+					      if symbolIterator^.fClass = stType then Begin
+						      symbol^.fType := symbolIterator^.fType;
+					      end else begin
+						      // If it's not a Type, error!
+						      (infoMsg(typeName + ' is not a TYPE!'));
+					      end;
+				      End else begin
+					      // Type not defined, symbol has to be removed.
+					      (errorMsg( 'Symboltable: Type not defined! ' + typeName));
+					      symbol^.fPrev^.fNext := Nil;
+					      // How to do this? Free(symbol);
+				      End;
+			      End;
+		      End;
+		    End;
+		  End;
 		End;
 	End;
 
@@ -290,11 +308,19 @@
 		stRecord := 'RECORD';
 		stProcedure := 'PROCEDURE';
 
-		// Init stTypeLongint
+		// Init predefined types
 		New(stTypeLongint);
 		stTypeLongint^.fForm := 'LONGINT';
 
-		// Init stTypeString
+		New(stTypeInteger);
+		stTypeInteger^.fForm := 'INTEGER';
+
+		New(stTypeText);
+		stTypeText^.fForm := 'TEXT';
+
+		New(stTypeChar);
+		stTypeChar^.fForm := 'CHAR';
+
 		New(stTypeString);
 		stTypeString^.fForm := 'STRING';
 
