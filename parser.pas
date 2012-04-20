@@ -1,4 +1,8 @@
     
+ 
+	
+    
+    
     (***************************************************************)
     (* Beginn Parser *)
     var gRetLongInt : longint;
@@ -9,6 +13,7 @@
     var parserDeclIsPtrType : longInt; // von parseType gesetzt
     var parserUseSymTab : longint;
     var parserPrintSymTab : longint;
+
     
 
     procedure parseCodeBlock; forward;
@@ -1489,13 +1494,6 @@
             ret :=  gRetLongInt;
         end;
         
-        if parserUseSymTab = cTrue then begin
-			(stEndProcedure);
-		end;
-		if parserPrintSymTab = cTrue then begin
-			(parserInfoStr( 'stEndProcedure'));
-		end;
-        
         (parserDebugStrInt( 'parseProcHeading', ret));
         gRetLongInt := ret;
     end;
@@ -1541,6 +1539,13 @@
             (parseSymbol( cSemicolon));
             ret :=  gRetLongInt;
         end;
+        
+        if parserUseSymTab = cTrue then begin
+			(stEndProcedure);
+		end;
+		if parserPrintSymTab = cTrue then begin
+			(parserInfoStr( 'stEndProcedure'));
+		end;
         
         (parserDebugStrInt( 'parseProcDeclaration', ret));
         gRetLongInt := ret;
@@ -1728,10 +1733,10 @@
         (parserInfoCRLF);
         (parserInfoStr( '-------------------------------------'));
         if parserErrorCount = 0 then begin
-            (parserInfoStr( '+++ Compilierung erfolgreich +++'));
+            (parserInfoStr( '+++ parsing o.k. +++'));
         end
         else begin
-            (parserInfoStr( '+++ Compilierung fehlgeschlagen +++'));
+            (parserInfoStr( '+++ parsing failed +++'));
         end;
         
         (close( R)); 
@@ -1742,6 +1747,5 @@
     Procedure ParserInit;
     Begin
         parserErrorCount := 0;
-        parserUseSymTab := cTrue;
-		parserPrintSymTab := cTrue; 
+        
     End;

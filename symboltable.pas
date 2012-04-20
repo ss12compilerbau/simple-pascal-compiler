@@ -33,9 +33,6 @@
 
 	var stTypeLongint: ptType;
 	var stTypeString: ptType;
-	var stTypeInteger: ptType;
-	var stTypeText: ptType;
-	var stTypeChar: ptType;
 
 	Procedure stSetType(symbol: ptObject; typeName: String; isPointer: Longint);forward;
 
@@ -73,6 +70,10 @@
 
 			// If this is the first global Symbol we instantiate it and set the name empty 
 			// so we recognize the situation later
+			if(stSymbolTable = Nil) then begin
+				New(stSymbolTable);
+				stSymbolTable^.fName := '';
+			End;
 			lastSymbol := stSymbolTable;
 		End;
 
@@ -108,54 +109,6 @@
 		End;
 	End;
 
-	Procedure stBeginContext(name: String; form: String);
-	Var lastSymbol: ptObject;
-	var error: Longint;
-	var UCFName : String;
-	var UCName : String;
-	Begin
-		lastSymbol := stSymbolTable;
-
-		UCFName := upCase(lastSymbol^.fName);
-		UCName := upCase(Name);
-		If UCFName = UCName then Begin
-		  if form <> stProcedure then begin
-			  (errorMsg( 'Symboltable: Duplicate Entry: ' + name));
-			  error := cTrue;
-			end;
-		end;
-		While lastSymbol^.fNext <> Nil Do Begin
-			lastSymbol := lastSymbol^.fNext;
-			UCFName := upCase(lastSymbol^.fName);
-			UCName := upCase(name);
-			If UCFName = UCName then Begin
-		    if form <> stProcedure then begin
-			    (errorMsg( 'Symboltable: Duplicate Entry: ' + name));
-			    error := cTrue;
-			  end;
-			end;
-		End;
-		if error = cFalse then begin
-			If lastSymbol^.fName <> '' then begin
-				// Create the actual Symbol for the Record
-				New(lastSymbol^.fNext);
-				lastSymbol^.fNext^.fPrev := lastSymbol;
-				stContextEntryPointer := lastSymbol^.fNext;
-				stContextEntryPointer^.fName := name;
-				New(stContextEntryPointer^.fType);
-
-				if form = stRecord then begin
-					stContextEntryPointer^.fClass := stType;
-					stContextEntryPointer^ .fType^ .fForm := stRecord;
-				end else begin
-					stContextEntryPointer^.fClass := stProcedure;
-					stContextEntryPointer^ .fType^ .fForm := stProcedure;
-				end;
-				stInContext := cTrue;
-			end;
-		end;
-	End;
-
 	// Set the type on a symbol.
 	Procedure stSetType(symbol: ptObject; typeName: String; isPointer: Longint);
 	Var symbolIterator: ptObject;
@@ -174,63 +127,79 @@
 			UCTypeName := upCase(typeName);
 			if UCTypeName = 'STRING' then Begin
 				symbol^.fType := stTypeString;
-		  end else begin 
-			  UCTypeName := upCase(typeName);
-			  if UCTypeName = 'INTEGER' then Begin
-				  symbol^.fType := stTypeInteger;
-		    end else begin 
-			    UCTypeName := upCase(typeName);
-			    if UCTypeName = 'TEXT' then Begin
-				    symbol^.fType := stTypeText;
-		      end else begin 
-			      UCTypeName := upCase(typeName);
-			      if UCTypeName = 'CHAR' then Begin
-				      symbol^.fType := stTypeChar;
-			      end Else Begin
-				      // Find typeName among the Symbols
-				      symbolIterator := stSymbolTable;
-				      found := cFalse;
+			end Else Begin
+				// Find typeName among the Symbols
+				symbolIterator := stSymbolTable;
+				found := cFalse;
 
-				      isWhile := cFalse;
-				      If symbolIterator^.fNext <> Nil then Begin
-					      if found = cFalse then begin
-						      isWhile := cTrue;
-					      end;
-				      end;
-				      While isWhile = cTrue Do Begin
-					      symbolIterator := symbolIterator^.fNext;
-					      UCTypeName := upCase(typeName);
-					      UCFName := upCase(symbolIterator^.fName);
-					      if UCFName = UCTypeName then Begin
-						      found := cTrue;
-					      End;
+				isWhile := cFalse;
+				If symbolIterator^.fNext <> Nil then Begin
+					if found = cFalse then begin
+						isWhile := cTrue;
+					end;
+				end;
+				While isWhile = cTrue Do Begin
+					symbolIterator := symbolIterator^.fNext;
+					UCTypeName := upCase(typeName);
+					UCFName := upCase(symbolIterator^.fName);
+					if UCFName = UCTypeName then Begin
+						found := cTrue;
+					End;
 
-					      isWhile := cFalse;
-					      If symbolIterator^.fNext <> Nil then Begin
-						      if found = cFalse then begin
-							      isWhile := cTrue;
-						      end;
-					      end;
+					isWhile := cFalse;
+					If symbolIterator^.fNext <> Nil then Begin
+						if found = cFalse then begin
+							isWhile := cTrue;
+						end;
+					end;
 
-				      End;
-				      if found = cTrue then Begin
-					      if symbolIterator^.fClass = stType then Begin
-						      symbol^.fType := symbolIterator^.fType;
-					      end else begin
-						      // If it's not a Type, error!
-						      (infoMsg(typeName + ' is not a TYPE!'));
-					      end;
-				      End else begin
-					      // Type not defined, symbol has to be removed.
-					      (errorMsg( 'Symboltable: Type not defined! ' + typeName));
-					      symbol^.fPrev^.fNext := Nil;
-					      // How to do this? Free(symbol);
-				      End;
-			      End;
-		      End;
-		    End;
-		  End;
+				End;
+				if found = cTrue then Begin
+					if symbolIterator^.fClass = stType then Begin
+						symbol^.fType := symbolIterator^.fType;
+					end else begin
+						// If it's not a Type, error!
+						(infoMsg(typeName + ' is not a TYPE!'));
+					end;
+				End else begin
+					// Type not defined, symbol has to be removed.
+					(errorMsg( 'Symboltable: Type not defined! ' + typeName));
+					symbol^.fPrev^.fNext := Nil;
+					// How to do this? Free(symbol);
+				End;
+			End;
 		End;
+	End;
+
+	Procedure stBeginContext(name: String; form: String);
+	Var lastSymbol: ptObject;
+	var UCFName : String;
+	var UCName : String;
+	Begin
+		lastSymbol := stSymbolTable;
+		While lastSymbol^.fNext <> Nil Do Begin
+			UCFName := upCase(lastSymbol^.fName);
+			UCName := upCase(name);
+			If UCFName = UCName then Begin
+				( errorMsg( 'Symboltable: Duplicate Entry: ' + name));
+			end Else Begin
+				lastSymbol := lastSymbol^.fNext;
+			End;
+		End;
+		// Create the actual Symbol for the Record
+		New(lastSymbol^.fNext);
+		lastSymbol^.fNext^.fPrev := lastSymbol;
+		stContextEntryPointer := lastSymbol^.fNext;
+		stContextEntryPointer^.fName := name;
+		New(stContextEntryPointer^.fType);
+		if form = stRecord then begin
+			stContextEntryPointer^.fClass := stType;
+			stContextEntryPointer^ .fType^ .fForm := stRecord;
+		end else begin
+			stContextEntryPointer^.fClass := stProcedure;
+			stContextEntryPointer^ .fType^ .fForm := stProcedure;
+		end;
+		stInContext := cTrue;
 	End;
 
 	Procedure stBeginProcedure(name: String);
@@ -262,6 +231,7 @@
 	Procedure printType(typeObj: tType; prefix: String);forward;
 
 	Procedure printSymbolTable(symbolTable: ptObject; prefix: String);
+	//Procedure printSymbolTable;
 	Var curSym: ptObject;
 	Begin
 		if symbolTable = Nil then begin
@@ -308,24 +278,13 @@
 		stRecord := 'RECORD';
 		stProcedure := 'PROCEDURE';
 
-		// Init predefined types
+		// Init stTypeLongint
 		New(stTypeLongint);
 		stTypeLongint^.fForm := 'LONGINT';
 
-		New(stTypeInteger);
-		stTypeInteger^.fForm := 'INTEGER';
-
-		New(stTypeText);
-		stTypeText^.fForm := 'TEXT';
-
-		New(stTypeChar);
-		stTypeChar^.fForm := 'CHAR';
-
+		// Init stTypeString
 		New(stTypeString);
 		stTypeString^.fForm := 'STRING';
-
-		New(stSymbolTable);
-		stSymbolTable^.fName := '';
 
 		stInContext := cFalse;
 	End;
