@@ -25,7 +25,7 @@ BEGIN
 
 	Writeln('var j: ^longint;');
 	stInsertSymbol('J', stVar, cTrue, 'longint');
-
+(*
 	Writeln('Type tKWs = record');
 	stBeginRecord('tKWs');
 	Writeln('	sym: Longint;');
@@ -60,8 +60,8 @@ BEGIN
 	Writeln('.. END;');
 	stEndProcedure();
 
+*)
 	Writeln;
 	printSymbolTable(stSymbolTable, '');
-
 END.
 

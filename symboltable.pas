@@ -2,6 +2,7 @@
 	Var stType: String;
 	Var stRecord: String;
 	Var stProcedure: String;
+	Var stPointer: String;
 
 	Type // forward type declatation, has to be in the same Type block!
 		ptObject = ^tObject;
@@ -37,6 +38,8 @@
 	Procedure stSetType(symbol: ptObject; typeName: String; isPointer: Longint);forward;
 
 	// stInsertSymbol(<name>, <SymbolType>, <isPointer>, <varType>)
+	// erzeugt einen Eintrag in der globalen symboltabelle oder in der lokalen symboltabelle,
+	// falls eine solche aktiviert worden ist für eine Procedure oder Record
 	Procedure stInsertSymbol(name: String; symbolType: String; isPointer: Longint; varType: String);
 	Var lastSymbol: ptObject;
 	Var error: Longint;
@@ -277,6 +280,7 @@
 		stType := 'TYPE';
 		stRecord := 'RECORD';
 		stProcedure := 'PROCEDURE';
+		stPointer := 'POINTER';
 
 		// Init stTypeLongint
 		New(stTypeLongint);
