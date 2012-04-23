@@ -72,8 +72,8 @@
 		(*errpos: LONGINT;*) (* never used *)
 	Var R: Text;
 	
-	var chr10 : char;
-	var chrQuote : char;
+	var chr10 : String;
+	var chrQuote : String;
 
 	// for {$include...} implementation
 	Var lineNrTemp: Longint;
@@ -127,7 +127,7 @@
 	end;
 
 	PROCEDURE NextChar;
-	var c: Char;
+	var c: String;
 	//var c10: Char;
 	BEGIN
 		(Read(R, c));
