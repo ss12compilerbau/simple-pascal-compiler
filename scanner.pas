@@ -62,7 +62,6 @@
 	Var id2: String;
 	Var str: String; (* wenn sym = cString, dann speichert str den string- Wert *)
 	Var str2: String;
-		(* error: BOOLEAN; *)
 
 	Var peekCallFlag : longint; (* cTrue, falls sym durch Aufruf peekSymbol *)
 	Var peek2CallFlag : longint; (* cTrue, 2 Peeks in Zukunft *)
@@ -119,10 +118,11 @@
 	
 	var isEofRet : longint;
 	procedure isEof;
-		var b : boolean;
+		var b : Longint;
 	begin
-		b := eof(R);
-		if b = true then begin isEofRet := cTrue; end
+		b := cFalse; 
+		if eof(R) then begin b := cTrue; end;
+		if b = cTrue then begin isEofRet := cTrue; end
 		else begin isEofRet := cFalse; end;
 	end;
 
