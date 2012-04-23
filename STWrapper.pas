@@ -11,21 +11,21 @@ BEGIN
     STInit();
 
 	// Examples:
-	Writeln('var i: Longint;');
-	stInsertSymbol('I', stVar, cFalse, 'Longint');
+	Writeln('var i1: Longint;');
+	stInsertSymbol('I1', stVar, cFalse, 'Longint');
 
-	Writeln('var i: Longint;');
-	stInsertSymbol('I', stVar, cFalse, 'Longint');
+	Writeln('var i1: Longint;');
+	stInsertSymbol('I1', stVar, cFalse, 'Longint');
 
-	Writeln('var j: ^longint;');
-	stInsertSymbol('J', stVar, cTrue, 'longint');
+	Writeln('var j1: ^longint;');
+	stInsertSymbol('J1', stVar, cTrue, 'longint');
 
-	Writeln('var j: ^longint;');
-	stInsertSymbol('J', stVar, cTrue, 'longint');
+	Writeln('var j1: ^longint;');
+	stInsertSymbol('J1', stVar, cTrue, 'longint');
 
-	Writeln('var j: ^longint;');
-	stInsertSymbol('J', stVar, cTrue, 'longint');
-(*
+	Writeln('var j1: ^longint;');
+	stInsertSymbol('J1', stVar, cTrue, 'longint');
+
 	Writeln('Type tKWs = record');
 	stBeginRecord('tKWs');
 	Writeln('	sym: Longint;');
@@ -40,6 +40,7 @@ BEGIN
 	stBeginProcedure('isEquStrId');
 	stInsertSymbol('id1', stVar, cFalse, 'String');
 	stEndProcedure();
+	stProcedureForward;
 
 	Writeln('Var xy: tKWs;');
 	stInsertSymbol('XY', stVar, cFalse, 'tKWs');
@@ -60,8 +61,8 @@ BEGIN
 	Writeln('.. END;');
 	stEndProcedure();
 
-*)
+
 	Writeln;
-	printSymbolTable(stSymbolTable, '');
+	printSymbolTable(stCurrentScope, '');
 END.
 

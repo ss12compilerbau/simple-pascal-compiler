@@ -30,12 +30,12 @@ PROGRAM SPC;
 	    end
 	    else begin
 			(* scan( ParamStr(1), ParamStr(2) ) *)
-			printSymbolTable( stSymbolTable, ' ');
+			printSymbolTable( stCurrentScope, ' ');
 	
 			parseParamStr1 := ParamStr(1);
 			parse( parseParamStr1);
 			
-			printSymbolTable( stSymbolTable, ' ');
+			printSymbolTable( stCurrentScope, ' ');
 	    end;
 
 	END.
