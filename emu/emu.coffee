@@ -70,16 +70,73 @@ class Emulator
             reg[a].set reg[b].get() - reg[c].get()
             pc.set pc.get() + 4
 
-        ###
         # Memory Instructions F1, Load and store words
         @I.add 12, 'LDW', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set mem[reg[b].get() + c].get()/4]
+            reg[a].set(mem.get((reg[b].get() + c)) / 4)
             pc.set pc.get() + 4
 
         @I.add 13, 'STW', 'F1', (a,b,c, reg, mem, pc) ->
-            mem[reg[b].get() + c].get()/4].set reg[a]
+            mem.set((reg[b].get() + c) /4, reg[a])
             pc.set pc.get() + 4
-        ###
+
+        # F1 POP and PUSH
+
+        # Control Instructions F1 Conditional Branching
+        @I.add 14, 'BEQ', 'F1', (a,b,c, reg, mem, pc) ->
+            if reg[a].get() is 0
+                pc.set pc.get() + c*4
+            else
+                pc.set pc.get() + 4
+
+        @I.add 15, 'BGE', 'F1', (a,b,c, reg, mem, pc) ->
+            if reg[a].get() >= 0
+                pc.set pc.get() + c*4
+            else
+                pc.set pc.get() + 4
+
+        @I.add 16, 'BGT', 'F1', (a,b,c, reg, mem, pc) ->
+            if reg[a].get() > 0
+                pc.set pc.get() + c*4
+            else
+                pc.set pc.get() + 4
+
+        @I.add 17, 'BLE', 'F1', (a,b,c, reg, mem, pc) ->
+            if reg[a].get() <= 0
+                pc.set pc.get() + c*4
+            else
+                pc.set pc.get() + 4
+
+        @I.add 18, 'BLT', 'F1', (a,b,c, reg, mem, pc) ->
+            if reg[a].get() < 0
+                pc.set pc.get() + c*4
+            else
+                pc.set pc.get() + 4
+
+        @I.add 19, 'BNE', 'F1', (a,b,c, reg, mem, pc) ->
+            if reg[a].get() isnt 0
+                pc.set pc.get() + c*4
+            else
+                pc.set pc.get() + 4
+
+        # Unconditional Branching F1
+        @I.add 20, 'BR', 'F1', (a,b,c, reg, mem, pc) ->
+            pc.set pc.get() + c*4
+
+        @I.add 21, 'BSR', 'F1', (a,b,c, reg, mem, pc) ->
+            reg[31].set pc.get() + 4
+            pc.set pc.get() + c*4
+
+        @I.add 22, 'WRN', 'F1', (a,b,c, reg, mem, pc) ->
+            console.log reg[a].get()
+            pc.set pc.get() + 4
+
+        @I.add 23, 'EXT', 'F1', (a,b,c, reg, mem, pc) =>
+            @exit = true
+            @exitCode = reg[a].get()
+            pc.set pc.get() + 4
+
+
+
         console.info "The instruction set has #{@I.instructions.length} instructions."
 
     load: (filename, callback) ->
@@ -98,7 +155,7 @@ class Emulator
         for p in instrStr.split(" ")[1].trim().split ","
             cl.push Number p.trim()
         instr = @I.encode cl
-        console.info cl, "0x#{instr.toString(16)}"
+        console.info "#{@_loadAddr}: ", cl
         @mem.put @_loadAddr, instr
         @_loadAddr += 4
     _openFile: (filename, callback) ->
@@ -121,8 +178,24 @@ class Emulator
                 nextRegForParams--
             else
                 throw "Only number parameters are implemented"
-        console.info "Execute is to be implemented"
-        callback(0)
+        if @debug
+            debugger
+        if @debug then @printState()
+        while @exit isnt true
+            @fetch()
+            instr = @I.getInstruction @ir.get()
+            instrWord = @ir.get()
+            a = instr.getA instrWord
+            b = instr.getB instrWord
+            c = instr.getC instrWord
+            if @debug
+                @printState()
+                console.info state = "\nline #{@pc.get()/4}: running #{instr.name} #{a},#{b},#{c}"
+            instr.execute a,b,c, @reg, @mem, @pc
+        callback(@exitCode)
+
+    fetch: ->
+        @ir.set @mem.get @pc.get()
 
     printState: ->
         console.log "\nMachine state:"
@@ -130,7 +203,7 @@ class Emulator
         console.log @pc.toString()
         for r, i in @reg
             console.log r.toString()
-        @mem.printState()
+        # @mem.printState()
 
 class Register
     constructor: (@name) ->
@@ -148,8 +221,8 @@ class Register
 class InstructionRegister extends Register
     constructor: ->
         super 'IR'
-    decode: ->
-        @op = @val >> 26 & 63;
+#     decode: ->
+#        @op = @val >> 26 & 63
 
 class Memory
     constructor: (size)->
@@ -194,6 +267,9 @@ class InstructionSet
         unless @operations[cl[0]]
             throw "Operation #{cl[0]} is undefined!"
         @operations[cl[0]].encode cl[1] or 0, cl[2] or 0, cl[3] or 0
+    getInstruction: (instrWord) ->
+        opcode = instrWord >> 26 & 63
+        @instructions[opcode]
 
 class Instruction
     constructor: (@opcode, @name, @execute) ->
@@ -202,26 +278,34 @@ class Instruction
 
 class F1Instr extends Instruction
     encode: (a,b,c) ->
+        if c<0 then c += 0x10000
         (@opcode << 26) + (a << 21) + (b << 16) + c
     getA: (instr) ->
         instr >> 21 & 31 # 5 bit
     getB: (instr) ->
         instr >> 16 & 31 # 5 bit
     getC: (instr) ->
-        instr & 0xffff # 16 bit
+        c = instr & 0xffff # 16 bit
+        if c > 0xff then c -= 0x10000
+        c
 
 class F2Instr extends Instruction
     encode: (a,b,c) ->
+        if c<0 then c += 0x10000
         (@opcode << 26) + (a << 21) + (b << 16) + c
     getA: (instr) ->
         instr >> 21 & 31 # 5 bit
     getB: (instr) ->
         instr >> 16 & 31 # 5 bit
     getC: (instr) ->
-        instr & 31 # 5 bit
+        c = instr & 31 # 5 bit
+        if c > 0xff then c -= 0x10000
+        c
 
 class F3Instr extends Instruction
     encode: (a,b,c) ->
+        if c < 0
+            throw "F3 instructions cannot have a negative c"
         (@opcode << 26) + c
     getA: (instr) ->
         0
@@ -236,13 +320,13 @@ if args.length is 0
     console.info "Usage: coffee emu.coffee filename"
 else
     emu = new Emulator
+    emu.debug = false
     emu.load args[0], (err) ->
         if err
             console.error err
         else
             programParams = args.splice 1
             emu.execute programParams, (exitCode) ->
-                emu.printState()
                 if exitCode isnt 0
                     console.info "Exit code is #{exitCode}"
                 else
