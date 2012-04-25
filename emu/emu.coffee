@@ -142,6 +142,9 @@ class Memory
         console.log res
 
 # The instruction set
+# The instructions are called in teh context of the Emulator object. 
+# That means, in teh functions @reg, @mem, @pc, @ir, etc are instance variables of
+# the emulator.
 class InstructionSet
     constructor: ->
         # can be accessed by @instructions[opcode]
