@@ -1,0 +1,18 @@
+Homework Assignment 3 (due May 3, 2pm):
+Implement an emulator of a DLX-like (RISC) machine.
+Make sure your emulator also contains a loader that starts the main routine of the executable.
+Implement the following program in your machine code calculating the n'th Fibonacci number (iteratively).
+    int fib (int n) {
+        int a = 1;
+        int b = 1;
+        int c;
+        for (int i = 3; i <= n; i++) {
+            c = a + b;
+            a = b;
+            b = c;
+        }
+        return b;
+    }
+If your compiler targets an existing processor, e.g. x86, implement at least the above program in its assembly language.
+Demonstrate that your Fibonacci calculation provides the correct result.
+Upload the code to the wiki.
