@@ -5,11 +5,12 @@
 # implement passing a string parameter, e.g. as a command line parameter
 
 class Emulator
+    # Options can define memSize (in bytes) and debug (boolean)
     constructor: (options) ->
         options ?= {}
         @debug = options.debug or false
         # it has an instruction register and a program counter
-        @ir = new InstructionRegister
+        @ir = new Register "IR"
         @pc = new Register "PC"
         # 32 32bit general purpose registers
         @reg = []
@@ -20,6 +21,7 @@ class Emulator
         if @debug
             console.info "The instruction set has #{@I.instructions.length} instructions."
 
+    # Loads an assembly file. When done, calls the callback function
     load: (filename, callback) ->
         finish = false
         @origCode = []
@@ -30,27 +32,12 @@ class Emulator
                 unless finish
                     instr = line.split(";")[0].trim()
                     if instr
-                        @processInstr instr
+                        @_processInstr instr
                         @origCode.push line
             callback()
-    processInstr: (instrStr) ->
-        cl = []
-        cl[0] = instrStr.split(" ")[0].trim()
-        for p in instrStr.split(" ")[1].trim().split ","
-            cl.push Number p.trim()
-        instr = @I.encode cl
-        if @debug
-            console.info "#{@_loadAddr}: ", cl
-        @mem.put @_loadAddr, instr
-        @_loadAddr += 4
-    _openFile: (filename, callback) ->
-        fs = require 'fs'
-        fs.readFile args[0], "utf-8", (err, data) ->
-            if err and err.errno is 34
-                console.error "The file #{args[0]} doesn't exist!"
-            else
-                callback data
-                # callback()
+
+    # Execute program with the given parameter list. 
+    # When done, call the callback function with the exitCode specified by the running program.
     execute: (params, callback) ->
         # should be put on the stack instead of the registers
         nextRegForParams = 30
@@ -67,7 +54,7 @@ class Emulator
             debugger
         if @debug then @printState()
         while @exit isnt true
-            @fetch()
+            @ir.set @mem.get @pc.get()
             instr = @I.getInstruction @ir.get()
             instrWord = @ir.get()
             a = instr.getA instrWord
@@ -81,9 +68,7 @@ class Emulator
             instr.execute.apply @, [a,b,c]#, @reg, @mem, @pc]
         callback(@exitCode)
 
-    fetch: ->
-        @ir.set @mem.get @pc.get()
-
+    # Print the machine state on the console
     printState: ->
         console.log "\nMachine state:"
         console.log @ir.toString()
@@ -92,6 +77,29 @@ class Emulator
             console.log r.toString()
         # @mem.printState()
 
+    # internal method
+    _processInstr: (instrStr) ->
+        cl = []
+        cl[0] = instrStr.split(" ")[0].trim()
+        for p in instrStr.split(" ")[1].trim().split ","
+            cl.push Number p.trim()
+        instr = @I.encode cl
+        if @debug
+            console.info "#{@_loadAddr}: ", cl
+        @mem.put @_loadAddr, instr
+        @_loadAddr += 4
+
+    # internal method
+    _openFile: (filename, callback) ->
+        fs = require 'fs'
+        fs.readFile filename, "utf-8", (err, data) ->
+            if err and err.errno is 34
+                console.error "The file #{filename} doesn't exist!"
+            else
+                callback data
+                # callback()
+
+# 32-bit register
 class Register
     constructor: (@name) ->
         @val = 0
@@ -105,17 +113,13 @@ class Register
         hex = (@val+0x100000000).toString(16).substr(-8)
         "#{@name} = 0x#{hex} (#{@val})"
 
-class InstructionRegister extends Register
-    constructor: ->
-        super 'IR'
-#     decode: ->
-#        @op = @val >> 26 & 63
-
+# byte-addressed Memory block with word-wise put and get
 class Memory
     constructor: (size)->
         @mem = []
         for i in [0..size]
             @mem[i] = 0
+    # addr is the starting byte, word is the value
     put: (addr, word) ->
         if addr+3 > @mem.length
             throw "Memory overflow"
@@ -123,12 +127,13 @@ class Memory
         for i in [0..3]
             offset = (3-i)*8
             @mem[addr + i] = (word >> offset) & 255
-        # @printState()
+    # addr is the starting byte. Return value is a word.
     get: (addr) ->
         res = 0
         for i in [0..3]
             res += @mem[addr+i] << ((3-i)*8)
         res
+    # Prints the whole memory block on the console
     printState: ->
         console.log "Memory state:"
         res = ""
@@ -136,9 +141,12 @@ class Memory
             res += " #{(m + 0x100).toString(16).substr(-2)}"
         console.log res
 
+# The instruction set
 class InstructionSet
     constructor: ->
+        # can be accessed by @instructions[opcode]
         @instructions = []
+        # can be accessed by @operations['CMP']
         @operations = {}
 
         # Register Instructions, immediate addressing (F1)
@@ -303,19 +311,26 @@ class InstructionSet
                 @instructions[opcode] = @operations[name] = new F2Instr opcode, name, execute
             when 'F3'
                 @instructions[opcode] = @operations[name] = new F3Instr opcode, name, execute
+
+    # encodes a command array [op, a,b,c] into an instruction word
     encode: (cl) ->
         unless @operations[cl[0]]
             throw "Operation #{cl[0]} is undefined!"
         @operations[cl[0]].encode cl[1] or 0, cl[2] or 0, cl[3] or 0
+
+    # get instruction object based on the instruction word
     getInstruction: (instrWord) ->
         opcode = instrWord >> 26 & 63
         @instructions[opcode]
 
+# Generic Instruction
 class Instruction
+    # all of them have an opcode, a name and a function that gets executed in the context of the emulator.
     constructor: (@opcode, @name, @execute) ->
         if @opcode > 63 or @opcode < 0
             throw "The opcode has to be between 0 and 63"
 
+# Specific F1 Instruction: opcode 6 bit, a, b 5 bit, c 16 bit
 class F1Instr extends Instruction
     encode: (a,b,c) ->
         if c<0 then c += 0x10000
@@ -329,6 +344,7 @@ class F1Instr extends Instruction
         if c > 0xff then c -= 0x10000
         c
 
+# Specific F2 Instruction: opcode 6 bit, a, b, c 5 bit
 class F2Instr extends Instruction
     encode: (a,b,c) ->
         if c<0 then c += 0x10000
@@ -342,6 +358,7 @@ class F2Instr extends Instruction
         if c > 0xff then c -= 0x10000
         c
 
+# Specific F3 Instruction: opcode 6 bit, c 26 bit
 class F3Instr extends Instruction
     encode: (a,b,c) ->
         if c < 0
@@ -354,34 +371,4 @@ class F3Instr extends Instruction
     getC: (instr) ->
         instr & 0x3ffffff # 26 bit
 
-# Loading and running the emulator
-args = process.argv.splice 2
-if args.length is 0
-    console.info "Usage: coffee emu.coffee filename"
-else
-    emu = new Emulator
-        memSize: 100
-        debug: false
-    emu.load args[0], (err) ->
-        if err
-            console.error err
-        else
-            programParams = args.splice 1
-            emu.execute programParams, (exitCode) ->
-                if exitCode isnt 0
-                    console.info "Exit code is #{exitCode}"
-                else
-                    # console.info "Finished."
-###
-mem = new Memory(16)
-mem.put 0, 0x11223344
-mem.put 4, 0x12345678
-
-console.info "at 0: 0x" + mem.get(0).toString(16)
-console.info "at 2: 0x" + mem.get(2).toString(16)
-console.info "at 4: 0x" + mem.get(4).toString(16)
-
-mem.printState()
-###
-
-
+exports.Emulator = Emulator
