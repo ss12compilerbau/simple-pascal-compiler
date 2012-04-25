@@ -5,7 +5,9 @@
 # implement passing a string parameter, e.g. as a command line parameter
 
 class Emulator
-    constructor: ->
+    constructor: (options) ->
+        options ?= {}
+        @debug = options.debug or false
         # it has an instruction register and a program counter
         @ir = new InstructionRegister
         @pc = new Register "PC"
@@ -13,19 +15,23 @@ class Emulator
         @reg = []
         for i in [0..31]
             @reg[i] = new Register "reg[#{(i+100).toString().substr(-2)}]"
-        @mem = new Memory 500
+        @mem = new Memory options.memSize or 500
         @I = new InstructionSet
-        console.info "The instruction set has #{@I.instructions.length} instructions."
+        if @debug
+            console.info "The instruction set has #{@I.instructions.length} instructions."
 
     load: (filename, callback) ->
         finish = false
+        @origCode = []
         @_loadAddr = 0
         @_openFile filename, (data)=>
             for line in data.split "\n"
                 if line.indexOf("###") is 0 then finish = true
                 unless finish
                     instr = line.split(";")[0].trim()
-                    if instr then @processInstr instr
+                    if instr
+                        @processInstr instr
+                        @origCode.push line
             callback()
     processInstr: (instrStr) ->
         cl = []
@@ -33,7 +39,8 @@ class Emulator
         for p in instrStr.split(" ")[1].trim().split ","
             cl.push Number p.trim()
         instr = @I.encode cl
-        console.info "#{@_loadAddr}: ", cl
+        if @debug
+            console.info "#{@_loadAddr}: ", cl
         @mem.put @_loadAddr, instr
         @_loadAddr += 4
     _openFile: (filename, callback) ->
@@ -67,8 +74,9 @@ class Emulator
             b = instr.getB instrWord
             c = instr.getC instrWord
             if @debug
-                @printState()
+                # @printState()
                 console.info state = "\nline #{@pc.get()/4}: running #{instr.name} #{a},#{b},#{c}"
+                console.info @origCode[@pc.get()/4]
             # Call instruction.execute with context this, so setting @exit = true 
             instr.execute.apply @, [a,b,c]#, @reg, @mem, @pc]
         callback(@exitCode)
@@ -352,7 +360,8 @@ if args.length is 0
     console.info "Usage: coffee emu.coffee filename"
 else
     emu = new Emulator
-    emu.debug = false
+        memSize: 100
+        debug: false
     emu.load args[0], (err) ->
         if err
             console.error err
@@ -362,7 +371,7 @@ else
                 if exitCode isnt 0
                     console.info "Exit code is #{exitCode}"
                 else
-                    console.info "Finished."
+                    # console.info "Finished."
 ###
 mem = new Memory(16)
 mem.put 0, 0x11223344
