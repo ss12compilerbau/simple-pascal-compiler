@@ -1,10 +1,8 @@
 # Emu is a simple RISC emulator
 # still TODO:
-# implement cycle of load, fetch, decode, execute, load again, etc.
-# implement pop and push operations
-# implement control instructions
 # implement file operations
 # implement system procedures
+# implement passing a string parameter, e.g. as a command line parameter
 
 class Emulator
     constructor: ->
@@ -15,128 +13,8 @@ class Emulator
         @reg = []
         for i in [0..31]
             @reg[i] = new Register "reg[#{(i+100).toString().substr(-2)}]"
-
         @mem = new Memory 500
-
         @I = new InstructionSet
-
-        # Register Instructions, immediate addressing (F1)
-        @I.add 0, 'ADDI', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() + c
-            pc.set pc.get() + 4
-
-        @I.add 1, 'SUBI', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() - c
-            pc.set pc.get() + 4
-
-        @I.add 2, 'MULI', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() * c
-            pc.set pc.get() + 4
-
-        @I.add 3, 'DIVI', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() / c
-            pc.set pc.get() + 4
-
-        @I.add 4, 'MODI', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() % c
-            pc.set pc.get() + 4
-
-        @I.add 5, 'CMPI', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() - c
-            pc.set pc.get() + 4
-
-        # Register Instructions, register addressing (F2)
-        @I.add 6, 'ADD', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() + reg[c].get()
-            pc.set pc.get() + 4
-
-        @I.add 7, 'SUB', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() - reg[c].get()
-            pc.set pc.get() + 4
-
-        @I.add 8, 'MUL', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() * reg[c].get()
-            pc.set pc.get() + 4
-
-        @I.add 9, 'DIV', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() / reg[c].get()
-            pc.set pc.get() + 4
-
-        @I.add 10, 'MOD', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() % reg[c].get()
-            pc.set pc.get() + 4
-
-        @I.add 11, 'CMP', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set reg[b].get() - reg[c].get()
-            pc.set pc.get() + 4
-
-        # Memory Instructions F1, Load and store words
-        @I.add 12, 'LDW', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[a].set(mem.get((reg[b].get() + c)) / 4)
-            pc.set pc.get() + 4
-
-        @I.add 13, 'STW', 'F1', (a,b,c, reg, mem, pc) ->
-            mem.set((reg[b].get() + c) /4, reg[a])
-            pc.set pc.get() + 4
-
-        # F1 POP and PUSH
-
-        # Control Instructions F1 Conditional Branching
-        @I.add 14, 'BEQ', 'F1', (a,b,c, reg, mem, pc) ->
-            if reg[a].get() is 0
-                pc.set pc.get() + c*4
-            else
-                pc.set pc.get() + 4
-
-        @I.add 15, 'BGE', 'F1', (a,b,c, reg, mem, pc) ->
-            if reg[a].get() >= 0
-                pc.set pc.get() + c*4
-            else
-                pc.set pc.get() + 4
-
-        @I.add 16, 'BGT', 'F1', (a,b,c, reg, mem, pc) ->
-            if reg[a].get() > 0
-                pc.set pc.get() + c*4
-            else
-                pc.set pc.get() + 4
-
-        @I.add 17, 'BLE', 'F1', (a,b,c, reg, mem, pc) ->
-            if reg[a].get() <= 0
-                pc.set pc.get() + c*4
-            else
-                pc.set pc.get() + 4
-
-        @I.add 18, 'BLT', 'F1', (a,b,c, reg, mem, pc) ->
-            if reg[a].get() < 0
-                pc.set pc.get() + c*4
-            else
-                pc.set pc.get() + 4
-
-        @I.add 19, 'BNE', 'F1', (a,b,c, reg, mem, pc) ->
-            if reg[a].get() isnt 0
-                pc.set pc.get() + c*4
-            else
-                pc.set pc.get() + 4
-
-        # Unconditional Branching F1
-        @I.add 20, 'BR', 'F1', (a,b,c, reg, mem, pc) ->
-            pc.set pc.get() + c*4
-
-        @I.add 21, 'BSR', 'F1', (a,b,c, reg, mem, pc) ->
-            reg[31].set pc.get() + 4
-            pc.set pc.get() + c*4
-
-        @I.add 22, 'WRN', 'F1', (a,b,c, reg, mem, pc) ->
-            console.log reg[a].get()
-            pc.set pc.get() + 4
-
-        @I.add 23, 'EXT', 'F1', (a,b,c, reg, mem, pc) =>
-            @exit = true
-            @exitCode = reg[a].get()
-            pc.set pc.get() + 4
-
-
-
         console.info "The instruction set has #{@I.instructions.length} instructions."
 
     load: (filename, callback) ->
@@ -191,7 +69,8 @@ class Emulator
             if @debug
                 @printState()
                 console.info state = "\nline #{@pc.get()/4}: running #{instr.name} #{a},#{b},#{c}"
-            instr.execute a,b,c, @reg, @mem, @pc
+            # Call instruction.execute with context this, so setting @exit = true 
+            instr.execute.apply @, [a,b,c]#, @reg, @mem, @pc]
         callback(@exitCode)
 
     fetch: ->
@@ -253,6 +132,159 @@ class InstructionSet
     constructor: ->
         @instructions = []
         @operations = {}
+
+        # Register Instructions, immediate addressing (F1)
+        @add 0, 'ADDI', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() + c
+            @pc.set @pc.get() + 4
+
+        @add 1, 'SUBI', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() - c
+            @pc.set @pc.get() + 4
+
+        @add 2, 'MULI', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() * c
+            @pc.set @pc.get() + 4
+
+        @add 3, 'DIVI', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() / c
+            @pc.set @pc.get() + 4
+
+        @add 4, 'MODI', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() % c
+            @pc.set @pc.get() + 4
+
+        @add 5, 'CMPI', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() - c
+            @pc.set @pc.get() + 4
+
+        # Register Instructions, register addressing (F2)
+        @add 6, 'ADD', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() + @reg[c].get()
+            @pc.set @pc.get() + 4
+
+        @add 7, 'SUB', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() - @reg[c].get()
+            @pc.set @pc.get() + 4
+
+        @add 8, 'MUL', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() * @reg[c].get()
+            @pc.set @pc.get() + 4
+
+        @add 9, 'DIV', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() / @reg[c].get()
+            @pc.set @pc.get() + 4
+
+        @add 10, 'MOD', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() % @reg[c].get()
+            @pc.set @pc.get() + 4
+
+        @add 11, 'CMP', 'F1', (a,b,c) ->
+            @reg[a].set @reg[b].get() - @reg[c].get()
+            @pc.set @pc.get() + 4
+
+        # Memory Instructions F1, Load and store words
+        @add 12, 'LDW', 'F1', (a,b,c) ->
+            @reg[a].set(@mem.get((@reg[b].get() + c)) / 4)
+            @pc.set @pc.get() + 4
+
+        @add 13, 'STW', 'F1', (a,b,c) ->
+            @mem.set((@reg[b].get() + c) /4, @reg[a])
+            @pc.set @pc.get() + 4
+
+        # F1 POP and PUSH
+
+        # Control Instructions F1 Conditional Branching
+        @add 14, 'BEQ', 'F1', (a,b,c) ->
+            if @reg[a].get() is 0
+                @pc.set @pc.get() + c*4
+            else
+                @pc.set @pc.get() + 4
+
+        @add 15, 'BGE', 'F1', (a,b,c) ->
+            if @reg[a].get() >= 0
+                @pc.set @pc.get() + c*4
+            else
+                @pc.set @pc.get() + 4
+
+        @add 16, 'BGT', 'F1', (a,b,c) ->
+            if @reg[a].get() > 0
+                @pc.set @pc.get() + c*4
+            else
+                @pc.set @pc.get() + 4
+
+        @add 17, 'BLE', 'F1', (a,b,c) ->
+            if @reg[a].get() <= 0
+                @pc.set @pc.get() + c*4
+            else
+                @pc.set @pc.get() + 4
+
+        @add 18, 'BLT', 'F1', (a,b,c) ->
+            if @reg[a].get() < 0
+                @pc.set @pc.get() + c*4
+            else
+                @pc.set @pc.get() + 4
+
+        @add 19, 'BNE', 'F1', (a,b,c) ->
+            if @reg[a].get() isnt 0
+                @pc.set @pc.get() + c*4
+            else
+                @pc.set @pc.get() + 4
+
+        # Unconditional Branching F1
+        @add 20, 'BR', 'F1', (a,b,c) ->
+            @pc.set @pc.get() + c*4
+
+        @add 21, 'BSR', 'F1', (a,b,c) ->
+            @reg[31].set @pc.get() + 4
+            @pc.set @pc.get() + c*4
+
+        @add 22, 'WRN', 'F1', (a,b,c) ->
+            console.log @reg[a].get()
+            @pc.set @pc.get() + 4
+
+        @add 23, 'EXT', 'F1', (a,b,c) ->
+            @exit = true
+            @exitCode = @reg[a].get()
+            @pc.set @pc.get() + 4
+
+        @add 24, 'POP', 'F1', (a,b,c) ->
+            @reg[a].set mem.get(@reg[b].get()/4)
+            @reg[b].set(@reg[b].get() + c)
+            @pc.set(@pc.get() + 4)
+
+        @add 25, 'PSH', 'F1', (a,b,c) ->
+            @reg[b].set(@reg[b].get() - c)
+            @mem.set(@reg[b].get()/4, @reg[a].get())
+            @pc.set @pc.get() + 4
+
+        ### 
+        File management F2
+        FLO a, b, c:
+        open ﬁle (pointer to ﬁle name string: reg[a];
+                         pointer to mode string "r" or "w": reg[b]) {
+          ...fopen...
+          reg[c] = ﬁle descriptor;
+        }
+        FLC c:
+        close ﬁle (ﬁle descriptor: reg[c]) {
+          ...fclose...
+        }
+
+        Reading, writing, F2
+
+        RDC a, c:
+        read character from open ﬁle (ﬁle descriptor: reg[a]) {
+          ...fread...
+          reg[c] = read character;
+        }
+        WRC a, c:
+        write character to open ﬁle (ﬁle descriptor: reg[a];
+                                                       character: reg[c]) {
+          ...fwrite...
+        }
+        ###
+
     add: (opcode, name, format, execute) ->
         if @instructions[opcode] isnt undefined
             throw "Opcode for #{opcode} is already defined for #{@instructions[opcode].name}. It cannot be overwritten by #{name}"
