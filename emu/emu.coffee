@@ -79,13 +79,22 @@ class Emulator
             mem[reg[b].get() + c].get()/4].set reg[a]
             pc.set pc.get() + 4
         ###
+        console.info "The instruction set has #{@I.instructions.length} instructions."
 
-    load: (filename) ->
-        console.info "to be implemented"
-    run: ->
-        console.info "to be implemented"
+    load: (filename, callback) ->
+        fs = require 'fs'
+        fs.open args[0], 'r', (err, fd) ->
+            if err and err.errno is 34
+                console.error "The file #{args[0]} doesn't exist!"
+            else
+                console.info "Load is to be implemented"
+                callback()
+    execute: (callback) ->
+        console.info "Execute is to be implemented"
+        callback(1)
 
     printState: ->
+        console.log "\nMachine state:"
         console.log @ir.toString()
         console.log @pc.toString()
         for r, i in @reg
@@ -114,8 +123,10 @@ class InstructionRegister extends Register
 class InstructionSet
     constructor: ->
         @instructions = []
-    add: (opcode, name, format, execute) -> 
-        switch format.toUpperCase()
+    add: (opcode, name, format, execute) ->
+        if @instructions[opcode] isnt undefined
+            throw "Opcode for #{opcode} is already defined for #{@instructions[opcode].name}. It cannot be overwritten by #{name}"
+        else switch format.toUpperCase()
             when 'F1'
                 @instructions[opcode] = new F1Instr opcode, name, execute
             when 'F2'
@@ -125,6 +136,8 @@ class InstructionSet
 
 class Instruction
     constructor: (@opcode, @name, @execute) ->
+        if @opcode > 63 or @opcode < 0
+            throw "The opcode has to be between 0 and 63"
 
 class F1Instr extends Instruction
     getA: (instr) ->
@@ -150,22 +163,20 @@ class F3Instr extends Instruction
     getC: (instr) ->
         instr & 0x3ffffff # 26 bit
 
+
+# Loading and running the emulator
 args = process.argv.splice(2)
-# console.info args
-fs = require 'fs'
-fs.open args[0], 'r', (err, fd) ->
-    if err and err.errno is 34
-        console.error "The file #{args[0]} doesn't exist!"
-    else 
-        console.info "The file descriptor is #{fd}"
-        emu = new Emulator
-
-        ###
-        emu.ir.set 0xffffffff
-        emu.ir.decode()
-        console.log emu.ir.op
-        emu.printState()
-        ###
-
-
-
+if args.length is 0
+    console.info "Usage: coffee emu.coffee filename"
+else
+    emu = new Emulator
+    emu.load args[0], (err) ->
+        if err
+            console.error err
+        else
+            emu.execute (exitCode) ->
+                emu.printState()
+                if exitCode isnt 0
+                    console.info "Exit code is #{exitCode}"
+                else
+                    console.info "Finished."
