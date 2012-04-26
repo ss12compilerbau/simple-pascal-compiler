@@ -1,7 +1,7 @@
 ; Annahmen: Reg[0] = 0, Reg[29] = n
 ADDI 1,0,1 ; a=1
 ADDI 2,0,1 ; b=1
-ADDI 3,0,0 ; c(=0)
+;ADDI 3,0,0 ; c(=0)
 ADDI 4,0,3 ; ;for (int i = 3; i <= n; i++) { -> i=3
 CMP 5,4,29 ; i <= n We jump back to this instr.
 BGT 5,0,6 ; jump to exit

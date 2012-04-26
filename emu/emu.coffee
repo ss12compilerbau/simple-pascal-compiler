@@ -264,7 +264,7 @@ class InstructionSet
 
         @add 23, 'EXT', 'F1', (a,b,c) ->
             @exit = true
-            @exitCode = @reg[a].get()
+            @exitCode = a
             @pc.set @pc.get() + 4
 
         @add 24, 'POP', 'F1', (a,b,c) ->
