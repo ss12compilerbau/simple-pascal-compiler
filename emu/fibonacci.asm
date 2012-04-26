@@ -1,4 +1,4 @@
-; Annahmen: Reg[0] = 0, Reg[30] = n
+; Annahmen: Reg[0] = 0, Reg[29] = n
 ADDI 1,0,1 ; a=1
 ADDI 2,0,1 ; b=1
 ADDI 3,0,0 ; c(=0)
