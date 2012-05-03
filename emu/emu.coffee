@@ -277,6 +277,12 @@ class InstructionSet
             @mem.set(@reg[b].get()/4, @reg[a].get())
             @pc.set @pc.get() + 4
 
+        # RET c: pc = reg[c]; F2, Return from Subroutine
+        @add 26, 'RET', 'F2', (a,b,c) ->
+            @pc.set @reg[c].get()
+
+        
+
         ### 
         File management F2
         FLO a, b, c:
