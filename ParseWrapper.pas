@@ -20,7 +20,7 @@ PROGRAM SPC;
 	    parserInit;
     	STInit;
 	
-	
+	    parserUseSymTab := cTrue;
 	    if ParamCount < 1 then
 	    begin
 			parseParamStr0 := ParamStr(0);

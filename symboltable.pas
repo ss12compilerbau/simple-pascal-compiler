@@ -310,7 +310,7 @@
 
     Procedure stBeginProgram(name: String);
     begin
-        (infoMsg( 'Symboltable: Beginning new procedure ' + name));
+        (infoMsg( 'Symboltable: Beginning program ' + name));
         (stBeginContext(name, stProgram));
     end;    
 
