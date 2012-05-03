@@ -310,6 +310,10 @@ class InstructionSet
         }
         ###
 
+    # Instructionset.add(opcode, name, format, execute)
+    # Instantiates an Instruction, keeping two indices for quick access, one by opcode, one by name.
+    # format is one of 'F1', 'F2' and 'F3', execute is a callback that gets executed
+    # in the context of the Emulator object. That means @pc = emulator.pc.
     add: (opcode, name, format, execute) ->
         if @instructions[opcode] isnt undefined
             throw "Opcode for #{opcode} is already defined for #{@instructions[opcode].name}. It cannot be overwritten by #{name}"
