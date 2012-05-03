@@ -428,106 +428,144 @@
 		
 		isEof;
 		IF isEofRet = cTrue THEN begin
-			sym := cEof; 
+			sym := cEof;
+			symFound := cTrue;
 		end
 		ELSE BEGIN 
-			IF ch = '&' THEN BEGIN NextChar; sym := cAnd; symFound := cTrue; END;
-			IF ch = '^' THEN BEGIN NextChar; sym := cPtrRef; symFound := cTrue; END;
-			IF ch = '*' THEN BEGIN NextChar; sym := cTimes; symFound := cTrue; END;
-			IF ch = '+' THEN BEGIN NextChar; sym := cPlus; symFound := cTrue; END;
-			IF ch = '-' THEN BEGIN NextChar; sym := cMinus; symFound := cTrue; END;
-			IF ch = '=' THEN BEGIN NextChar; sym := cEql; symFound := cTrue; END;
-			IF ch = '#' THEN BEGIN NextChar; sym := cNeq; symFound := cTrue; END;
-			
-			IF ch = '<' THEN BEGIN
-				NextChar;
-				IF ch = '=' THEN BEGIN
-					NextChar;
-					sym := cLeq;
-				END
-				else begin
-					if ch = '>' then begin
-						nextchar;
-						sym := cNeq;
-					end
-					ELSE begin sym := cLss;	end;
-				end;
-				symFound := cTrue;
-			END;	
-			
-			IF ch = '>' THEN BEGIN
-				NextChar;
-				IF ch = '=' THEN BEGIN
-					NextChar;
-					sym := cGeq;
-				END
-				ELSE begin sym := cGtr; END;
-				symFound := cTrue;
-			end;
-				
-			IF ch = ';' THEN BEGIN NextChar; sym := cSemicolon; symFound := cTrue; END;
-			IF ch = ',' THEN BEGIN NextChar; sym := cComma; symFound := cTrue; END;
-			
-			IF ch = ':' THEN BEGIN
-				NextChar;
-				IF ch = '=' THEN
-				BEGIN
-					NextChar;
-					sym := cBecomes;
-				END
-				ELSE begin sym := cColon; end;
-				symFound := cTrue;
+            IF symFound = cFalse then begin
+    			IF ch = '&' THEN BEGIN NextChar; sym := cAnd; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '^' THEN BEGIN NextChar; sym := cPtrRef; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '*' THEN BEGIN NextChar; sym := cTimes; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '+' THEN BEGIN NextChar; sym := cPlus; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '-' THEN BEGIN NextChar; sym := cMinus; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '=' THEN BEGIN NextChar; sym := cEql; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '#' THEN BEGIN NextChar; sym := cNeq; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+			    IF ch = '<' THEN BEGIN
+				    NextChar;
+				    IF ch = '=' THEN BEGIN
+					    NextChar;
+					    sym := cLeq;
+				    END
+				    else begin
+					    if ch = '>' then begin
+						    nextchar;
+						    sym := cNeq;
+					    end
+					    ELSE begin sym := cLss;	end;
+				    end;
+				    symFound := cTrue;
+			    END;	
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '>' THEN BEGIN
+				    NextChar;
+				    IF ch = '=' THEN BEGIN
+					    NextChar;
+					    sym := cGeq;
+				    END
+				    ELSE begin sym := cGtr; END;
+				    symFound := cTrue;
+			    end;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = ';' THEN BEGIN NextChar; sym := cSemicolon; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = ',' THEN BEGIN NextChar; sym := cComma; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = ':' THEN BEGIN
+				    NextChar;
+				    IF ch = '=' THEN
+				    BEGIN
+					    NextChar;
+					    sym := cBecomes;
+				    END
+				    ELSE begin sym := cColon; end;
+				    symFound := cTrue;
+			    END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '.' THEN BEGIN NextChar; sym := cPeriod; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+			    IF ch = '(' THEN BEGIN
+				    NextChar;
+				    IF ch = '*' THEN
+				    BEGIN
+					    comment;
+					    getSymHard;
+				    END
+				    ELSE begin sym := cLparen; end;
+				    symFound := cTrue;
+			    END;
 			END;
-			
-			IF ch = '.' THEN BEGIN NextChar; sym := cPeriod; symFound := cTrue; END;
-			
-			IF ch = '(' THEN BEGIN
-				NextChar;
-				IF ch = '*' THEN
-				BEGIN
-					comment;
-					getSymHard;
-				END
-				ELSE begin sym := cLparen; end;
-				symFound := cTrue;
-			END;
-			
-			IF ch = ')' THEN BEGIN NextChar; sym := cRparen; symFound := cTrue; END;
-			IF ch = '[' THEN BEGIN NextChar; sym := cLbrak; symFound := cTrue; END;
-			IF ch = ']' THEN BEGIN NextChar; sym := cRbrak; symFound := cTrue; END;
-			IF ch = chrQuote THEN Begin getString; symFound := cTrue; END;
-			IF isDigitRet = cTrue THEN Begin Number; symFound := cTrue; END;
-			IF isLetterRet = cTrue THEN Begin Ident; symFound := cTrue; END;
-			IF ch = '~' THEN BEGIN NextChar; sym := cNot; symFound := cTrue; END;
-			
-			IF ch = '{' THEN BEGIN
-				NextChar;
-				If ch = '$' then begin
-					NextChar;
-					getSymbol;
-					if id = 'INCLUDE' then begin
-						include;
-					end;
-				end;
-				symFound := cTrue;
-			end;
-		
-			IF ch = '/' THEN
-			BEGIN
-				NextChar;
-				IF ch = '/' THEN BEGIN
-					While ch <> chr10 Do Begin
-						NextChar;
-					End;
-					getSymbol;
-				END
-				ELSE begin
-					errorMsg( 'Unrecognized "/"');
-				END;
-				symFound := cTrue;
-			End;
-		end;
-			
+            IF symFound = cFalse then begin
+			    IF ch = ')' THEN BEGIN NextChar; sym := cRparen; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '[' THEN BEGIN NextChar; sym := cLbrak; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = ']' THEN BEGIN NextChar; sym := cRbrak; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = chrQuote THEN Begin getString; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF isDigitRet = cTrue THEN Begin Number; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF isLetterRet = cTrue THEN Begin Ident; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '~' THEN BEGIN NextChar; sym := cNot; symFound := cTrue; END;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '{' THEN BEGIN
+				    NextChar;
+				    If ch = '$' then begin
+					    NextChar;
+					    getSymbol;
+					    if id = 'INCLUDE' then begin
+						    include;
+					    end;
+				    end;
+				    symFound := cTrue;
+			    end;
+    		end;
+            IF symFound = cFalse then begin
+    			IF ch = '/' THEN
+			    BEGIN
+				    NextChar;
+				    IF ch = '/' THEN BEGIN
+					    While ch <> chr10 Do Begin
+						    NextChar;
+					    End;
+					    getSymbol;
+				    END
+				    ELSE begin
+					    errorMsg( 'Unrecognized "/"');
+				    END;
+				    symFound := cTrue;
+			    End;
+    		end;
+    	end;
+
 		if symFound = cFalse then begin
 			errorMsg( 'Unrecognized Symbol "' + ch + '"');
 			NextChar;

@@ -56,10 +56,9 @@ PROGRAM SPC;
 					ELSE BEGIN
 						writeln( sym);
 					END;
-					
-					getSymbol;
 				END;
 			end;
+			getSymbol;
 		end;
 		
 		writeln( sym);
