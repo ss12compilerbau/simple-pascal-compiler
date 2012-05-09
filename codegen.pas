@@ -27,6 +27,7 @@ Begin
     cgRegisterUsage[i] := cFalse;
 End;
 
+// Initialize the register allocation API related variables
 Procedure cgRegAllocInit();
 Var i: Longint;
 Begin
@@ -40,13 +41,34 @@ Begin
     cgRegisterUsage[28] := cTrue; // Reserved for Global Variable address pointer
 End;
 
-// Item API
+// ***** Item API ****
+Type
+    ptItem = ^tItem;
+    tItem = Record
+        mode: Longint; // one of mCONST, mVAR, mREG, mREF
+        ptype: ptType;
+        reg: Longint;
+        offset: Longint;
+    end;
 
+var mCONST: Longint;
+var mVar: Longint;
+var mREG: Longint;
+var mREF: Longint;
 
+// Initialize the ITEM API related parts
+Procedure cgItemInit();
+Begin
+    mCONST := 1;
+    mVAR := 2;
+    mREG := 3;
+    mREF := 4;
+End;
 
-
+// Initialize Parts of this module
 Procedure cgInit();
 Begin
     cgRegAllocInit;
+    cgItemInit;
 End;
 
