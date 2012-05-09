@@ -68,7 +68,7 @@ test.selfParsing : build.parser
 	 ./ParseWrapper ParseWrapper.pas
 
 # Symboltable
-build.symboltable :
+build.symboltable : clean
 	fpc STWrapper.pas
 	@echo "Symboltable build successful!"
 
@@ -76,6 +76,16 @@ test.symboltable: build.symboltable
 	./STWrapper # >test.out
 	# diff test.out tests/symboltabletest.should
 	@echo "Symboltable tests ok."
+
+# Code generator
+build.codegen: clean
+	fpc CGWrapper.pas
+
+test.codegen : test.codegen.assignment
+	@echo "Codegeneration tests ok."
+
+test.codegen.assignment : build.codegen
+	./CGWrapper tests/cg-assignment.pas
 
 # Emulator
 install.emu:
