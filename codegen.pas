@@ -1,7 +1,10 @@
-// Code-generation API
+// *****************************
+// ***  Code-generation API  ***
+// *****************************
 
-// Register allocation API
+// ***** Register allocation API ******
 var cgRegisterUsage: ^Longint;
+Var outputfile: Text;
 
 // cgRequestRegister() reserves a register and returns its number.
 Var cgRequestRegisterRet: Longint;
@@ -41,6 +44,13 @@ Begin
     cgRegisterUsage[28] := cTrue; // Reserved for Global Variable address pointer
 End;
 
+// ***** Code emitting ******
+procedure cgPut(op: String; a: Longint; b: Longint; c: Longint; remark: String);
+begin
+    Writeln(op, ', ', a, ', ', b, ', ', c, '; ', remark);
+    Writeln(outputfile, op, ', ', a, ', ', b, ', ', c, '; ', remark);
+End;
+
 // ***** Item API ****
 Type
     ptItem = ^tItem;
@@ -68,7 +78,15 @@ End;
 // Initialize Parts of this module
 Procedure cgInit();
 Begin
+    Assign(outputfile, 'out.asm');
+    Rewrite(outputfile);
     cgRegAllocInit;
     cgItemInit;
+    cgPut('ADDI', 1,1,2, 'Test');
+End;
+
+Procedure cgEnd();
+Begin
+    close(outputfile);
 End;
 

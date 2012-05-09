@@ -44,5 +44,6 @@ PROGRAM SPC;
         Writeln('Allocated Register: ', cgRequestRegisterRet);
         cgReleaseRegister(1);
         }
+	    cgEnd;
 	END.
 
