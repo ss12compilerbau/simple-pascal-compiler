@@ -1,7 +1,7 @@
 // Code-generation API
 
 // Register allocation API
-var cgRegisterUsage: Array of Longint;
+var cgRegisterUsage: ^Longint;
 
 // cgRequestRegister() reserves a register and returns its number.
 Var cgRequestRegisterRet: Longint;
@@ -31,7 +31,7 @@ End;
 Procedure cgRegAllocInit();
 Var i: Longint;
 Begin
-    setLength(cgRegisterUsage, 32);
+    New(cgRegisterUsage);
     i := 0;
     while i<31 do begin
         cgRegisterUsage[i] := cFalse;
