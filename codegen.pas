@@ -75,6 +75,25 @@ Begin
     mREF := 4;
 End;
 
+// TODO
+procedure load(item: ptItem);
+Begin
+End;
+
+procedure const2Reg(item: ptItem);
+Begin
+End;
+
+procedure var2Reg(item: ptItem);
+Begin
+End;
+
+procedure assignmentOperator(leftItem: ptItem; rightItem: ptItem);
+Begin
+End;
+
+
+
 // Initialize Parts of this module
 Procedure cgInit();
 Begin
@@ -82,7 +101,7 @@ Begin
     Rewrite(outputfile);
     cgRegAllocInit;
     cgItemInit;
-    cgPut('ADDI', 1,1,2, 'Test');
+    // cgPut('ADDI', 1,1,2, 'Test');
 End;
 
 Procedure cgEnd();

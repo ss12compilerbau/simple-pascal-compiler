@@ -86,6 +86,8 @@ test.codegen : test.codegen.assignment
 
 test.codegen.assignment : build.codegen
 	./CGWrapper tests/cg-assignment.pas
+	@echo "Code emitted:"
+	@cat out.asm
 
 # Emulator
 install.emu:
