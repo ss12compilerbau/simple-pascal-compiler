@@ -59,6 +59,7 @@ Type
         ptype: ptType;
         reg: Longint; // reg[reg] + offset -> address
         offset: Longint;
+        value: Longint;
     end;
 
 var mCONST: Longint;
@@ -75,19 +76,41 @@ Begin
     mREF := 4;
 End;
 
-// TODO
 procedure load(item: ptItem);
 Begin
+    if item^.mode = mCONST then begin
+        const2Reg(item);
+    end else begin 
+        if item^.mode = mVAR then begin
+            var2Reg(item);
+        end else begin 
+            if item^.mode = mREF then begin
+                ref2Reg(item);
+            end;
+        end;
+    end;
 End;
 
 procedure const2Reg(item: ptItem);
 Begin
+    item^.mode := mREG;
+    cgRequestRegister;
+    item^.reg := cgRequestRegisterRet;
+    // assumes_ R0 = 0
+    cgPut('ADDI', item^.reg, 0, item^.value, 'cg Const2Reg');
+    item^.value := 0;
+    item^.offset := 0;
 End;
 
 procedure var2Reg(item: ptItem);
 Begin
+    item^.mode := mREG;
+    cgRequestRegister;
+    cgPut('LDW', cgRequestRegisterRet, item^.reg, item^.offset, 'cg var2Reg');
+    item^.reg := cgRequestRegisterRet;
 End;
 
+// TODO
 procedure assignmentOperator(leftItem: ptItem; rightItem: ptItem);
 Begin
 End;
