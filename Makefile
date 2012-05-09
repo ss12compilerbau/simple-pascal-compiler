@@ -99,6 +99,6 @@ test.emu.fibo:
 	@echo "Emulator fibonacci test ok."
 
 clean :
-	rm -rf *.s *.o hello ScanWrapper ParseWrapper STWrapper SPC *.out tests/*.out
+	rm -rf *.s *.o hello ScanWrapper ParseWrapper STWrapper SPC CGWrapper *.out tests/*.out
 	@echo "Clean succesful"
 

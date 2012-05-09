@@ -47,7 +47,7 @@ Type
     tItem = Record
         mode: Longint; // one of mCONST, mVAR, mREG, mREF
         ptype: ptType;
-        reg: Longint;
+        reg: Longint; // reg[reg] + offset -> address
         offset: Longint;
     end;
 
