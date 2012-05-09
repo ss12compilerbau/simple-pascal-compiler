@@ -179,7 +179,7 @@
             symbolTable^.fFirst := symbol;
         end else begin
             // writeln('d1.3.3');
-            Writeln(symbolTable^.fFirst^.fName);
+            // Writeln(symbolTable^.fFirst^.fName);
             symbolTable^.fLast^.fNext := symbol;
         end;
         // writeln('d1.3.4');
