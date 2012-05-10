@@ -97,6 +97,9 @@ Type
         fReg: Longint; // reg[reg] + offset -> address
         fOffset: Longint;
         fValue: Longint;
+        fOperator: Longint; // Operator token
+        fls: Longint;
+        tru: Longint;
     end;
 
 var mCONST: Longint;
@@ -179,7 +182,7 @@ End;
 Procedure cJump(item: ptItem);
 Begin
     branchNegate(item^.fOperator);
-    cgPut(branchNegateRet, item^.fReg, 0, item^.fls);
+    cgPut(branchNegateRet, item^.fReg, 0, item^.fls, 'cJump');
     cgReleaseRegister(item^.fReg);
     item^.fls := PC - 1;// Remember address of branch instruction for later fixup
 End;
