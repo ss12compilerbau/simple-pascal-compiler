@@ -76,21 +76,6 @@ Begin
     mREF := 4;
 End;
 
-procedure load(item: ptItem);
-Begin
-    if item^.mode = mCONST then begin
-        const2Reg(item);
-    end else begin 
-        if item^.mode = mVAR then begin
-            var2Reg(item);
-        end else begin 
-            if item^.mode = mREF then begin
-                ref2Reg(item);
-            end;
-        end;
-    end;
-End;
-
 procedure const2Reg(item: ptItem);
 Begin
     item^.mode := mREG;
@@ -109,6 +94,27 @@ Begin
     cgPut('LDW', cgRequestRegisterRet, item^.reg, item^.offset, 'cg var2Reg');
     item^.reg := cgRequestRegisterRet;
 End;
+
+procedure ref2Reg(item: ptItem);
+Begin
+    Writeln('var2Reg not yet implemented!');
+end;
+
+procedure load(item: ptItem);
+Begin
+    if item^.mode = mCONST then begin
+        const2Reg(item);
+    end else begin 
+        if item^.mode = mVAR then begin
+            var2Reg(item);
+        end else begin 
+            if item^.mode = mREF then begin
+                ref2Reg(item);
+            end;
+        end;
+    end;
+End;
+
 
 // TODO
 procedure assignmentOperator(leftItem: ptItem; rightItem: ptItem);
