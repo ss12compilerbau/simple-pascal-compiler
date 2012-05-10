@@ -44,11 +44,48 @@ Begin
     cgRegisterUsage[28] := cTrue; // Reserved for Global Variable address pointer
 End;
 
+
 // ***** Code emitting ******
-procedure cgPut(op: String; a: Longint; b: Longint; c: Longint; remark: String);
+Type 
+    ptCodeline = ^tCodeline;
+    tCodeline = Record
+        op: String;
+        a: Longint;
+        b: Longint;
+        c: Longint;
+        rem: String;
+    End;
+Var cgCodeLines: ^ptCodeLine; // Array
+Var pc: Longint;
+
+procedure cgPut(op: String; a: Longint; b: Longint; c: Longint; rem: String);
 begin
-    Writeln(op, ', ', a, ', ', b, ', ', c, '; ', remark);
-    Writeln(outputfile, op, ', ', a, ', ', b, ', ', c, '; ', remark);
+    New(cgCodeLines[PC]);
+    cgCodeLines[PC]^.op := op;
+    cgCodeLines[PC]^.a := a;
+    cgCodeLines[PC]^.b := b;
+    cgCodeLines[PC]^.c := c;
+    cgCodeLines[PC]^.rem := rem;
+    Writeln(op, ', ', a, ', ', b, ', ', c, '; ', rem);
+    PC := PC + 1;
+End;
+procedure cgCodegenInit();
+Begin
+    New(cgCodeLines);
+    PC := 0;
+End;
+
+procedure cgCodegenFinish();
+Var i: Longint;
+Begin
+    Assign(outputfile, 'out.asm');
+    Rewrite(outputfile);
+    i := 0;
+    While i < PC Do Begin
+        Writeln(outputfile, cgCodelines[i]^.op, ', ', cgCodelines[i]^.a, ', ', cgCodelines[i]^.b, ', ', cgCodelines[i]^.c, '; ', cgCodelines[i]^.rem);
+        i := i + 1;
+    End;
+    close(outputfile);
 End;
 
 // ***** Item API ****
@@ -126,8 +163,7 @@ End;
 // Initialize Parts of this module
 Procedure cgInit();
 Begin
-    Assign(outputfile, 'out.asm');
-    Rewrite(outputfile);
+    cgCodegenInit;
     cgRegAllocInit;
     cgItemInit;
     // cgPut('ADDI', 1,1,2, 'Test');
@@ -135,6 +171,6 @@ End;
 
 Procedure cgEnd();
 Begin
-    close(outputfile);
+    cgCodegenFinish;
 End;
 
