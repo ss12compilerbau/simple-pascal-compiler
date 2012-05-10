@@ -92,11 +92,11 @@ End;
 Type
     ptItem = ^tItem;
     tItem = Record
-        mode: Longint; // one of mCONST, mVAR, mREG, mREF
-        ptype: ptType;
-        reg: Longint; // reg[reg] + offset -> address
-        offset: Longint;
-        value: Longint;
+        fMode: Longint; // one of mCONST, mVAR, mREG, mREF
+        fType: ptType;
+        fReg: Longint; // reg[reg] + offset -> address
+        fOffset: Longint;
+        fValue: Longint;
     end;
 
 var mCONST: Longint;
@@ -115,21 +115,21 @@ End;
 
 procedure const2Reg(item: ptItem);
 Begin
-    item^.mode := mREG;
+    item^.fMode := mREG;
     cgRequestRegister;
-    item^.reg := cgRequestRegisterRet;
+    item^.fReg := cgRequestRegisterRet;
     // assumes_ R0 = 0
-    cgPut('ADDI', item^.reg, 0, item^.value, 'cg Const2Reg');
-    item^.value := 0;
-    item^.offset := 0;
+    cgPut('ADDI', item^.fReg, 0, item^.fValue, 'cg Const2Reg');
+    item^.fValue := 0;
+    item^.fOffset := 0;
 End;
 
 procedure var2Reg(item: ptItem);
 Begin
-    item^.mode := mREG;
+    item^.fMode := mREG;
     cgRequestRegister;
-    cgPut('LDW', cgRequestRegisterRet, item^.reg, item^.offset, 'cg var2Reg');
-    item^.reg := cgRequestRegisterRet;
+    cgPut('LDW', cgRequestRegisterRet, item^.fReg, item^.fOffset, 'cg var2Reg');
+    item^.fReg := cgRequestRegisterRet;
 End;
 
 procedure ref2Reg(item: ptItem);
@@ -137,25 +137,30 @@ Begin
     Writeln('var2Reg not yet implemented!');
 end;
 
-procedure load(item: ptItem);
+procedure cgLoad(item: ptItem);
 Begin
-    if item^.mode = mCONST then begin
+    if item^.fMode = mCONST then begin
         const2Reg(item);
     end else begin 
-        if item^.mode = mVAR then begin
+        if item^.fMode = mVAR then begin
             var2Reg(item);
         end else begin 
-            if item^.mode = mREF then begin
+            if item^.fMode = mREF then begin
                 ref2Reg(item);
             end;
         end;
     end;
 End;
 
-
-// TODO
-procedure assignmentOperator(leftItem: ptItem; rightItem: ptItem);
+procedure cgAssignmentOperator(leftItem: ptItem; rightItem: ptItem);
 Begin
+    if(leftItem^.fType <> rightItem^.fType) then begin
+        errorMsg('Type mismatch in assignment');
+    End;
+    cgLoad(rightItem);
+
+    // leftItem must be in VAR_MODE, rightItem must be in REG_MODE
+    cgPut('STW', rightItem^.fReg, leftItem^.fReg, leftItem^.fOffset, 'assignmentOperator');
 End;
 
 
