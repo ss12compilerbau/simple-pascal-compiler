@@ -163,7 +163,49 @@ Begin
     cgPut('STW', rightItem^.fReg, leftItem^.fReg, leftItem^.fOffset, 'assignmentOperator');
 End;
 
+// TODO
+// cEql -> BNE
+// cNeq -> BEQ
+// cLss -> BGE
+// cGeq -> BLT
+// cLeq -> BGT
+// cGtr -> BLE
+Var branchNegateRet: String;
+Procedure branchNegate(operatorSymbol: Longint);
+Begin
+End;
 
+// Conditional Jump, to be fixed up later
+Procedure cJump(item: ptItem);
+Begin
+    branchNegate(item^.fOperator);
+    cgPut(branchNegateRet, item^.fReg, 0, item^.fls);
+    cgReleaseRegister(item^.fReg);
+    item^.fls := PC - 1;// Remember address of branch instruction for later fixup
+End;
+
+Var fJumpRet: Longint;
+Procedure fJump();
+Begin
+    cgPut('BR', 0,0,0, 'fJump');
+    fJumpRet := PC - 1;// remember address for later fixup
+End;
+
+Procedure fixUp(branchAddress: Longint);
+Begin
+    cgCodeLines[branchAddress]^.c := PC - branchAddress;
+    cgCodeLines[branchAddress]^.rem := cgCodeLines[branchAddress]^.rem + ' /fixedUp/';
+End;
+
+Procedure fixLink(branchAddress: Longint);
+Var nextBranchAddress: Longint;
+Begin
+    while(branchAddress <> 0) do begin
+        nextBranchAddress := cgCodelines[branchAddress]^.c;
+        fixUp(branchAddress);
+        branchAddress := nextBranchAddress;
+    end;
+End;
 
 // Initialize Parts of this module
 Procedure cgInit();
