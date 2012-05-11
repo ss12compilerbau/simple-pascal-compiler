@@ -164,6 +164,7 @@ Begin
 
     // leftItem must be in VAR_MODE, rightItem must be in REG_MODE
     cgPut('STW', rightItem^.fReg, leftItem^.fReg, leftItem^.fOffset, 'assignmentOperator');
+    cgReleaseRegister(rightItem^.fReg);
 End;
 
 // TODO

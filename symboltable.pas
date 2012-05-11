@@ -33,7 +33,8 @@
             fIsForward: Longint;
             fIsParameter: Longint;
             fPrev: ptSymbol; // link to the previous symbol. for conveninence
-            fNext: ptSymbol // link to the next symbol
+            fNext: ptSymbol; // link to the next symbol
+            fOffset: Longint // To be set when a variable is declared TODO
         End;
 
         // type descriptor record for each type (Longint, String, tType, ...)
@@ -46,6 +47,10 @@
     Var stCurrentScope: ptSymbolTable;
     Var stCurrentContext: ptSymbol;
     Var stProcedureParameters: Longint;
+
+    var stLongintType: ptType; // TODO Fill!
+    var stStringType: ptType; // TODO Fill!
+
 
     Var stCreateSymbolRet: ptSymbol;
     Procedure stCreateSymbol;
@@ -97,7 +102,7 @@
     var UCName : String;
     Begin
         // stFindSymbolRet := Nil; // should be done before calling!
-        // writeln('dFS1');
+        writeln('dFS1');
         if symbolTable^.fFirst <> Nil then begin
             iterator := symbolTable^.fFirst;
             whileBool := 0;
@@ -105,14 +110,14 @@
             UCFName := upCase(iterator^.fName);
             UCName := upCase(name);
             if UCFName <> UCName then begin
-                // writeln('dFS2');
+                writeln('dFS2');
                 // AND there's more to look at
                 if iterator <> symbolTable^.fLast then begin
                     whileBool := 1;
                 End;
             end;
             while whileBool = 1 do begin
-                // writeln('dFS3');
+                writeln('dFS3');
                 // next
                 iterator := iterator^.fNext;
                 // prepare whileBool
@@ -128,22 +133,22 @@
                     End;
                 end;
             end;
-            // writeln('dFS5');
+            writeln('dFS5');
             if UCFName = UCName then begin
                 stFindSymbolRet := iterator;
             end else begin
                 if symbolTable^.fParent <> Nil then begin
-                    // writeln('dFS6');
+                    writeln('dFS6');
                     stFindSymbol(symbolTable^.fParent, name);
                 end;
             end;
         end else begin
             if symbolTable^.fParent <> Nil then begin
-                // writeln('dFS6');
+                writeln('dFS6');
                 stFindSymbol(symbolTable^.fParent, name);
             end;
         end;
-        // writeln('dFS end');
+        writeln('dFS end');
     End;
 
     Var stFindTypeRet: ptType;

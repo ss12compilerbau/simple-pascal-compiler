@@ -18,7 +18,7 @@
 
     procedure parseCodeBlock; forward;
     procedure parseDeclaration; forward;
-    procedure parseExpression; forward;
+    procedure parseExpression(item: ptItem); forward;
 
     procedure parserErrorStr( errMsg : String);
     begin
@@ -341,24 +341,39 @@
     
     
     
-    procedure parseVarExtIdentifier;
+    procedure parseVarExtIdentifier(item: ptItem);
         var ret : longint;
         var again : longint;
         var bTry : longint;
         var bParse : longint;
     begin
         (parserDebugStr( 'parseVarExtIdentifier'));
-        
         (parseVarIdentifier);
         ret :=  gRetLongInt;
         if ret = cTrue then begin
+            stFindSymbol(stCurrentScope, id);
+            if stFindSymbolRet <> Nil then begin
+                item^.fMode := mVar;
+                writeln('fo1');
+                item^.fType := stFindSymbolRet^.fType;
+                if stCurrentScope^.fParent = Nil then begin // Global scope
+                    item^.fReg := 28;
+                end else begin
+                    item^.fReg := 27;
+                end;
+                item^.fOffset := stFindSymbolRet^.fOffset;
+                writeln('fo2');
+            end else begin
+                errorMsg('parseVarExtIdentifier: Variable not found');
+            end;
+
             (peekIsSymbol( cLBrak)); 
             bTry :=  gRetLongInt;
             again := bTry;
             while (again = cTrue) do begin
                 if bTry = cTrue then begin
                     (getSymbol); // "["
-                    (parseExpression);
+                    (parseExpression(item));
                     bParse :=  gRetLongInt;
                     if bParse = cTrue then begin
                         (parseSymbol( cRBrak));
@@ -402,7 +417,7 @@
         ret := gRetLongInt;
         
         if ret = cTrue then begin
-            (parseVarExtIdentifier);
+            parseVarExtIdentifier(Nil);
             ret := gRetLongInt;
         end;
         
@@ -422,7 +437,7 @@
         gRetLongInt := ret;
     end;
     
-    procedure parseVariable;
+    procedure parseVariable(item: ptItem);
         var ret : longint;
         var again : longint;
         var bTry : longint;
@@ -431,9 +446,8 @@
         var ret : longint;
         *)
     begin
-        (parserDebugStr( 'parseVariable'));
-        
-        (parseVarExtIdentifier);
+        parserDebugStr( 'parseVariable');
+        parseVarExtIdentifier(item);
         ret :=  gRetLongInt;
         if ret = cTrue then begin
             (PeekIsVarModifier); 
@@ -468,7 +482,7 @@
     end;
     
     
-    procedure parseFactor;
+    procedure parseFactor(item: ptItem);
         var ret : longint;
         var bTry: longint;
     begin
@@ -494,7 +508,7 @@
             bTry :=  gRetLongInt;
             if bTry = cTrue then begin
                 (getSymbol); // LParen
-                (parseExpression);
+                parseExpression(Nil);
                 ret := gRetLongInt;
                 if ret = cTrue then begin
                     (parseSymbol( cRParen));
@@ -510,6 +524,9 @@
                 else begin // longint
                     (peekSymbol);
                     if sym = cNumber then begin
+                        item^.fMode := mConst;
+                        item^.fType := stLongintType;
+                        item^.fValue := val;
                         (getSymbol);
                         ret := cTrue;
                     end
@@ -517,7 +534,7 @@
                         (peekSymbol);
                         if sym = cNot then begin
                             (getSymbol); // not
-                            (parseFactor);
+                            (parseFactor(item));
                             ret := gRetLongInt;
                         end
                         else begin
@@ -529,7 +546,7 @@
 								(parseVariableTry);
 								bTry :=  gRetLongInt;
 								if bTry = cTrue then begin
-									(parseVariable);
+									parseVariable(Nil);
 									ret :=  gRetLongInt;
 								end;
 							end;
@@ -544,7 +561,7 @@
     end;
     
     
-    procedure parseTerm;
+    procedure parseTerm(item: ptItem);
         var ret : longint;
         var again : longint;
         var bTry : longint;
@@ -552,7 +569,7 @@
     begin
         (parserDebugStr( 'parseTerm'));
         
-        (parseFactor);
+        parseFactor(item);
         ret :=  gRetLongInt;
         
         (peekIsMultOperator);
@@ -561,7 +578,7 @@
         while again = cTrue do begin
             if bTry = cTrue then begin
                 (getSymbol); // multOperator
-                (parseFactor);
+                parseFactor(item);
                 bParse :=  gRetLongInt;
             end;
             if bParse = cTrue then begin
@@ -586,7 +603,7 @@
     end;
     
     
-    procedure parseSimpleExpression;
+    procedure parseSimpleExpression(item: ptItem);
         var ret : longint;
         var again : longint;
         var bTry : longint;
@@ -594,7 +611,7 @@
     begin
         (parserDebugStr( 'parseSimpleExpression'));
         
-        (parseTerm);
+        parseTerm(item);
         ret :=  gRetLongInt;
         
         (peekIsAddOperator);
@@ -603,7 +620,7 @@
         while again = cTrue do begin
             if bTry = cTrue then begin
                 (getSymbol); // addOperator
-                (parseTerm);
+                parseTerm(item);
                 bParse :=  gRetLongInt;
             end;
             if bParse = cTrue then begin
@@ -628,12 +645,12 @@
     end;
     
     
-    procedure parseExpression;
+    procedure parseExpression(item: ptItem);
         var ret : longint;
         var bTry : longint;
     begin
         (parserDebugStr( 'parseExpression'));
-        (parseSimpleExpression);
+        (parseSimpleExpression(item));
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
@@ -642,7 +659,7 @@
             
             if bTry = cTrue then begin
                 (getSymbol); // relOperator 
-                (parseSimpleExpression);
+                parseSimpleExpression(item);
                 ret :=  gRetLongInt;
             end;
         end;
@@ -675,7 +692,7 @@
         if ret = cTrue then begin
             (getSymbol); // ist '('
             
-            (parseExpression);
+            parseExpression(Nil);
             ret :=  gRetLongInt;
             if ret = cTrue then begin
                 (PeekIsSymbol( cComma)); 
@@ -684,7 +701,7 @@
                 while again = cTrue do begin
                     if bTry = cTrue then begin
                         (getSymbol); // ","
-                        (parseExpression);
+                        (parseExpression(Nil));
                         bParse :=  gRetLongInt;
                     end;
                     if bParse = cTrue then begin
@@ -1010,7 +1027,7 @@
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
-            (parseExpression);
+            (parseExpression(Nil));
             ret :=  gRetLongInt;
         end;
         
@@ -1051,7 +1068,7 @@
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
-            (parseExpression);
+            (parseExpression(Nil));
             ret :=  gRetLongInt;
         end;
         
@@ -1096,8 +1113,12 @@
     
     procedure parseSimpleStatement;
         var ret : longint;
+        var leftItem: ptItem;
+        var rightItem: ptItem;
     begin
-        (parseVariable);
+        New(leftItem);
+        New(rightItem);
+        parseVariable(leftItem);
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
@@ -1113,7 +1134,7 @@
 				ret :=  gRetLongInt;
             end
             else begin
-				parseExpression;
+				parseExpression(rightItem);
 				ret :=  gRetLongInt;
 				if ret = cTrue then begin
 					(parseSymbol( cSemicolon));
@@ -1121,6 +1142,9 @@
 				end;
             end;
         end;
+        if ret = cTrue then begin
+            cgAssignmentOperator(leftItem, rightItem);
+        End;
     end;
 
 
