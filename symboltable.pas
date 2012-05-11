@@ -20,7 +20,8 @@
         tSymbolTable = Record
             fFirst: ptSymbol; 
             fLast: ptSymbol; // The last is only there for convenience reasons.
-            fParent: ptSymbolTable // to allow scopes
+            fParent: ptSymbolTable; // to allow scopes
+            fSP: Longint
         End;
 
         // an entry like Var i: Longing;
@@ -189,6 +190,9 @@
         end;
         // writeln('d1.3.4');
         symbolTable^.fLast := symbol;
+        // Fill offset and shift SP 
+        // symbol^.fOffset := TODO
+        // symbolTable^.fSP := TODO
     End;
 
     Procedure createPredefinedType(typeName: String);
@@ -224,8 +228,10 @@
         // writeln('d1');
         // Create predefined symbols LONGINT, String
         createPredefinedType('LONGINT');
+        stLongintType := stCreateSymbolRet^.fType;
         // writeln('d2');
         createPredefinedType('STRING');
+        stStringType := stCreateSymbolRet^.fType;
         // writeln('d3');
     End;
 

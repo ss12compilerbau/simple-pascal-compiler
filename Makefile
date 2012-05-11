@@ -1,6 +1,8 @@
 #Makefile manual:
 # http://www.gnu.org/software/make/manual/
 
+COMPILER=fpc -gw3
+
 # The default task is 'all'.
 all : build
 build:  clean build.scanner build.symboltable build.parser
@@ -12,7 +14,7 @@ test : build test.scanner test.symboltable test.parser
 
 # Scanner
 build.scanner : clean
-	fpc ScanWrapper.pas
+	${COMPILER} ScanWrapper.pas
 	@echo "Scanner build successful"
 
 test.scanner : build.scanner test.scanner.terminals test.scanner.comment test.scanner.commentfail test.scanner.keywords test.scanner.string  test.scanner.stringfail test.scanner.include test.scanner.selfScanning
@@ -59,7 +61,7 @@ test.scanner.selfScanning : build.scanner
 
 # Parser
 build.parser : clean
-	fpc ParseWrapper.pas
+	${COMPILER} ParseWrapper.pas
 
 test.parser : test.selfParsing
 	@echo "test.parser successful"
@@ -69,7 +71,7 @@ test.selfParsing : build.parser
 
 # Symboltable
 build.symboltable : clean
-	fpc STWrapper.pas
+	${COMPILER} STWrapper.pas
 	@echo "Symboltable build successful!"
 
 test.symboltable: build.symboltable
@@ -79,7 +81,7 @@ test.symboltable: build.symboltable
 
 # Code generator
 build.codegen: clean
-	fpc CGWrapper.pas
+	${COMPILER} CGWrapper.pas
 
 test.codegen : test.codegen.assignment
 	@echo "Codegeneration tests ok."

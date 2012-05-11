@@ -6,6 +6,7 @@ PROGRAM SPC;
 
 {$include 'scanner.pas';}
 {$include 'symboltable.pas';}
+{$include 'codegen.pas';}
 {$include 'parser.pas';}
  
 

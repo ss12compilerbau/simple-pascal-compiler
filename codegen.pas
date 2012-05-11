@@ -167,7 +167,6 @@ Begin
     cgReleaseRegister(rightItem^.fReg);
 End;
 
-// TODO
 // cEql -> BNE
 // cNeq -> BEQ
 // cLss -> BGE
@@ -177,6 +176,12 @@ End;
 Var branchNegateRet: String;
 Procedure branchNegate(operatorSymbol: Longint);
 Begin
+    if operatorSymbol = cEql then begin branchNegateRet := 'BNE';end;
+    if operatorSymbol = cNeq then begin branchNegateRet := 'BEQ';end;
+    if operatorSymbol = cLss then begin branchNegateRet := 'BGE';end;
+    if operatorSymbol = cGeq then begin branchNegateRet := 'BLT';end;
+    if operatorSymbol = cLeq then begin branchNegateRet := 'BGT';end;
+    if operatorSymbol = cGtr then begin branchNegateRet := 'BLE';end;
 End;
 
 // Conditional Jump, to be fixed up later
