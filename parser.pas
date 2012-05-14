@@ -354,7 +354,6 @@
             stFindSymbol(stCurrentScope, id);
             if stFindSymbolRet <> Nil then begin
                 item^.fMode := mVar;
-                writeln('fo1');
                 item^.fType := stFindSymbolRet^.fType;
                 if stCurrentScope^.fParent = Nil then begin // Global scope
                     item^.fReg := 28;
@@ -362,7 +361,6 @@
                     item^.fReg := 27;
                 end;
                 item^.fOffset := stFindSymbolRet^.fOffset;
-                writeln('fo2');
             end else begin
                 errorMsg('parseVarExtIdentifier: Variable not found');
             end;
@@ -560,62 +558,6 @@
         gRetLongInt := ret;
     end;
     
-    procedure gcTerm( leftItem: ptItem; rightItem: ptItem; op: longint);
-		var ret: longint;
-		var bothLongint: longint;
-    begin
-		// both Items longint ?
-		bothLongint := cTrue;
-		if leftItem^.fType <> stLongintType THEN begin
-			bothLongint := cFalse;
-		end;
-		if rightItem^.fType <> stLongintType then begin
-			bothLongint := cFalse;
-		end;
-		
-		ret := cTrue;
-		if bothLongInt = cTrue then begin
-			if rightItem^.fMode = mConst then begin
-				if leftItem^.fMode = mConst then begin
-					// z.B. 6 * 7 * 2
-					if op = cTimes then begin
-						leftItem^.fValue := leftItem^.fValue * rightItem^.fValue;
-					end;
-					if op = cColon then begin
-						leftItem^.fValue := leftItem^.fValue DIV rightItem^.fValue
-					end;
-				end
-				else begin
-					// z.B. i + 3
-					cgLoad( leftItem);
-					if op = cTimes then begin
-						cgPut('MULI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'gcTerm');
-					end;
-					if op = cColon then begin
-						cgPut('DIVI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'gcTerm');
-					end;
-				end;
-			end
-			else begin
-				// z.B. 3 + j oder i * j
-				cgLoad( leftItem);
-				cgLoad( rightItem);
-				if op = cTimes then begin
-					cgPut('MUL', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'gcTerm');
-				end;
-				if op = cColon then begin
-					cgPut('DIV', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'gcTerm');
-				end;
-				cgReleaseRegister(rightItem^.fReg);
-			end;
-		end
-		else begin
-			parserErrorStr( 'Integer expressions expected');
-			ret := cFalse;
-		end;
-		gRetLongInt := ret;
-    end;
-    
     procedure parseTerm(item: ptItem);
         var ret : longint;
         var again : longint;
@@ -640,7 +582,7 @@
                 bParse :=  gRetLongInt;
             end;
             if bParse = cTrue then begin
-				gcTerm(item, rightItem, multOperator);
+				cgTerm(item, rightItem, multOperator);
                 (PeekIsMultOperator);
                 bTry :=  gRetLongInt;
                 again := bTry;

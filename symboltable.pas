@@ -103,7 +103,6 @@
     var UCName : String;
     Begin
         // stFindSymbolRet := Nil; // should be done before calling!
-        writeln('dFS1');
         if symbolTable^.fFirst <> Nil then begin
             iterator := symbolTable^.fFirst;
             whileBool := 0;
@@ -111,14 +110,12 @@
             UCFName := upCase(iterator^.fName);
             UCName := upCase(name);
             if UCFName <> UCName then begin
-                writeln('dFS2');
                 // AND there's more to look at
                 if iterator <> symbolTable^.fLast then begin
                     whileBool := 1;
                 End;
             end;
             while whileBool = 1 do begin
-                writeln('dFS3');
                 // next
                 iterator := iterator^.fNext;
                 // prepare whileBool
@@ -134,22 +131,18 @@
                     End;
                 end;
             end;
-            writeln('dFS5');
             if UCFName = UCName then begin
                 stFindSymbolRet := iterator;
             end else begin
                 if symbolTable^.fParent <> Nil then begin
-                    writeln('dFS6');
                     stFindSymbol(symbolTable^.fParent, name);
                 end;
             end;
         end else begin
             if symbolTable^.fParent <> Nil then begin
-                writeln('dFS6');
                 stFindSymbol(symbolTable^.fParent, name);
             end;
         end;
-        writeln('dFS end');
     End;
 
     Var stFindTypeRet: ptType;

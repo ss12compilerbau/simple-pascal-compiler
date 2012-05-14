@@ -27,13 +27,18 @@ End;
 // cgReleaseRegister(i) releases register i
 Procedure cgReleaseRegister(i: Longint);
 Begin
-    cgRegisterUsage[i] := cFalse;
+    if i = 0 then begin
+        errorMsg('cgReleaseRegister: Register 0 cannot be released!');
+    end else begin
+        cgRegisterUsage[i] := cFalse;
+    end;
 End;
 
 // Initialize the register allocation API related variables
 Procedure cgRegAllocInit();
 Var i: Longint;
 Begin
+    infoMsg('cgRegAllocInit called');
     New(cgRegisterUsage);
     i := 0;
     while i<31 do begin
@@ -55,7 +60,7 @@ Type
         c: Longint;
         rem: String;
     End;
-Var cgCodeLines: ^ptCodeLine; // Array
+Var cgCodeLines: Array of ptCodeLine; // Array
 Var pc: Longint;
 
 procedure cgPut(op: String; a: Longint; b: Longint; c: Longint; rem: String);
@@ -71,7 +76,7 @@ begin
 End;
 procedure cgCodegenInit();
 Begin
-    New(cgCodeLines);
+    setLength(cgCodeLines, 1000);
     PC := 0;
 End;
 
@@ -129,10 +134,14 @@ End;
 
 procedure var2Reg(item: ptItem);
 Begin
-    item^.fMode := mREG;
-    cgRequestRegister;
-    cgPut('LDW', cgRequestRegisterRet, item^.fReg, item^.fOffset, 'cg var2Reg');
-    item^.fReg := cgRequestRegisterRet;
+    if item^.fMode <> mVar then begin
+        errorMsg('var2Reg: item is not in VAR mode!');
+    end else begin
+        item^.fMode := mREG;
+        cgRequestRegister;
+        cgPut('LDW', cgRequestRegisterRet, item^.fReg, item^.fOffset, 'cg var2Reg');
+        item^.fReg := cgRequestRegisterRet;
+    end;
 End;
 
 procedure ref2Reg(item: ptItem);
@@ -166,6 +175,64 @@ Begin
     cgPut('STW', rightItem^.fReg, leftItem^.fReg, leftItem^.fOffset, 'assignmentOperator');
     cgReleaseRegister(rightItem^.fReg);
 End;
+
+Var cgTermRet: Longint;
+procedure cgTerm( leftItem: ptItem; rightItem: ptItem; op: longint);
+	var ret: longint;
+	var bothLongint: longint;
+begin
+	// both Items longint ?
+	bothLongint := cTrue;
+	if leftItem^.fType <> stLongintType THEN begin
+		bothLongint := cFalse;
+	end;
+	if rightItem^.fType <> stLongintType then begin
+		bothLongint := cFalse;
+	end;
+	
+	ret := cTrue;
+	if bothLongInt = cTrue then begin
+		if rightItem^.fMode = mConst then begin
+			if leftItem^.fMode = mConst then begin
+				// z.B. 6 * 7 * 2
+				if op = cTimes then begin
+					leftItem^.fValue := leftItem^.fValue * rightItem^.fValue;
+				end;
+				if op = cColon then begin
+					leftItem^.fValue := leftItem^.fValue DIV rightItem^.fValue
+				end;
+			end
+			else begin
+				// z.B. i * 3
+				cgLoad( leftItem);
+				if op = cTimes then begin
+					cgPut('MULI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgTerm');
+				end;
+				if op = cColon then begin
+					cgPut('DIVI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgTerm');
+				end;
+			end;
+		end
+		else begin
+			// z.B. 3 * j oder i * j
+			cgLoad( leftItem);
+			cgLoad( rightItem);
+			if op = cTimes then begin
+				cgPut('MUL', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgTerm');
+			end;
+			if op = cColon then begin
+				cgPut('DIV', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgTerm');
+			end;
+			cgReleaseRegister(rightItem^.fReg);
+		end;
+	end
+	else begin
+		errorMsg( 'Integer expressions expected');
+		ret := cFalse;
+	end;
+	cgTermRet := ret;
+end;
+
 
 // cEql -> BNE
 // cNeq -> BEQ
@@ -215,6 +282,7 @@ Begin
         branchAddress := nextBranchAddress;
     end;
 End;
+
 
 // Initialize Parts of this module
 Procedure cgInit();
