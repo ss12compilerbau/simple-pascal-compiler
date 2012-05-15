@@ -83,7 +83,7 @@
         if form = 'RECORD' then begin isSimple := 0; end;
         if form = 'PROCEDURE' then begin isSimple := 0; end;
         if isSimple = -1 then begin
-            (errorMsg('Symboltable: Unrecognized Type form: ' + form));
+            errorMsg('Symboltable: Unrecognized Type form: ' + form);
         end else begin
             stCreateTypeRet^.fForm := form;
             If isSimple = 0 then begin
@@ -231,19 +231,19 @@
     // erzeugt einen Eintrag für eine Procedure oder Record in der aktuellen symboltabelle
     Procedure stInsertSymbol(name: String; symbolType: String; isPointer: Longint; varType: String);
     Begin
-        (infoMsg( 'Symboltable: Adding new symbol ' + name));
+        infoMsg( 'Symboltable: Adding new symbol ' + name);
         // Make sure the symbol doesn't exist yet.
         // writeln('dIS start');
         stFindSymbolRet := Nil;
         stFindSymbol(stCurrentScope, name);
         if stFindSymbolRet <> Nil then begin
-            (errorMsg( 'Symboltable: Duplicate Entry: ' + name));
+            errorMsg( 'Symboltable: Duplicate Entry: ' + name);
         end else begin
             // writeln('dIS1');
             stFindType(varType);
             // writeln('dIS1.1');
             if stFindTypeRet = Nil then begin
-                (errorMsg( 'Symboltable: Type not defined! ' + varType));
+                errorMsg( 'Symboltable: Type not defined! ' + varType);
             end else begin
                 // writeln('dIS2');
                 stCreateSymbol;
@@ -285,7 +285,7 @@
                 stCurrentScope := stFindSymbolRet^.fType^.fFields;
             end else begin
                 // writeln('dBC 1');
-                (errorMsg( 'Symboltable: Duplicate Entry: ' + name));
+                errorMsg( 'Symboltable: Duplicate Entry: ' + name);
             end;
         end else begin
             // writeln('dBC 2');
@@ -314,26 +314,26 @@
 
     Procedure stBeginProgram(name: String);
     begin
-        (infoMsg( 'Symboltable: Beginning program ' + name));
-        (stBeginContext(name, stProgram));
+		infoMsg( 'Symboltable: Beginning program ' + name);
+        stBeginContext(name, stProgram);
     end;    
 
     Procedure stBeginProcedure(name: String);
     begin
-        (infoMsg( 'Symboltable: Beginning new procedure ' + name));
-        (stBeginContext(name, stProcedure));
+        infoMsg( 'Symboltable: Beginning new procedure ' + name);
+        stBeginContext(name, stProcedure);
         stProcedureParameters := cTrue;
     end;
 
     Procedure stEndProcedureParameters;
     begin
-        (infoMsg( 'Symboltable: End of procedure parameters'));
+        infoMsg( 'Symboltable: End of procedure parameters');
         stProcedureParameters := cFalse;
     end;
 
     Procedure stProcedureForward;
     begin
-        (infoMsg( 'Symboltable: Procedure forward declaration'));
+        infoMsg( 'Symboltable: Procedure forward declaration');
         stProcedureParameters := cFalse;
         stCurrentContext^.fIsForward := cTrue;
     end;
@@ -341,20 +341,20 @@
     // Beginning of a record
     Procedure stBeginRecord(name: String);
     begin
-        (infoMsg( 'Symboltable: Beginning new record ' + name));
-        (stBeginContext(name, stRecord));
+        infoMsg( 'Symboltable: Beginning new record ' + name);
+        stBeginContext(name, stRecord);
     end;
 
     // Ending a record
     Procedure stEndRecord;
     Begin
-        (infoMsg( 'Symboltable: Ending record'));
+        infoMsg( 'Symboltable: Ending record');
         stCurrentScope := stCurrentScope^.fParent;
     End;
 
     Procedure stEndProcedure;
     Begin
-        (infoMsg( 'Symboltable: Ending procedure'));
+        infoMsg( 'Symboltable: Ending procedure');
         if stCurrentScope^.fParent <> Nil then begin
             stCurrentScope := stCurrentScope^.fParent;
         end;
@@ -371,18 +371,18 @@
     Begin
         // writeln('dPST start');
         if symbolTable = Nil then begin
-            (writeln(prefix + 'Empty Symbol table.'));
+            writeln(prefix + 'Empty Symbol table.');
         end else Begin
             curSym := symbolTable^.fFirst;
             While curSym <> Nil Do Begin
-                (Write(prefix + 'Symbol Name: ' + curSym^.fName + ', Class: '));
-                (Write(curSym^.fClass + ', IsParameter: ', curSym^.fIsParameter));
-                (Write( ', Type object: '));
+                Write(prefix + 'Symbol Name: ' + curSym^.fName + ', Class: ');
+                Write(curSym^.fClass + ', IsParameter: ', curSym^.fIsParameter);
+                Write( ', Type object: ');
                 if curSym^.fType = Nil then Begin
                     (Writeln( 'Nil '));
                 End else begin
-                    (Writeln);
-                    (printType(curSym^.fType, prefix + '    '));
+                    Writeln;
+                    printType(curSym^.fType, prefix + '    ');
                 end;
                 curSym := curSym^.fNext;
             End;
@@ -391,17 +391,17 @@
 
     Procedure printType(typeObj: ptType; prefix: String);
     Begin
-        (Write(prefix + 'TypeObj Form: ' + typeObj^.fForm + ', Base: '));
+        Write(prefix + 'TypeObj Form: ' + typeObj^.fForm + ', Base: ');
         if(typeObj^.fBase = Nil) then begin
-            (Write( 'Nil, '));
+            Write( 'Nil, ');
         end else begin
-            (Write('[', typeObj^.fBase^.fForm, ']'));
+            Write('[', typeObj^.fBase^.fForm, ']');
         end;
         If typeObj^.fFields <> Nil then Begin
-            (Writeln( ' Field objects:'));
-            (printSymbolTable(typeObj^.fFields, prefix + '    '));
+            Writeln( ' Field objects:');
+            printSymbolTable(typeObj^.fFields, prefix + '    ');
         End else begin
-            (Writeln( ' Fields: Empty.'));
+            Writeln( ' Fields: Empty.');
         End;
     End;
 

@@ -51,7 +51,7 @@
 	Var cFalse : longint;
 
 	Var lineNr: Longint;
-	Var colNr: Integer;
+	Var colNr: longint;
 	var filename: String;
 
 	Var sym: Longint; (* speichert das nächste Symbol des Scanners *)
@@ -77,7 +77,7 @@
 
 	// for {$include...} implementation
 	Var lineNrTemp: Longint;
-	Var colNrTemp: Integer;
+	Var colNrTemp: longint;
 	Var RTemp: Text;
 	var filenameTemp: String;
 	Var includeMode: Longint;
@@ -130,9 +130,9 @@
 	var c: Char;
 	//var c10: Char;
 	BEGIN
-		(Read(R, c));
+		Read(R, c);
 		chOrig := c;
-		(UCaseChr(c));
+		UCaseChr(c);
 		ch := UCaseChrRet;
 		colNr := colNr + 1;
 		//c10 := chr10;
@@ -153,13 +153,13 @@
 
 	PROCEDURE Mark(msgType: String; msg: STRING);
 	BEGIN
-		(Write(msgType, ' at Pos ', lineNr, ':', colNr, ' in ' + filename + ', ', msg));
+		Write(msgType, ' at Pos ', lineNr, ':', colNr, ' in ' + filename + ', ', msg);
 	END;
 
 	PROCEDURE MarkLn(msgType: String; msg: STRING);
 	BEGIN
-		(Mark(msgType, msg));
-		(Writeln);
+		Mark(msgType, msg);
+		Writeln;
 	END;
 
 
@@ -211,11 +211,11 @@
 	Procedure isLetterOrDigit( ch: String);
 	BEGIN
 		isLetterOrDigitRet := cFalse;
-		(isLetter(ch));
+		isLetter(ch);
 		if isLetterRet = cTrue then begin
 			isLetterOrDigitRet := cTrue;
 		end;
-		(isDigit(ch));
+		isDigit(ch);
 		if isDigitRet = cTrue then begin
 			isLetterOrDigitRet := cTrue;
 		end;
@@ -253,14 +253,14 @@
 	PROCEDURE Ident;
 	BEGIN
 		id := '';
-		(isLetterOrDigit(ch));
+		isLetterOrDigit(ch);
 		While(isLetterOrDigitRet = cTrue) Do begin
 			id := id + ch;
-			(NextChar);
-			(isLetterOrDigit( ch));
+			NextChar;
+			isLetterOrDigit( ch);
 		End;
 
-		(setSymToKeywordOrIdent);
+		setSymToKeywordOrIdent;
 	END;
 
 	(* falls beim Lesen erkannt wurde, dass es sich um ein String handelt *)
@@ -269,7 +269,7 @@
 	BEGIN
 		str := '';
 		(* komsumiere "'" am Anfang *)
-		(NextChar);
+		NextChar;
 		nextWhile := cFalse;
 
 		if chOrig <> chrQuote then begin
@@ -281,7 +281,7 @@
 
 		While nextWhile = cTrue do begin
 			str := str + chOrig;
-			(NextChar);
+			NextChar;
 			if chOrig = chrQuote then begin
 				nextWhile := cFalse;
 			end;
@@ -297,7 +297,7 @@
 			infoMsg( 'String not closed!');
 		end;
 		sym := cString;
-		(NextChar);
+		NextChar;
 	END;
 
 	var chToNumberRet : LongInt;
@@ -321,19 +321,19 @@
 	BEGIN
 		val := 0;
 		sym := cNumber;
-		(IsDigit(ch));
+		IsDigit(ch);
 		While  ( IsDigitRet = cTrue) do begin
-			(chToNumber( ch));
+			chToNumber( ch);
 			val1 := 10 * val + chToNumberRet; 
 			if val1 <= cMaxNumber then begin
 				val := val1;
 			end
 			ELSE BEGIN
-				(infoMsg( 'number too large'));
+				infoMsg( 'number too large');
 				val := 0;
 			END;
-			(NextChar);
-			(IsDigit(ch));
+			NextChar;
+			IsDigit(ch);
 		End;
 	END;
 
@@ -342,18 +342,18 @@
 		var inComment: Longint;
 	BEGIN
 		inComment := cTrue;
-		(NextChar);
+		NextChar;
 		WHILE inComment = cTrue DO
 		BEGIN
 			isEof;
 			if isEofRet = cTrue THEN
 			BEGIN
-				(infoMsg( 'ERROR: comment not terminated'));
+				infoMsg( 'ERROR: comment not terminated');
 				EXIT;
 			END;
 			IF ch = '*' THEN
 			BEGIN
-				(nextChar);
+				nextChar;
 				isEof;
 				if isEofRet = cTrue THEN
 				BEGIN
@@ -375,14 +375,14 @@
 	// Include instructions look like {$include 'filename';}
 	Procedure include;
 	Begin
-		(NextChar);
+		NextChar;
 		// consume the 'include' identifier, the next one has to be the string
 		// with the file name (in str)
-		(getSymbol);
-		//(writeln('cur sym: ', sym));
+		getSymbol;
+		//writeln('cur sym: ', sym);
 		// consume ';}'
-		(NextChar);
-		(NextChar);
+		NextChar;
+		NextChar;
 		// Initialize file swap
 		RTemp := R;
 		lineNrTemp := lineNr;
@@ -392,10 +392,10 @@
 		lineNr := 0;
 		colNr := 0;
 		filename := str;
-		(Assign( R, str));
-		(Reset( R));
+		Assign( R, str);
+		Reset( R);
 		// recall getSymbol
-		(getSymbol);
+		getSymbol;
 	END;
 
 	(* Liefert das nächste Symbol aus der Input- Datei *)
@@ -421,8 +421,8 @@
 			end;
 		END;
 
-		(isDigit(ch));
-		(isLetter(ch));
+		isDigit(ch);
+		isLetter(ch);
 		(* IF R.eot THEN sym := eof *)
 		symFound := cFalse;
 		
@@ -590,7 +590,7 @@
 				peekCallFlag := cTrue;
 			end
 			else begin
-				(getSymHard);
+				getSymHard;
 				// writeln(sym);
 			end;
 		end;
@@ -601,7 +601,7 @@
 	// damit nächstes GetSymbol erkennt, dass getSymHard bereits aufger.
 	begin
 		if peekCallFlag = cFalse then begin
-			(getSymbol);
+			getSymbol;
 			peekCallFlag := cTrue;
 		end;
 	end;
@@ -613,14 +613,14 @@
 		var saveStr : string;
 	begin
 		if peek2CallFlag = cFalse then begin
-			(peekSymbol);
+			peekSymbol;
 			
 			saveSym := sym; // Peek Symbol zwischenspeichern
 			saveId := id;
 			saveVal := val;
 			saveStr := str;
 			
-			(getSymHard);
+			getSymHard;
 			
 			sym2 := sym; // 2. Peek Symbol
 			id2 := id;
@@ -639,10 +639,10 @@
 
 	Procedure scanInitFile(inputFile: String);
 	Begin
-		(Assign( R, inputFile));
-		(Reset( R)); 
+		Assign( R, inputFile);
+		Reset( R); 
 		filename := inputFile;
-		(NextChar);
+		NextChar;
 	End;
 
 	Procedure ScannerInit;

@@ -227,7 +227,64 @@ begin
 		end;
 	end
 	else begin
-		errorMsg( 'Integer expressions expected');
+		errorMsg( 'cgTerm: Integer expressions expected');
+		ret := cFalse;
+	end;
+	cgTermRet := ret;
+end;
+
+Var cgSimpleExpressionRet: Longint;
+procedure cgSimpleExpression( leftItem: ptItem; rightItem: ptItem; op: longint);
+	var ret: longint;
+	var bothLongint: longint;
+begin
+	// both Items longint ?
+	bothLongint := cTrue;
+	if leftItem^.fType <> stLongintType THEN begin
+		bothLongint := cFalse;
+	end;
+	if rightItem^.fType <> stLongintType then begin
+		bothLongint := cFalse;
+	end;
+	
+	ret := cTrue;
+	if bothLongInt = cTrue then begin
+		if rightItem^.fMode = mConst then begin
+			if leftItem^.fMode = mConst then begin
+				// z.B. 6 + 7 + 2
+				if op = cPlus then begin
+					leftItem^.fValue := leftItem^.fValue + rightItem^.fValue;
+				end;
+				if op = cMinus then begin
+					leftItem^.fValue := leftItem^.fValue - rightItem^.fValue
+				end;
+			end
+			else begin
+				// z.B. i + 3
+				cgLoad( leftItem);
+				if op = cPlus then begin
+					cgPut('ADDI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgSimpleExpression');
+				end;
+				if op = cMinus then begin
+					cgPut('SUBI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgSimpleExpression');
+				end;
+			end;
+		end
+		else begin
+			// z.B. 3 + j oder i + j
+			cgLoad( leftItem);
+			cgLoad( rightItem);
+			if op = cPlus then begin
+				cgPut('ADD', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgSimpleExpression');
+			end;
+			if op = cMinus then begin
+				cgPut('SUB', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgSimpleExpression');
+			end;
+			cgReleaseRegister(rightItem^.fReg);
+		end;
+	end
+	else begin
+		errorMsg( 'cgSimpleExpression: Integer expressions expected');
 		ret := cFalse;
 	end;
 	cgTermRet := ret;
