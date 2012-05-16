@@ -47,11 +47,11 @@
 
     procedure parserDebugStr( msg: String);
     begin
-         //writeln( msg);
+        // writeln( msg);
     end;
     procedure parserDebugInt( code: longint);
     begin
-         //writeln( code);
+        // writeln( code);
     end;
     procedure parserDebugStrInt( msg : String; code: longint);
     begin
@@ -534,6 +534,20 @@
                             getSymbol; // not
                             parseFactor(item);
                             ret := gRetLongInt;
+                            if ret = cTrue then begin
+								if item^.fType = stBooleanType then begin
+									if item^.fValue = cTrue then begin
+										item^.fValue := cFalse;
+									end
+									else begin
+										item^.fValue := cTrue;
+									end;
+								end
+								else begin
+									errorMsg( 'parseFactor - Not: boolean expressions expected');
+									ret := cFalse;
+								end;
+                            end;
                         end
                         else begin
 							if sym = cNil then begin
@@ -570,34 +584,42 @@
         parseFactor(item);
         ret :=  gRetLongInt;
         
-        peekIsMultOperator;
-        bTry :=  gRetLongInt;
-        again := bTry;
-        while again = cTrue do begin
-            if bTry = cTrue then begin
-                getSymbol; // multOperator
-                multOperator := Sym;
-                new( rightItem);
-                parseFactor(rightItem);
-                bParse :=  gRetLongInt;
-            end;
-            if bParse = cTrue then begin
-				cgTerm(item, rightItem, multOperator);
-                PeekIsMultOperator;
-                bTry :=  gRetLongInt;
-                again := bTry;
-            end
-            else begin
-                again := cFalse;
-            end;
-        end;
-    
-        if bTry = cFalse then begin
-            ret := cTrue;
-        end
-        else begin
-            ret := bParse;
-        end;
+        if ret = cTrue then begin
+			peekIsMultOperator;
+			bTry :=  gRetLongInt;
+			again := bTry;
+			while again = cTrue do begin
+				if bTry = cTrue then begin
+					getSymbol; // multOperator
+					multOperator := Sym;
+					new( rightItem);
+					parseFactor(rightItem);
+					bParse :=  gRetLongInt;
+				end;
+				if bParse = cTrue then begin
+					cgTerm(item, rightItem, multOperator);
+					if cgTermRet = cTrue then begin
+						PeekIsMultOperator; // weiteres * ?
+						bTry :=  gRetLongInt;
+						again := bTry;
+					end
+					else begin
+						bTry := cTrue;
+						again := cFalse;
+					end;
+				end
+				else begin
+					again := cFalse;
+				end;
+			end;
+		
+			if bTry = cFalse then begin
+				ret := cTrue;
+			end
+			else begin
+				ret := bParse;
+			end;
+		end;
         
         parserDebugStrInt( 'parseTerm', ret);
         gRetLongInt := ret;
@@ -616,34 +638,42 @@
         parseTerm(item);
         ret :=  gRetLongInt;
         
-        peekIsAddOperator;
-        bTry :=  gRetLongInt;
-        again := bTry;
-        while again = cTrue do begin
-            if bTry = cTrue then begin
-                getSymbol; // addOperator
-                addOperator := Sym;
-                new( rightItem);
-                parseTerm(rightItem);
-                bParse :=  gRetLongInt;
-            end;
-            if bParse = cTrue then begin
-				cgSimpleExpression( item, rightItem, addOperator);
-                PeekIsAddOperator;
-                bTry :=  gRetLongInt;
-                again := bTry;
-            end
-            else begin
-                again := cFalse;
-            end;
-        end;
-    
-        if bTry = cFalse then begin
-            ret := cTrue;
-        end
-        else begin
-            ret := bParse;
-        end;
+        if ret = cTrue then begin
+			peekIsAddOperator;
+			bTry :=  gRetLongInt;
+			again := bTry;
+			while again = cTrue do begin
+				if bTry = cTrue then begin
+					getSymbol; // addOperator
+					addOperator := Sym;
+					new( rightItem);
+					parseTerm(rightItem);
+					bParse :=  gRetLongInt;
+				end;
+				if bParse = cTrue then begin
+					cgSimpleExpression( item, rightItem, addOperator);
+					if cgSimpleExpressionRet = cTrue then begin
+						PeekIsAddOperator;
+						bTry :=  gRetLongInt;
+						again := bTry;
+					end
+					else begin
+						bTry := cTrue;
+						again := cFalse;
+					end;
+				end
+				else begin
+					again := cFalse;
+				end;
+			end;
+		
+			if bTry = cFalse then begin
+				ret := cTrue;
+			end
+			else begin
+				ret := bParse;
+			end;
+		end;
         
         parserDebugStrInt( 'parseSimpleExpression', ret);
         gRetLongInt := ret;
@@ -653,6 +683,8 @@
     procedure parseExpression(item: ptItem);
         var ret : longint;
         var bTry : longint;
+        var rightItem: ptItem;
+        var relOperator: longint;
     begin
         parserDebugStr( 'parseExpression');
         parseSimpleExpression(item);
@@ -664,8 +696,15 @@
             
             if bTry = cTrue then begin
                 getSymbol; // relOperator 
-                parseSimpleExpression(item);
+                relOperator := Sym;
+				new( rightItem);
+                parseSimpleExpression(rightItem);
                 ret :=  gRetLongInt;
+                
+                if ret = cTrue then begin
+					cgExpression( item, rightItem, relOperator);
+					ret := cgExpressionRet;
+                end;
             end;
         end;
         
@@ -1104,6 +1143,7 @@
             else begin
 				parseExpression(rightItem);
 				ret :=  gRetLongInt;
+				writeln('Rel- Expression DLX = ', rightitem^.fValue, ' (1...True, 0...False)');
 				if ret = cTrue then begin
 					parseSymbol( cSemicolon);
 					ret :=  gRetLongInt;

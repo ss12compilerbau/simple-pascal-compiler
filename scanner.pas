@@ -1,15 +1,17 @@
-		(* größte Zahl, die im Source angegeben werden darf *)
+
+	
+	(* größte Zahl, die im Source angegeben werden darf *)
 	Var cMaxNumber: Longint;
 
-		(* symbols *)
+	(* symbols *)
 	Var cNull: Longint; // Unknown
 	Var cTimes: Longint; // *
-	Var cAnd: Longint; // &
+	Var cAnd: Longint; // AND
 	Var cPlus: Longint; // +
 	Var cMinus: Longint; // -
 	Var cOr: Longint; // OR
 	Var cEql: Longint; // =
-	Var cNeq: Longint; // #
+	Var cNeq: Longint; // <>
 	Var cLss: Longint; // <
 	Var cGeq: Longint; // >=
 	Var cLeq: Longint; // <=
@@ -23,7 +25,7 @@
 	Var cDo: Longint; // DO
 	Var cLparen: Longint; // (
 	Var cLbrak: Longint; // [
-	Var cNot: Longint; // ~
+	Var cNot: Longint; // NOT
 	Var cBecomes: Longint; // :=
 	Var cNumber: Longint; // decimal number
 	Var cIdent: Longint; // some identifier
@@ -229,7 +231,9 @@
 		if id = 'TypeLongint' then begin sym := cTypeLongint; end;
 		if id = 'TypeString' then begin sym := cTypeString; end;
 		if id = 'OR' then begin sym := cOr; end;
+		if id = 'AND' then begin sym := cAnd; end;
 		if id = 'END' then begin sym := cEnd; end;
+		if id = 'NOT' then begin sym := cNOT; end;
 		if id = 'NIL' then begin sym := cNil; end;
 		if id = 'VAR' then begin sym := cVar; end;
 		if id = 'ELSE' then begin sym := cElse; end;
@@ -432,9 +436,11 @@
 			symFound := cTrue;
 		end
 		ELSE BEGIN 
+			(*
             IF symFound = cFalse then begin
     			IF ch = '&' THEN BEGIN NextChar; sym := cAnd; symFound := cTrue; END;
     		end;
+    		*)
             IF symFound = cFalse then begin
     			IF ch = '^' THEN BEGIN NextChar; sym := cPtrRef; symFound := cTrue; END;
     		end;
@@ -450,9 +456,11 @@
             IF symFound = cFalse then begin
     			IF ch = '=' THEN BEGIN NextChar; sym := cEql; symFound := cTrue; END;
     		end;
+    		(*
             IF symFound = cFalse then begin
     			IF ch = '#' THEN BEGIN NextChar; sym := cNeq; symFound := cTrue; END;
     		end;
+    		*)
             IF symFound = cFalse then begin
 			    IF ch = '<' THEN BEGIN
 				    NextChar;
@@ -532,9 +540,11 @@
             IF symFound = cFalse then begin
     			IF isLetterRet = cTrue THEN Begin Ident; symFound := cTrue; END;
     		end;
+    		(*
             IF symFound = cFalse then begin
     			IF ch = '~' THEN BEGIN NextChar; sym := cNot; symFound := cTrue; END;
     		end;
+    		*)
             IF symFound = cFalse then begin
     			IF ch = '{' THEN BEGIN
 				    NextChar;
@@ -669,12 +679,12 @@
 		(* symbols *)
 		cNull := 0; // Unknown
 		cTimes := 1; // *
-		cAnd := 5; // &
+		cAnd := 5; // AND
 		cPlus := 6; // +
 		cMinus := 7; // -
 		cOr := 8; // OR
 		cEql := 9; // =
-		cNeq := 10; // #
+		cNeq := 10; // <>
 		cLss := 11; // <
 		cGeq := 12; // >=
 		cLeq := 13; // <=
@@ -688,7 +698,7 @@
 		cDo := 27; // DO
 		cLparen := 29; // (
 		cLbrak := 30; // [
-		cNot := 32; // ~
+		cNot := 32; // NOT
 		cBecomes := 33; // :=
 		cNumber := 34; // decimal number
 		cIdent := 37; // some identifier
