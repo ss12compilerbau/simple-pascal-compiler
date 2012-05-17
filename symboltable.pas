@@ -51,6 +51,7 @@
 
     var stLongintType: ptType;
     var stStringType: ptType;
+    var stBooleanType: ptType;
 
 
     Var stCreateSymbolRet: ptSymbol;
@@ -225,6 +226,9 @@
         // writeln('d2');
         createPredefinedType('STRING');
         stStringType := stCreateSymbolRet^.fType;
+        
+        createPredefinedType('BOOLEAN');
+        stBooleanType := stCreateSymbolRet^.fType;
         // writeln('d3');
     End;
 
