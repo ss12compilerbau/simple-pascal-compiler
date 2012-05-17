@@ -21,7 +21,7 @@
             fFirst: ptSymbol; 
             fLast: ptSymbol; // The last is only there for convenience reasons.
             fParent: ptSymbolTable; // to allow scopes
-            fSP: Longint
+            fSP: Longint // Next symbol pointer
         End;
 
         // an entry like Var i: Longing;
@@ -35,7 +35,8 @@
             fIsParameter: Longint;
             fPrev: ptSymbol; // link to the previous symbol. for conveninence
             fNext: ptSymbol; // link to the next symbol
-            fOffset: Longint // To be set when a variable is declared TODO
+            fOffset: Longint; // To be set when a variable is declared
+            fScope: ptSymbolTable //Pointer to the symbol table
         End;
 
         // type descriptor record for each type (Longint, String, tType, ...)
@@ -46,6 +47,7 @@
         End;
 
     Var stCurrentScope: ptSymbolTable;
+    var stGlobalScope: ptSymbolTable;
     Var stCurrentContext: ptSymbol;
     Var stProcedureParameters: Longint;
 
@@ -53,6 +55,7 @@
     var stStringType: ptType;
     var stBooleanType: ptType;
 
+    var stGP: Longint;
 
     Var stCreateSymbolRet: ptSymbol;
     Procedure stCreateSymbol;
@@ -70,6 +73,7 @@
         stCreateSymbolTableRet^.fFirst := Nil;
         stCreateSymbolTableRet^.fLast := Nil;
         stCreateSymbolTableRet^.fParent := parentSymbolTable;
+        stCreateSymbolTableRet^.fSP := -4;
     End;
 
     var stCreateTypeRet: ptType;
@@ -81,6 +85,7 @@
         if form = 'LONGINT' then begin isSimple := 1; end;
         if form = 'STRING' then begin isSimple := 1; end;
         if form = 'POINTER' then begin isSimple := 1; end;
+        if form = 'BOOLEAN' then begin isSimple := 1; end;
         if form = 'RECORD' then begin isSimple := 0; end;
         if form = 'PROCEDURE' then begin isSimple := 0; end;
         if isSimple = -1 then begin
@@ -185,8 +190,10 @@
         // writeln('d1.3.4');
         symbolTable^.fLast := symbol;
         // Fill offset and shift SP 
-        // symbol^.fOffset := TODO
-        // symbolTable^.fSP := TODO
+        if symbol^.fClass = stVar then begin
+            symbol^.fOffset := symbolTable^.fSP;
+            symbolTable^.fSP := symbolTable^.fSP - 4;
+        end;
     End;
 
     Procedure createPredefinedType(typeName: String);
@@ -218,6 +225,7 @@
         // Create global symbol table. The only one that's parent is Nil
         stCreateSymbolTable(Nil);
         stCurrentScope := stCreateSymbolTableRet;
+        stGlobalScope := stCurrentScope;
 
         // writeln('d1');
         // Create predefined symbols LONGINT, String
@@ -379,8 +387,9 @@
         end else Begin
             curSym := symbolTable^.fFirst;
             While curSym <> Nil Do Begin
-                Write(prefix + 'Symbol Name: ' + curSym^.fName + ', Class: ');
-                Write(curSym^.fClass + ', IsParameter: ', curSym^.fIsParameter);
+                Write(prefix, 'Symbol Name: ', curSym^.fName, ', Class: ');
+                Write(curSym^.fClass, ', IsParameter: ', curSym^.fIsParameter);
+                Write( ', Offset: ', curSym^.fOffset);
                 Write( ', Type object: ');
                 if curSym^.fType = Nil then Begin
                     (Writeln( 'Nil '));
