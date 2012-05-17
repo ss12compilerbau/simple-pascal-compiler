@@ -83,7 +83,7 @@ test.symboltable: build.symboltable
 build.codegen: clean
 	${COMPILER} CGWrapper.pas
 
-test.codegen : test.codegen.assignment test.codegen.boolean test.codegen.arrays test.codegen.conditionals-loops
+test.codegen : test.codegen.assignment test.codegen.boolean test.codegen.arrays test.codegen.arrayselements test.codegen.conditionals-loops test.codegen.field
 	@echo "Codegeneration tests ok."
 
 test.codegen.assignment : build.codegen
@@ -101,10 +101,21 @@ test.codegen.arrays: build.codegen
 	@echo "Code emitted:"
 	@cat out.asm
 
+test.codegen.arrayselements: build.codegen
+	./CGWrapper tests/cg-arrayselements.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
 test.codegen.conditionals-loops: build.codegen
 	./CGWrapper tests/cg-conditionals-loops.pas
 	@echo "Code emitted:"
 	@cat out.asm
+
+test.codegen.field: build.codegen
+	./CGWrapper tests/cg-field.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
 
 # Emulator
 install.emu:
