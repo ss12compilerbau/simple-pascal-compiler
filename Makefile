@@ -83,11 +83,26 @@ test.symboltable: build.symboltable
 build.codegen: clean
 	${COMPILER} CGWrapper.pas
 
-test.codegen : test.codegen.assignment
+test.codegen : test.codegen.assignment test.codegen.boolean test.codegen.arrays test.codegen.conditionals-loops
 	@echo "Codegeneration tests ok."
 
 test.codegen.assignment : build.codegen
 	./CGWrapper tests/cg-assignment.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
+test.codegen.boolean: build.codegen
+	./CGWrapper tests/cg-boolean.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
+test.codegen.arrays: build.codegen
+	./CGWrapper tests/cg-assignment.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
+test.codegen.conditionals-loops: build.codegen
+	./CGWrapper tests/cg-conditionals-loops.pas
 	@echo "Code emitted:"
 	@cat out.asm
 
@@ -103,6 +118,6 @@ test.emu.fibo:
 	@echo "Emulator fibonacci test ok."
 
 clean :
-	rm -rf *.s *.o hello ScanWrapper ParseWrapper STWrapper SPC CGWrapper *.out tests/*.out
+	rm -rf *.s *.o hello ScanWrapper ParseWrapper STWrapper SPC CGWrapper *.out tests/*.out *.exe
 	@echo "Clean succesful"
 

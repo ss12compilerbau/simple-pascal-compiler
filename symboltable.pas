@@ -49,8 +49,8 @@
     Var stCurrentContext: ptSymbol;
     Var stProcedureParameters: Longint;
 
-    var stLongintType: ptType; // TODO Fill!
-    var stStringType: ptType; // TODO Fill!
+    var stLongintType: ptType;
+    var stStringType: ptType;
 
 
     Var stCreateSymbolRet: ptSymbol;

@@ -31,10 +31,6 @@ begin
 	ADD, 1, 1, 3; cgSimpleExpression
 	STW, 1, 28, 0; assignmentOperator
 	*)
-	
-	j := not ((3 = 3) AND (1 = 1));
-//  Rel- Expression DLX = 0 (1...True, 0... False)
-	
    
 //  j := i + 3;
 //  j := 3 + i;
