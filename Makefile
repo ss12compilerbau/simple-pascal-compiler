@@ -83,7 +83,7 @@ test.symboltable: build.symboltable
 build.codegen: clean
 	${COMPILER} CGWrapper.pas
 
-test.codegen : test.codegen.assignment test.codegen.boolean test.codegen.arrays test.codegen.arrayselements test.codegen.conditionals-loops test.codegen.field
+test.codegen : test.codegen.assignment test.codegen.boolean test.codegen.arrays test.codegen.records test.codegen.arrayselements test.codegen.conditionals-loops test.codegen.field
 	@echo "Codegeneration tests ok."
 
 test.codegen.assignment : build.codegen
@@ -98,6 +98,11 @@ test.codegen.boolean: build.codegen
 
 test.codegen.arrays: build.codegen
 	./CGWrapper tests/cg-assignment.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
+test.codegen.records: build.codegen
+	./CGWrapper tests/cg-records.pas
 	@echo "Code emitted:"
 	@cat out.asm
 
