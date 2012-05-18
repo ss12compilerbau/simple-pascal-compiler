@@ -106,14 +106,16 @@ Type
         fOffset: Longint;
         fValue: Longint;
         fOperator: Longint; // Operator token
-        fls: Longint;
-        tru: Longint;
+        fFls: Longint;
+        fTru: Longint;
     end;
 
 var mCONST: Longint;
 var mVar: Longint;
 var mREG: Longint;
 var mREF: Longint;
+var mCOND: Longint;
+
 
 // Initialize the ITEM API related parts
 Procedure cgItemInit();
@@ -122,6 +124,7 @@ Begin
     mVAR := 2;
     mREG := 3;
     mREF := 4;
+    mCOND := 5;
 End;
 
 procedure const2Reg(item: ptItem);
@@ -166,6 +169,17 @@ Begin
         end;
     end;
 End;
+
+Procedure cgLoadBool(item: ptItem);
+Begin
+    if item^.fMode <> mCOND then begin
+        cgLoad(item);
+        item^.fMode := mCOND;
+        item^.fOperator := cNeq;
+        item^.fFls := 0;
+        item^.fTru := 0;
+    end;
+end;
 
 procedure cgAssignmentOperator(leftItem: ptItem; rightItem: ptItem);
 Begin
@@ -269,81 +283,65 @@ procedure cgSimpleExpression( leftItem: ptItem; rightItem: ptItem; op: longint);
 	var bothLongint: longint;
 	var bothBool: longint;
 begin
-	// both Items longint ?
-	bothLongint := cTrue;
-	if leftItem^.fType <> stLongintType THEN begin
-		bothLongint := cFalse;
-	end;
-	if rightItem^.fType <> stLongintType then begin
-		bothLongint := cFalse;
-	end;
-	
-	// both Items mBool ?
-	bothBool := cTrue;
-	if leftItem^.fType <> stBooleanType THEN begin
-		bothBool := cFalse;
-	end;
-	if rightItem^.fType <> stBooleanType then begin
-		bothBool := cFalse;
-	end;
-	
-	ret := cTrue;
-	if bothLongInt = cTrue then begin
-		if rightItem^.fMode = mConst then begin
-			if leftItem^.fMode = mConst then begin
-				// z.B. 6 + 7 + 2
-				if op = cPlus then begin
-					leftItem^.fValue := leftItem^.fValue + rightItem^.fValue;
-				end;
-				if op = cMinus then begin
-					leftItem^.fValue := leftItem^.fValue - rightItem^.fValue
-				end;
-			end
-			else begin
-				// z.B. i + 3
-				cgLoad( leftItem);
-				if op = cPlus then begin
-					cgPut('ADDI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgSimpleExpression');
-				end;
-				if op = cMinus then begin
-					cgPut('SUBI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgSimpleExpression');
-				end;
-			end;
-		end
-		else begin
-			// z.B. 3 + j oder i + j
-			cgLoad( leftItem);
-			cgLoad( rightItem);
-			if op = cPlus then begin
-				cgPut('ADD', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgSimpleExpression');
-			end;
-			if op = cMinus then begin
-				cgPut('SUB', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgSimpleExpression');
-			end;
-			cgReleaseRegister(rightItem^.fReg);
-		end;
-	end
-	else begin
-		if bothBool = cTrue then begin
-			// OR
-			if op = cOR then begin
-				if( (leftItem^.fValue = cTrue) OR (rightItem^.fValue = cTrue)) then begin
-					leftItem^.fValue := cTrue;
-				end
-				else begin
-					leftItem^.fValue := cFalse;
-				end
-			end
-			else begin
-				errorMsg( 'cgSimpleExpression-1: boolean expressions expected');
-				ret := cFalse;
-			end;
-		end
-		else begin
-			errorMsg( 'cgSimpleExpression-2: Integer expressions expected');
-			ret := cFalse;
-		end;
-	end;
+    if leftItem^.fType = rightItem^.fType then begin
+        if leftItem^.fType = stLongintType then begin
+            // Longints
+		    if rightItem^.fMode = mConst then begin
+			    if leftItem^.fMode = mConst then begin
+				    // z.B. 6 + 7 + 2
+				    if op = cPlus then begin
+					    leftItem^.fValue := leftItem^.fValue + rightItem^.fValue;
+				    end;
+				    if op = cMinus then begin
+					    leftItem^.fValue := leftItem^.fValue - rightItem^.fValue
+				    end;
+			    end
+			    else begin
+				    // z.B. i + 3
+				    cgLoad( leftItem);
+				    if op = cPlus then begin
+					    cgPut('ADDI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgSimpleExpression');
+				    end;
+				    if op = cMinus then begin
+					    cgPut('SUBI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgSimpleExpression');
+				    end;
+			    end;
+		    end
+		    else begin
+			    // z.B. 3 + j oder i + j
+			    cgLoad( leftItem);
+			    cgLoad( rightItem);
+			    if op = cPlus then begin
+				    cgPut('ADD', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgSimpleExpression');
+			    end;
+			    if op = cMinus then begin
+				    cgPut('SUB', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgSimpleExpression');
+			    end;
+			    cgReleaseRegister(rightItem^.fReg);
+		    end;
+        end else begin
+            if leftItem^.fType = stBooleanType then begin
+			    // OR
+			    if op = cOR then begin
+				    if( (leftItem^.fValue = cTrue) OR (rightItem^.fValue = cTrue)) then begin
+					    leftItem^.fValue := cTrue;
+				    end
+				    else begin
+					    leftItem^.fValue := cFalse;
+				    end
+			    end
+			    else begin
+				    errorMsg( 'cgSimpleExpression-1: boolean expressions expected');
+				    ret := cFalse;
+			    end;
+            end else begin
+			    errorMsg( 'cgSimpleExpression: Boolean or Longint expressions expected');
+            end;
+        end;
+    end else begin
+        errorMsg('cgSimpleExpression: Type mismatch!');
+		ret := cFalse;
+    end;
 	cgSimpleExpressionRet := ret;
 end;
 
@@ -351,10 +349,28 @@ end;
 Var cgExpressionRet: Longint;
 procedure cgExpression( leftItem: ptItem; rightItem: ptItem; op: longint);
 	var ret: longint;
+begin
+    if ((leftItem^.fType = stLongintType) and (rightItem^.fType = stLongintType)) then begin
+        cgLoad(leftItem);
+        if((rightItem^.fMode <> mCONST) or (rightItem^.fValue <> 0)) then begin
+            cgLoad(rightItem);
+            cgPut('CMP', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgExpression');
+            cgReleaseRegister(rightItem^.fReg);
+        end;
+        leftItem^.fMode := mCOND;
+        leftItem^.fType := stBooleanType;
+        leftItem^.fOperator := op;
+        leftItem^.fFls := 0;
+        leftItem^.fTru := 0;
+        ret := cTrue;
+    end else begin
+        errorMsg('cgExpression: Longint expression expected!');
+		ret := cFalse;
+    end;
+(*
+	var ret: longint;
 	var bothLongint: longint;
 	var expr: longint;
-begin
-
 	// both Items longint ?
 	bothLongint := cTrue;
 	if leftItem^.fType <> stLongintType THEN begin
@@ -419,7 +435,7 @@ begin
 		errorMsg( 'cgExpression-6: Integer expressions expected');
 		ret := cFalse;
 	end;
-
+*)
 	cgExpressionRet := ret;
 end;
 
@@ -445,9 +461,14 @@ End;
 Procedure cJump(item: ptItem);
 Begin
     branchNegate(item^.fOperator);
-    cgPut(branchNegateRet, item^.fReg, 0, item^.fls, 'cJump');
+    cgPut(branchNegateRet, item^.fReg, 0, item^.fFls, 'cJump');
     cgReleaseRegister(item^.fReg);
-    item^.fls := PC - 1;// Remember address of branch instruction for later fixup
+    item^.fFls := PC - 1;// Remember address of branch instruction for later fixup
+End;
+
+Procedure bJump(backAddress: Longint);
+Begin
+    cgPut('BR', 0,0, backAddress - PC, 'bJump');
 End;
 
 Var fJumpRet: Longint;
@@ -457,18 +478,18 @@ Begin
     fJumpRet := PC - 1;// remember address for later fixup
 End;
 
-Procedure fixUp(branchAddress: Longint);
+Procedure cgFixUp(branchAddress: Longint);
 Begin
     cgCodeLines[branchAddress]^.c := PC - branchAddress;
     cgCodeLines[branchAddress]^.rem := cgCodeLines[branchAddress]^.rem + ' /fixedUp/';
 End;
 
-Procedure fixLink(branchAddress: Longint);
+Procedure cgFixLink(branchAddress: Longint);
 Var nextBranchAddress: Longint;
 Begin
     while(branchAddress <> 0) do begin
         nextBranchAddress := cgCodelines[branchAddress]^.c;
-        fixUp(branchAddress);
+        cgFixUp(branchAddress);
         branchAddress := nextBranchAddress;
     end;
 End;

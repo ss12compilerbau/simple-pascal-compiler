@@ -1,0 +1,19 @@
+SUBI 28,28,-16; Reserve command to shift space for global variables
+ADDI 1,0,3; cg Const2Reg
+STW 1,28,-4; assignmentOperator
+ADDI 1,0,10; cg Const2Reg
+STW 1,28,-8; assignmentOperator
+ADDI 1,0,100; cg Const2Reg
+STW 1,28,-12; assignmentOperator
+LDW 1,28,-4; cg var2Reg
+LDW 2,28,-8; cg var2Reg
+CMP 1,1,2; cgExpression
+BGE 1,0,8; cJump /fixedUp/
+LDW 1,28,-12; cg var2Reg
+ADDI 1,1,10; cgSimpleExpression
+STW 1,28,-12; assignmentOperator
+LDW 1,28,-4; cg var2Reg
+ADDI 1,1,1; cgSimpleExpression
+STW 1,28,-4; assignmentOperator
+BR 0,0,-10; bJump
+EXT 0,0,0; Exit program

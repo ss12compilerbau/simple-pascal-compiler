@@ -1030,13 +1030,26 @@
     
     procedure parseWhileStatement;
         var ret : longint;
+        Var item: ptItem;
+        Var bJumpAddress: Longint;
     begin
         parseSymbol( cWhile);
         ret :=  gRetLongInt;
-        
         if ret = cTrue then begin
-            parseExpression(Nil);
+            New(item);
+            bJumpAddress := PC;
+            parseExpression(item);
             ret :=  gRetLongInt;
+            if ret = cTrue then begin
+                if item^.fType = stBooleanType then begin
+                    cgLoadBool(item);
+                    cJump(item);
+                    cgFixLink(item^.fTru);
+                end else begin
+					errorMsg( 'parseWhileStatement: boolean expressions expected');
+					ret := cFalse;
+                end;
+            end;
         end;
         
         if ret = cTrue then begin
@@ -1047,6 +1060,8 @@
         if ret = cTrue then begin
             parseCodeBlock;
             ret :=  gRetLongInt;
+            bJump(bJumpAddress);
+            cgFixLink(item^.fFls);
         end;
         
         if ret = cTrue then begin
@@ -1072,6 +1087,7 @@
     procedure parseIfStatement;
         var ret : longint;
         var item: ptItem;
+        var fJumpAddress: Longint;
     begin
         parseSymbol( cIf);
         ret :=  gRetLongInt;
@@ -1080,6 +1096,16 @@
             New(item);
             parseExpression(item);
             ret :=  gRetLongInt;
+            if ret = cTrue then begin
+                if item^.fType = stBooleanType then begin
+                    cgLoadBool(item);
+                    cJump(item);
+                    cgFixLink(item^.fTru);
+                end else begin
+					errorMsg( 'parseIfStatement: boolean expressions expected');
+					ret := cFalse;
+                end;
+            end;
         end;
         
         if ret = cTrue then begin
@@ -1096,8 +1122,14 @@
             peekSymbol;
             if sym = cElse then begin
                 getSymbol; // else
+                fJump();
+                fJumpAddress := fJumpRet;
+                cgFixLink(item^.fFls);
                 parseCodeBlock;
                 ret :=  gRetLongInt;
+                cgFixUp(fJumpAddress);
+            end else begin
+                cgFixLink(item^.fFls);
             end;
         end;
         

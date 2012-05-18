@@ -98,8 +98,13 @@ test.codegen.boolean: build.codegen
 
 test.codegen.ifstatement: build.codegen
 	./CGWrapper tests/cg-ifstatement.pas
-	@echo "Code emitted:"
-	@cat out.asm
+	diff out.asm tests/cg-ifstatement.should
+	@echo "If statement test okay."
+
+test.codegen.whilestatement: build.codegen
+	./CGWrapper tests/cg-whilestatement.pas
+	diff out.asm tests/cg-whilestatement.should
+	@echo "While statement test okay."
 
 test.codegen.arrays: build.codegen
 	./CGWrapper tests/cg-assignment.pas
