@@ -7,3 +7,6 @@ ScanWrapper
 STWrapper
 ParseWrapper
 CGWrapper
+out.asm
+tests/hw4
+tests/*.exe

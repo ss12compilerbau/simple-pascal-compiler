@@ -78,16 +78,19 @@ procedure cgCodegenInit();
 Begin
     setLength(cgCodeLines, 1000);
     PC := 0;
+    cgPut('SUBI', 28, 28, 0, 'Reserve command to shift space for global variables');
 End;
 
 procedure cgCodegenFinish();
 Var i: Longint;
 Begin
+    cgCodeLines[0]^.c := stGlobalScope^.fSP;
+    cgPut('EXT', 0, 0, 0, 'Exit program');
     Assign(outputfile, 'out.asm');
     Rewrite(outputfile);
     i := 0;
     While i < PC Do Begin
-        Writeln(outputfile, cgCodelines[i]^.op, ', ', cgCodelines[i]^.a, ', ', cgCodelines[i]^.b, ', ', cgCodelines[i]^.c, '; ', cgCodelines[i]^.rem);
+        Writeln(outputfile, cgCodelines[i]^.op, ' ', cgCodelines[i]^.a, ',', cgCodelines[i]^.b, ',', cgCodelines[i]^.c, '; ', cgCodelines[i]^.rem);
         i := i + 1;
     End;
     close(outputfile);

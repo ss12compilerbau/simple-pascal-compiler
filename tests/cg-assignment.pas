@@ -10,14 +10,15 @@ begin
  // j := i * j;
  
  
-	j := 3 * 4 + 5 * (6 - 4);
+	i := 3 * 4 + 5 * (6 - 4);
     (* 16.5.2012
     ADDI, 1, 0, 22; cg Const2Reg
 	STW, 1, 28, 0; assignmentOperator
 	*)
     
-       
-	j := 3 * i + j * (13 - i) : 4;
+    i := i - 5;
+    j := 1;
+	j := 3 * i + j * (23 - i);
     (* 16.5.2012
     ADDI, 1, 0, 3; cg Const2Reg
 	LDW, 2, 28, 0; cg var2Reg
@@ -31,7 +32,8 @@ begin
 	ADD, 1, 1, 3; cgSimpleExpression
 	STW, 1, 28, 0; assignmentOperator
 	*)
-   
+	    Writeln(i);
+    Writeln(j);
 //  j := i + 3;
 //  j := 3 + i;
 end.

@@ -175,6 +175,18 @@
         // writeln('dFindType end');
     End;
 
+    {
+    Var stSizeRet: Longint;
+    Procedure stSize(typ: ptType);
+    Begin
+        if (typ^.fForm = stArray) then begin
+            
+        end else begin
+            stSizeRet := 4;
+        end;
+    End;
+    }
+
     // adds the symbol as the last element of the symboltable
     Procedure stSymbolTableInsert(symbol: ptSymbol; symbolTable: ptSymbolTable);
     Begin

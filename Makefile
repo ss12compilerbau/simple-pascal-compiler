@@ -88,11 +88,16 @@ test.codegen : test.codegen.assignment test.codegen.boolean test.codegen.arrays 
 
 test.codegen.assignment : build.codegen
 	./CGWrapper tests/cg-assignment.pas
-	@echo "Code emitted:"
-	@cat out.asm
+	diff out.asm tests/cg-assignment.should
+	@echo "Assignment test okay."
 
 test.codegen.boolean: build.codegen
 	./CGWrapper tests/cg-boolean.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
+test.codegen.ifstatement: build.codegen
+	./CGWrapper tests/cg-ifstatement.pas
 	@echo "Code emitted:"
 	@cat out.asm
 

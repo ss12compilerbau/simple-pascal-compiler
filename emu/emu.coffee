@@ -26,6 +26,7 @@ class Emulator
         finish = false
         @origCode = []
         @_loadAddr = 0
+        debugger
         @_openFile filename, (data)=>
             for line in data.split "\n"
                 if line.indexOf("###") is 0 then finish = true
@@ -34,6 +35,7 @@ class Emulator
                     if instr
                         @_processInstr instr
                         @origCode.push line
+            @reg[28].set @_loadAddr
             callback()
 
     # Execute program with the given parameter list. 
@@ -61,11 +63,13 @@ class Emulator
             b = instr.getB instrWord
             c = instr.getC instrWord
             if @debug
-                # @printState()
+                @printState()
                 console.info state = "\nline #{@pc.get()/4}: running #{instr.name} #{a},#{b},#{c}"
                 console.info @origCode[@pc.get()/4]
             # Call instruction.execute with context this, so setting @exit = true 
             instr.execute.apply @, [a,b,c]#, @reg, @mem, @pc]
+        if @debug
+            @printState()
         callback(@exitCode)
 
     # Print the machine state on the console
@@ -75,13 +79,13 @@ class Emulator
         console.log @pc.toString()
         for r, i in @reg
             console.log r.toString()
-        # @mem.printState()
+        @mem.printState @reg[28].get()
 
     # internal method
     _processInstr: (instrStr) ->
         cl = []
         cl[0] = instrStr.split(" ")[0].trim()
-        for p in instrStr.split(" ")[1].trim().split ","
+        for p in instrStr.split(" ")[1].trim().replace(' ', '').split ","
             cl.push Number p.trim()
         instr = @I.encode cl
         if @debug
@@ -134,11 +138,21 @@ class Memory
             res += @mem[addr+i] << ((3-i)*8)
         res
     # Prints the whole memory block on the console
-    printState: ->
+    printState: (to) ->
         console.log "Memory state:"
         res = ""
-        for m in @mem
-            res += " #{(m + 0x100).toString(16).substr(-2)}"
+        r = ""
+        re = ""
+        for m, adr in @mem
+            if adr < to
+                r += "#{(m + 0x100).toString(16).substr(-2)}"
+                if adr % 4 is 3
+                    re += " 0x#{r}(#{@get(adr-3)})"
+                    r = ""
+                    if adr % 20 is 19
+                        res += "#{re}\n"
+                        re = ""
+        res += "#{re}\n"
         console.log res
 
 # The instruction set
@@ -204,11 +218,11 @@ class InstructionSet
 
         # Memory Instructions F1, Load and store words
         @add 12, 'LDW', 'F1', (a,b,c) ->
-            @reg[a].set(@mem.get((@reg[b].get() + c)) / 4)
+            @reg[a].set(@mem.get((@reg[b].get() + c)))
             @pc.set @pc.get() + 4
 
         @add 13, 'STW', 'F1', (a,b,c) ->
-            @mem.set((@reg[b].get() + c) /4, @reg[a])
+            @mem.put((@reg[b].get() + c), @reg[a].get())
             @pc.set @pc.get() + 4
 
         # F1 POP and PUSH
@@ -274,7 +288,7 @@ class InstructionSet
 
         @add 25, 'PSH', 'F1', (a,b,c) ->
             @reg[b].set(@reg[b].get() - c)
-            @mem.set(@reg[b].get()/4, @reg[a].get())
+            @mem.put(@reg[b].get()/4, @reg[a].get())
             @pc.set @pc.get() + 4
 
         # RET c: pc = reg[c]; F2, Return from Subroutine
@@ -328,6 +342,7 @@ class InstructionSet
     # encodes a command array [op, a,b,c] into an instruction word
     encode: (cl) ->
         unless @operations[cl[0]]
+            debugger
             throw "Operation #{cl[0]} is undefined!"
         @operations[cl[0]].encode cl[1] or 0, cl[2] or 0, cl[3] or 0
 

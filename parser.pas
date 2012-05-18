@@ -719,6 +719,7 @@
         var again : longint;
         var bTry : longint;
         var bParse : longint;
+        var item: ptItem;
     begin
         parserDebugStr( 'parseCallParameters');
         PeekIsSymbol( cLParen);
@@ -726,8 +727,8 @@
         
         if ret = cTrue then begin
             getSymbol; // ist '('
-            
-            parseExpression(Nil);
+            New(item);
+            parseExpression(item);
             ret :=  gRetLongInt;
             if ret = cTrue then begin
                 PeekIsSymbol( cComma); 
@@ -736,7 +737,7 @@
                 while again = cTrue do begin
                     if bTry = cTrue then begin
                         getSymbol; // ","
-                        parseExpression(Nil);
+                        parseExpression(item);		
                         bParse :=  gRetLongInt;
                     end;
                     if bParse = cTrue then begin
@@ -1070,12 +1071,14 @@
     
     procedure parseIfStatement;
         var ret : longint;
+        var item: ptItem;
     begin
         parseSymbol( cIf);
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
-            parseExpression(Nil);
+            New(item);
+            parseExpression(item);
             ret :=  gRetLongInt;
         end;
         
@@ -1143,7 +1146,9 @@
             else begin
 				parseExpression(rightItem);
 				ret :=  gRetLongInt;
-				writeln('Rel- Expression DLX = ', rightitem^.fValue, ' (1...True, 0...False)');
+				if rightItem^.fType = stBooleanType then begin
+				    writeln('Rel- Expression DLX = ', rightitem^.fValue, ' (1...True, 0...False)');
+				end;
 				if ret = cTrue then begin
 					parseSymbol( cSemicolon);
 					ret :=  gRetLongInt;
