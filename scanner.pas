@@ -46,7 +46,11 @@
 	Var cPtrRef: LongInt;
 	Var cTypeLongint: LongInt;
 	Var cTypeString: LongInt; 
+	Var cTypeChar: LongInt; 
+	Var cTypeText: LongInt; 
 	Var cNil: LongInt; 
+	Var cArray: Longint;
+	Var cOf: Longint;
 
 	(* Konstanten *)
 	Var cTrue : longint;
@@ -90,6 +94,7 @@
 	Var UCaseChrRet: String;
 	Procedure UCaseChr(c: String);
 	BEGIN
+		// TODO Performance
 		uCaseChrRet := c;
 		if c = 'a' then begin uCaseChrRet := 'A'; end;
 		if c = 'b' then begin uCaseChrRet := 'B'; end;
@@ -225,11 +230,13 @@
 
 	Procedure setSymToKeywordOrIdent;
 	Begin
+		// TODO Performance
 		sym := cIdent;
 		if id = 'DO' then begin sym := cDo; end;
 		if id = 'IF' then begin sym := cIf; end;
-		if id = 'TypeLongint' then begin sym := cTypeLongint; end;
-		if id = 'TypeString' then begin sym := cTypeString; end;
+		//if id = 'TypeLongint' then begin sym := cTypeLongint; end;
+		//if id = 'TypeChar' then begin sym := cTypeChar; end;
+		if id = 'TypeText' then begin sym := cTypeText; end;
 		if id = 'OR' then begin sym := cOr; end;
 		if id = 'AND' then begin sym := cAnd; end;
 		if id = 'END' then begin sym := cEnd; end;
@@ -245,6 +252,8 @@
 		if id = 'RECORD' then begin sym := cRecord; end;
 		if id = 'PROCEDURE' then begin sym := cProcedure; end;
 		if id = 'PROGRAM' then begin sym := cProgram; end;
+		if id = 'ARRAY' then begin sym := cArray; end;
+		if id = 'OF' then begin sym := cOf; end;
 
 	End;
 
@@ -720,5 +729,9 @@
 		cTypeLongint := 90;
 		cTypeString := 89;
 		cNil := 88;
+		cTypeChar := 87;
+		cTypeText := 86;
+		cArray := 85;
+		cOf := 84;
 	End;
 

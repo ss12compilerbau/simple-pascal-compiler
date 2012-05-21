@@ -1,42 +1,53 @@
-Program simple;
-Var i: Longint;
 
-Type tArray = Array of Longint;
-Var a3: tArray;
+program Test;
+type tArr = array of longint;
+var arr: tArr;
+var i: longint;
+var sum: longint;
 
-Type tArrayOfArrays = Array of tArray;
-Var a4: tArrayOfArrays;
 begin
-    // required
-    int i;
-    i = 15;
-
-    // optional
-    // int a1[10];
-    // a1[9] = 1;
-
-    // optional
-    // int *a2;
-    // a2 = malloc(10 * sizeof(int));
-    // a2[9] = 2;
-
-    // required
-    // typedef int *array_t;
-    // array_t a3;
-    // a3 = malloc(10 * sizeof(int));
-    setLength(a3, 10);
-    a3[9] := 3;
-
-    // required
-    // typedef array_t *array_of_arrays_t;
-    // array_of_arrays_t a4;
-    // a4 = malloc(2 * sizeof(array_t));
-    setLength(a4, 2);
-    a4[1] := a3;
-    // printf("a4[1][9]: %d\n", a4[1][9]);
-    writeln("a4[1][9]: ", a4[1][9]); // -> 3
-
-    // optional
-    // int a5[2][10];
-    // a5[1][9] = 4;
+    Setlength(arr, 3);
+    arr[0] := 10;
+    arr[1] := 20;
+    arr[2] := 30;
+    
+    i:= 0;
+    sum := 0;
+    while( i <= 3) do begin
+        sum := sum + arr[i];
+        i := i + 1;
+    end;
+    writeln( sum);
 end.
+
+
+(*
+program Test;
+type tArr = array of longint;
+type tArrArr = array of tArr;
+var arr: tArrArr;
+var i: longint;
+var j: longint;
+var sum: longint;
+
+begin     
+    Setlength(arr, 3);
+    setlength(arr[0], 5);
+    setlength(arr[1], 5);
+    setlength(arr[2], 5);
+    
+    sum := 0;
+    i := 0;
+    while( i < 3) do begin
+        j := 0;
+        while( j < 5) do begin
+            arr[i][j] := i*100 + j;
+            sum := sum + 2 * arr[i][j];
+            j := j + 1;
+        end;
+        i := i + 1;
+    end;
+    writeln( sum);
+end.
+*)
+

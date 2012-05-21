@@ -319,6 +319,12 @@
         if sym = cTypeString then begin
             ret :=  cTrue;
         end;
+        if sym = cTypeChar then begin
+            ret :=  cTrue;
+        end;
+        if sym = cTypeText then begin
+            ret :=  cTrue;
+        end;
         
         parserDebugStrInt( 'parseSimpleTypeTry', ret);
         gRetLongInt := ret;
@@ -976,6 +982,44 @@
     end;
 
 
+procedure parseArrayTypeTry;
+        var ret : longint;
+    begin
+        parserDebugStr( 'parseArrayTypeTry');
+        PeekIsSymbol( cArray);
+        ret :=  gRetLongInt;
+        
+        parserDebugStrInt( 'parseArrayTypeTry', ret);
+        gRetLongInt := ret;
+    end;
+    
+    procedure parseArrayType;
+        var ret : longint;
+    begin
+        parserDebugStr( 'parseArrayType');
+        parseSymbol( cArray);
+        ret :=  gRetLongInt;
+        
+        if ret = cTrue then begin
+            parseSymbol( cOf);
+            ret :=  gRetLongInt;
+        end;
+        
+        if ret = cTrue then begin
+            parseTypeIdentifier;
+			ret :=  gRetLongInt;
+        end;
+        
+        if ret = cTrue then begin
+			writeln('############## array of ', id);
+        end;
+        
+        parserDebugStrInt( 'parseArrayType', ret);
+        gRetLongInt := ret;
+    end;
+
+
+
     procedure parseProcCallTry;
         var ret : longint;
     begin
@@ -1365,7 +1409,7 @@
 					parserInfoStr( 'stBeginRecord( ' + typeID + ') ');
 				end;
 				
-                (parseRecordType);
+                parseRecordType;
                 ret :=  gRetLongInt;
                 
                 if parserUseSymTab = cTrue then begin
@@ -1374,26 +1418,34 @@
 				if parserPrintSymTab = cTrue then begin
 					parserInfoStr( 'stEndRecord');
 				end;
-      
             end
             else begin
-                parseSymbol( cPtrRef);
-                ret :=  gRetLongInt;
-                if ret = cTrue then begin
-                    parseTypeIdentifier;
-                    ret :=  gRetLongInt;
-                    
-                    if parserUseSymTab = cTrue then begin
-						stInsertSymbol(typeId, stType, 
-							cTrue, id); // type = ... nur ^ typeName
+				parseArrayTypeTry;
+				ret :=  gRetLongInt;
+				if ret = cTrue then begin
+					// TODO, Call symtable for array of ...
+					parseArrayType;
+					ret :=  gRetLongInt;
+				end
+				else begin
+					parseSymbol( cPtrRef);
+					ret :=  gRetLongInt;
+					if ret = cTrue then begin
+						parseTypeIdentifier;
+						ret :=  gRetLongInt;
+						
+						if parserUseSymTab = cTrue then begin
+							stInsertSymbol(typeId, stType, 
+								cTrue, id); // type = ... nur ^ typeName
+						end;
+						if parserPrintSymTab = cTrue then begin
+							parserPrintStInsertSymbol(typeId, stType, 
+								cTrue, id);
+						end;
+						
 					end;
-					if parserPrintSymTab = cTrue then begin
-						parserPrintStInsertSymbol(typeId, stType, 
-							cTrue, id);
-					end;
-					
-                end;
-            end;
+				end;
+			end;
         end;
         
         if ret = cTrue then begin

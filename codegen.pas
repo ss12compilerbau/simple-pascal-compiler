@@ -280,8 +280,6 @@ end;
 Var cgSimpleExpressionRet: Longint;
 procedure cgSimpleExpression( leftItem: ptItem; rightItem: ptItem; op: longint);
 	var ret: longint;
-	var bothLongint: longint;
-	var bothBool: longint;
 begin
     if leftItem^.fType = rightItem^.fType then begin
         if leftItem^.fType = stLongintType then begin
@@ -367,75 +365,7 @@ begin
         errorMsg('cgExpression: Longint expression expected!');
 		ret := cFalse;
     end;
-(*
-	var ret: longint;
-	var bothLongint: longint;
-	var expr: longint;
-	// both Items longint ?
-	bothLongint := cTrue;
-	if leftItem^.fType <> stLongintType THEN begin
-		bothLongint := cFalse;
-	end;
-	if rightItem^.fType <> stLongintType then begin
-		bothLongint := cFalse;
-	end;
-	
-	ret := cTrue;
-	if bothLongInt = cTrue then begin
-		if rightItem^.fMode = mConst then begin
-			if leftItem^.fMode = mConst then begin
-				// 3 = 4
-				leftItem^.fType := stBooleanType;
-				expr := cFalse;
-				
-				if op = cLss then begin // <
-					if leftItem^.fValue < rightItem^.fValue then begin
-						expr := cTrue;
-					end;
-				end;
-				if op = cLeq then begin // <=
-					if leftItem^.fValue <= rightItem^.fValue then begin
-						expr := cTrue;
-					end;
-				end;
-				if op = cEql then begin	// =
-					if leftItem^.fValue = rightItem^.fValue then begin
-						expr := cTrue;
-					end;
-				end;
-				if op = cNeq then begin	// # i.e. <>
-					if leftItem^.fValue <> rightItem^.fValue then begin
-						expr := cTrue;
-					end;
-				end;
-				if op = cGeq then begin	// >=
-					if leftItem^.fValue >= rightItem^.fValue then begin
-						expr := cTrue;
-					end;
-				end;
-				if op = cGtr then begin	// >
-					if leftItem^.fValue > rightItem^.fValue then begin
-						expr := cTrue;
-					end;
-				end;
-				leftItem^.fValue := expr;
-			end
-			else begin
-				errorMsg( 'cgExpression-1: Constant Integer expressions expected');
-				ret := cFalse;
-			end;
-		end
-		else begin
-			errorMsg( 'cgExpression-2: Constant Integer expressions expected');
-			ret := cFalse;
-		end;
-	end
-	
-	else begin
-		errorMsg( 'cgExpression-6: Integer expressions expected');
-		ret := cFalse;
-	end;
-*)
+
 	cgExpressionRet := ret;
 end;
 
