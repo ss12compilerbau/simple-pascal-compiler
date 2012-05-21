@@ -20,7 +20,7 @@ Begin
         cgRegisterUsage[i] := cTrue;
         cgRequestRegisterRet := i;
     end else begin
-        Writeln('ERROR: Register allocation failed, all registers taken!');
+        errorMsg('cgRequestRegister: Register allocation failed, all registers taken!');
     end;
 End;
 
@@ -47,6 +47,7 @@ Begin
     end;
     cgRegisterUsage[0] := cTrue;
     cgRegisterUsage[28] := cTrue; // Reserved for Global Variable address pointer
+    cgRegisterUsage[29] := cTrue; // Reserved for Heap address pointer
 End;
 
 
@@ -79,6 +80,7 @@ Begin
     setLength(cgCodeLines, 1000);
     PC := 0;
     cgPut('SUBI', 28, 28, 0, 'Reserve command to shift space for global variables');
+    cgPut('ADDI', 29, 28, 0, 'Set Heap beginning');
 End;
 
 procedure cgCodegenFinish();
@@ -147,12 +149,15 @@ Begin
         cgRequestRegister;
         cgPut('LDW', cgRequestRegisterRet, item^.fReg, item^.fOffset, 'cg var2Reg');
         item^.fReg := cgRequestRegisterRet;
+        item^.fOffset := 0;
     end;
 End;
 
 procedure ref2Reg(item: ptItem);
 Begin
-    Writeln('var2Reg not yet implemented!');
+    item^.fMode := mReg;
+    cgPut('LDW', item^.fReg, item^.fReg, item^.fOffset, 'ref2Reg');
+    item^.fOffset := 0;
 end;
 
 procedure cgLoad(item: ptItem);
@@ -181,6 +186,23 @@ Begin
     end;
 end;
 
+Procedure cgSetLength(item: ptItem; lengthItem: ptItem);
+Begin
+    cgPut('STW', 29, item^.fReg, item^.fOffset, 'cgSetLength');
+    cgLoad(lengthItem);
+    cgPut('MULI', lengthItem^.fReg, lengthItem^.fReg, 4, 'cgSetLength'); // TODO Replace 4 by sizeof(item^.fType)
+    cgPut('ADD', 29, 29, lengthItem^.fReg, 'cgSetLength');
+    cgReleaseRegister(lengthItem^.fReg);
+End;
+
+Procedure cgNew(item: ptItem);
+Begin
+    //TODO
+    // stSizeOf(item)
+    cgPut('STW', 29, 28, item^.fOffset, 'cgSetLength');
+    // cgPut('ADDI', 29, 29, sizeofRet, 'cgNew');
+End;
+
 procedure cgAssignmentOperator(leftItem: ptItem; rightItem: ptItem);
 Begin
     if(leftItem^.fType <> rightItem^.fType) then begin
@@ -191,6 +213,9 @@ Begin
     // leftItem must be in VAR_MODE, rightItem must be in REG_MODE
     cgPut('STW', rightItem^.fReg, leftItem^.fReg, leftItem^.fOffset, 'assignmentOperator');
     cgReleaseRegister(rightItem^.fReg);
+    if leftItem^.fMode = mRef then begin
+        cgReleaseRegister(leftItem^.fReg);
+    end;
 End;
 
 Var cgTermRet: Longint;
@@ -369,6 +394,24 @@ begin
 	cgExpressionRet := ret;
 end;
 
+Procedure cgIndex(item: ptItem; indexItem: ptItem);
+Begin
+    if indexItem^.fMode = mConst then begin
+        cgLoad(item);
+        item^.fMode := mRef;
+        item^.fOffset := indexItem^.fValue * 4;
+    end else begin
+        cgLoad(indexItem);
+        cgPut('MULI', indexItem^.fReg, indexItem^.fReg, 4, 'cgIndex');
+        
+        cgLoad(item);
+        item^.fMode := mREF;
+        // item^.fOffset := 0;
+        cgPut('ADD', item^.fReg, item^.fReg, indexItem^.fReg, 'cgIndex');
+        cgReleaseRegister(indexItem^.fReg);
+    end;
+    item^.fType := item^.fType^.fBase;
+end;
 
 // cEql -> BNE
 // cNeq -> BEQ

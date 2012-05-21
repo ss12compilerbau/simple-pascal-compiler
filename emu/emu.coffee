@@ -79,7 +79,10 @@ class Emulator
         console.log @pc.toString()
         for r, i in @reg
             console.log r.toString()
-        @mem.printState @reg[28].get()
+        console.log 'Code+Global:'
+        @mem.printState 0, @reg[28].get()
+        console.log 'Heap:'
+        @mem.printState @reg[28].get() + 1, @reg[29].get()
 
     # internal method
     _processInstr: (instrStr) ->
@@ -138,13 +141,13 @@ class Memory
             res += @mem[addr+i] << ((3-i)*8)
         res
     # Prints the whole memory block on the console
-    printState: (to) ->
-        console.log "Memory state:"
+    printState: (from, to) ->
+        # console.log "Memory state:"
         res = ""
         r = ""
         re = ""
         for m, adr in @mem
-            if adr < to
+            if adr < to and adr > from
                 r += "#{(m + 0x100).toString(16).substr(-2)}"
                 if adr % 4 is 3
                     re += " 0x#{r}(#{@get(adr-3)})"

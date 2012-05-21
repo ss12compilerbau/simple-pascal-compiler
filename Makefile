@@ -107,7 +107,7 @@ test.codegen.whilestatement: build.codegen
 	@echo "While statement test okay."
 
 test.codegen.arrays: build.codegen
-	./CGWrapper tests/cg-assignment.pas
+	./CGWrapper tests/cg-arrays.pas
 	@echo "Code emitted:"
 	@cat out.asm
 
@@ -128,6 +128,11 @@ test.codegen.conditionals-loops: build.codegen
 
 test.codegen.field: build.codegen
 	./CGWrapper tests/cg-field.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
+test.codegen.hw4: build.codegen
+	./CGWrapper tests/hw4.pas
 	@echo "Code emitted:"
 	@cat out.asm
 

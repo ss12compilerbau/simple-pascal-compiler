@@ -352,6 +352,7 @@
         var again : longint;
         var bTry : longint;
         var bParse : longint;
+        var indexItem: ptItem;
     begin
         parserDebugStr( 'parseVarExtIdentifier');
         parseVarIdentifier;
@@ -371,17 +372,19 @@
                 errorMsg('parseVarExtIdentifier: Variable not found');
             end;
 
-            peekIsSymbol( cLBrak); 
+            peekIsSymbol( cLBrak);
             bTry :=  gRetLongInt;
             again := bTry;
             while (again = cTrue) do begin
                 if bTry = cTrue then begin
                     getSymbol; // "["
-                    parseExpression(item);
+                    New(indexItem);
+                    parseExpression(indexItem);
                     bParse :=  gRetLongInt;
                     if bParse = cTrue then begin
                         parseSymbol( cRBrak);
                         bParse :=  gRetLongInt;
+                        cgIndex(item, indexItem);
                     end;
                 end;
                 if bParse = cTrue then begin
@@ -720,13 +723,17 @@
     
 
         
-    procedure parseCallParameters;
+    procedure parseCallParameters(specialMode: Longint);
         var ret : longint;
         var again : longint;
         var bTry : longint;
         var bParse : longint;
         var item: ptItem;
+        var parLength: Longint;
+        var parameters: Array of ptItem;
     begin
+        parLength := 0;
+        setLength(parameters, 10);
         parserDebugStr( 'parseCallParameters');
         PeekIsSymbol( cLParen);
         ret :=  gRetLongInt;
@@ -736,6 +743,8 @@
             New(item);
             parseExpression(item);
             ret :=  gRetLongInt;
+            parameters[parLength] := item;
+            parLength := parLength + 1;
             if ret = cTrue then begin
                 PeekIsSymbol( cComma); 
                 bTry :=  gRetLongInt;
@@ -743,8 +752,11 @@
                 while again = cTrue do begin
                     if bTry = cTrue then begin
                         getSymbol; // ","
-                        parseExpression(item);		
+                        New(item);
+                        parseExpression(item);
                         bParse :=  gRetLongInt;
+                        parameters[parLength] := item;
+                        parLength := parLength + 1;
                     end;
                     if bParse = cTrue then begin
                         PeekIsSymbol( cComma);
@@ -767,10 +779,27 @@
                     parseSymbol( cRParen); 
                     ret :=  gRetLongInt;
                 end;    
+
+                if ret = cTrue then begin
+                    if specialmode = 1 then begin
+                        // SetLength
+                        if parLength <> 2 then begin
+                            errorMsg('parseCallParameters: SetLength needs 2 parameters!');
+        					ret := cFalse;
+                        end else begin
+                            cgSetLength(parameters[0], parameters[1]);
+                        end;
+                    end;
+                    if specialmode = 2 then begin
+                        // New() mode
+                        if parLength <> 1 then begin
+                            errorMsg('parseCallParameters: New needs 1 parameters!');
+        					ret := cFalse;
+                        end;
+                    end;
+                end;
             end;
-        end
-        
-        else begin
+        end else begin
             ret := cTrue;
         end;
         
@@ -1009,11 +1038,7 @@ procedure parseArrayTypeTry;
             parseTypeIdentifier;
 			ret :=  gRetLongInt;
         end;
-        
-        if ret = cTrue then begin
-			writeln('############## array of ', id);
-        end;
-        
+
         parserDebugStrInt( 'parseArrayType', ret);
         gRetLongInt := ret;
     end;
@@ -1037,9 +1062,10 @@ procedure parseArrayTypeTry;
         parserDebugStrInt( 'parseProcCallTry', ret);
         gRetLongInt := ret;
     end;
-    
+
     procedure parseProcCall;
         var ret : longint;
+        var procName: String;
     begin
         parserDebugStr( 'parseProcCall');
        
@@ -1047,7 +1073,16 @@ procedure parseArrayTypeTry;
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
-            parseCallParameters;
+            procName := id;
+            if procName = 'SETLENGTH' then begin
+                parseCallParameters(1);
+            end else begin
+                if procName = 'NEW' then begin
+                    parseCallParameters(2);
+                end else begin
+                    parseCallParameters(0);
+                end;
+            end;
             ret :=  gRetLongInt;
         end;
         
@@ -1389,10 +1424,10 @@ procedure parseArrayTypeTry;
         parserDebugStr( 'parseOneTypeDeclaration');
         parseTypeIdentifier;
         ret :=  gRetLongInt;
-        
+
         typeId := '';
         if ret = cTrue then begin
-			typeId := id;
+            typeId := id;
             parseSymbol( cEql);
             ret :=  gRetLongInt;
         end;
@@ -1423,8 +1458,9 @@ procedure parseArrayTypeTry;
 				parseArrayTypeTry;
 				ret :=  gRetLongInt;
 				if ret = cTrue then begin
-					// TODO, Call symtable for array of ...
 					parseArrayType;
+					// Call symtable for array of ...
+				    stInsertSymbol(typeId, stType, cTrue, id);
 					ret :=  gRetLongInt;
 				end
 				else begin

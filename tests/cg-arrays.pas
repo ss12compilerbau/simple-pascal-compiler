@@ -10,14 +10,14 @@ begin
     arr[0] := 10;
     arr[1] := 20;
     arr[2] := 30;
-    
+
     i:= 0;
     sum := 0;
     while( i <= 3) do begin
         sum := sum + arr[i];
         i := i + 1;
     end;
-    writeln( sum);
+    writeln(sum);
 end.
 
 
