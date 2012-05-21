@@ -1,3 +1,4 @@
+(*
 
 program Test;
 type tArr = array of longint;
@@ -19,9 +20,8 @@ begin
     end;
     writeln(sum);
 end.
+*)
 
-
-(*
 program Test;
 type tArr = array of longint;
 type tArrArr = array of tArr;
@@ -30,12 +30,12 @@ var i: longint;
 var j: longint;
 var sum: longint;
 
-begin     
+begin
     Setlength(arr, 3);
     setlength(arr[0], 5);
     setlength(arr[1], 5);
     setlength(arr[2], 5);
-    
+
     sum := 0;
     i := 0;
     while( i < 3) do begin
@@ -49,5 +49,4 @@ begin
     end;
     writeln( sum);
 end.
-*)
 

@@ -508,9 +508,7 @@
             else begin
                 ret := cFalse;
             end;
-        end
-        
-        else begin // expression ?
+        end else begin // expression ?
             peekIsSymbol( cLParen);
             bTry :=  gRetLongInt;
             if bTry = cTrue then begin
@@ -521,14 +519,16 @@
                     parseSymbol( cRParen);
                     ret := gRetLongInt;
                 end;
-            end
-            else begin // string
+            end else begin // string
                 peekSymbol;
                 if sym = cString then begin
+                    item^.fMode := mConst;
+                    item^.fType := stStringType;
+                    cgEmitString(str);
+                    item^.fValue := cgEmitStringRet;
                     getSymbol;
                     ret := cTrue;
-                end
-                else begin // longint
+                end else begin // longint
                     peekSymbol;
                     if sym = cNumber then begin
                         item^.fMode := mConst;
@@ -536,8 +536,7 @@
                         item^.fValue := val;
                         getSymbol;
                         ret := cTrue;
-                    end
-                    else begin // not factor
+                    end else begin // not factor
                         peekSymbol;
                         if sym = cNot then begin
                             getSymbol; // not
@@ -557,11 +556,13 @@
 									ret := cFalse;
 								end;
                             end;
-                        end
-                        else begin
+                        end else begin
 							if sym = cNil then begin
 								getSymbol; // nil
-								ret := gRetLongInt;
+								ret := cTrue;
+								item^.fMode := mConst;
+								item^.fType := stPointerType;
+								item^.fValue := 0;
 							end
 							else begin // Variable
 								parseVariableTry;
@@ -731,6 +732,7 @@
         var item: ptItem;
         var parLength: Longint;
         var parameters: Array of ptItem;
+        var i: Longint;
     begin
         parLength := 0;
         setLength(parameters, 10);
@@ -797,6 +799,15 @@
         					ret := cFalse;
                         end;
                     end;
+                    if specialmode = 3 then begin
+                        i := 0;
+                        while i < parLength do begin
+                            cgWrite(parameters[i]);
+                            i := i + 1;
+                        end;
+                        cgWriteCR;
+                    end;
+
                 end;
             end;
         end else begin
@@ -1080,7 +1091,11 @@ procedure parseArrayTypeTry;
                 if procName = 'NEW' then begin
                     parseCallParameters(2);
                 end else begin
-                    parseCallParameters(0);
+                    if procName = 'WRITELN' then begin
+                        parseCallParameters(3);
+                    end else begin
+                        parseCallParameters(0);
+                    end;
                 end;
             end;
             ret :=  gRetLongInt;

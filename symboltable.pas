@@ -54,6 +54,7 @@
     var stLongintType: ptType;
     var stStringType: ptType;
     var stBooleanType: ptType;
+    var stPointerType: ptType;
 
     var stGP: Longint;
 
@@ -249,6 +250,9 @@
         
         createPredefinedType('BOOLEAN');
         stBooleanType := stCreateSymbolRet^.fType;
+
+        createPredefinedType('POINTER');
+        stPointerType := stCreateSymbolRet^.fType;
         // writeln('d3');
     End;
 

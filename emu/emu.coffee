@@ -31,7 +31,12 @@ class Emulator
             for line in data.split "\n"
                 if line.indexOf("###") is 0 then finish = true
                 unless finish
-                    instr = line.split(";")[0].trim()
+                    instr = null
+                    if line.indexOf('STR') is 0
+                        str = line.split(';')[1]
+                        instr = "STR '#{str}'"
+                    else
+                        instr = line.split(";")[0].trim()
                     if instr
                         @_processInstr instr
                         @origCode.push line
@@ -88,13 +93,24 @@ class Emulator
     _processInstr: (instrStr) ->
         cl = []
         cl[0] = instrStr.split(" ")[0].trim()
-        for p in instrStr.split(" ")[1].trim().replace(' ', '').split ","
-            cl.push Number p.trim()
-        instr = @I.encode cl
-        if @debug
-            console.info "#{@_loadAddr}: ", cl
-        @mem.put @_loadAddr, instr
-        @_loadAddr += 4
+        if cl[0] is 'STR'
+            console.info 'STR: ', str = instrStr.substring(5, instrStr.length-1)
+            for i in [0..4]
+                debugger
+                strInstr = str.charCodeAt(i*4) or 0
+                strInstr = (strInstr << 8) + (str.charCodeAt(i*4 + 1) or 0)
+                strInstr = (strInstr << 8) + (str.charCodeAt(i*4 + 2) or 0)
+                strInstr = (strInstr << 8) + (str.charCodeAt(i*4 + 3) or 0)
+                @mem.put @_loadAddr, strInstr
+                @_loadAddr += 4
+        else
+            for p in instrStr.split(" ")[1].trim().replace(' ', '').split ","
+                cl.push Number p.trim()
+            instr = @I.encode cl
+            if @debug
+                console.info "#{@_loadAddr}: ", cl
+            @mem.put @_loadAddr, instr
+            @_loadAddr += 4
 
     # internal method
     _openFile: (filename, callback) ->
@@ -298,6 +314,18 @@ class InstructionSet
         @add 26, 'RET', 'F2', (a,b,c) ->
             @pc.set @reg[c].get()
 
+        @add 27, 'WRS', 'F1', (a,b,c) ->
+            res = ''
+            console.info 'WRS'
+            word = @mem.get(@reg[c].get())
+            # console.log 'word', word >> 8 & 255
+
+            # console.log @reg[a].get()
+            @pc.set @pc.get() + 4
+
+        @add 28, 'WCR', 'F1', (a,b,c) ->
+            @pc.set @pc.get() + 4
+            # console.info
         
 
         ### 

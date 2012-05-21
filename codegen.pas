@@ -203,15 +203,110 @@ Begin
     // cgPut('ADDI', 29, 29, sizeofRet, 'cgNew');
 End;
 
+Var cgEmitStringRet: Longint;
+Procedure cgEmitString(str: String);
+// var len: Longint;
+Begin
+    // len := length(str);
+    cgEmitStringRet := PC;
+    cgPut('BR', 0, 0, 6, 'emitString');
+    cgPut('STR', 0, 0, 5, str);
+    cgPut(';', 0,0,0,'noop');
+    cgPut(';', 0,0,0,'noop');
+    cgPut(';', 0,0,0,'noop');
+    cgPut(';', 0,0,0,'noop');
+End;
+
+Procedure cgWrite(item: ptItem);
+begin
+    cgLoad(item);
+    if item^.fType = stLongintType then begin
+        cgPut('WRN', item^.fReg,0,0,'Write longint');
+    end;
+    if item^.fType = stStringType then begin
+        cgPut('WRS', item^.fReg, 0,0,'Write String');
+    end;
+end;
+
+Procedure cgWriteCR;
+begin
+    cgPut('WCR', 0,0,0,'Write Carriage Return');
+end;
+
+// cEql -> BNE
+// cNeq -> BEQ
+// cLss -> BGE
+// cGeq -> BLT
+// cLeq -> BGT
+// cGtr -> BLE
+Var branchNegateRet: String;
+Procedure branchNegate(operatorSymbol: Longint);
+Begin
+    if operatorSymbol = cEql then begin branchNegateRet := 'BNE';end;
+    if operatorSymbol = cNeq then begin branchNegateRet := 'BEQ';end;
+    if operatorSymbol = cLss then begin branchNegateRet := 'BGE';end;
+    if operatorSymbol = cGeq then begin branchNegateRet := 'BLT';end;
+    if operatorSymbol = cLeq then begin branchNegateRet := 'BGT';end;
+    if operatorSymbol = cGtr then begin branchNegateRet := 'BLE';end;
+End;
+
+// Conditional Jump, to be fixed up later
+Procedure cJump(item: ptItem);
+Begin
+    branchNegate(item^.fOperator);
+    cgPut(branchNegateRet, item^.fReg, 0, item^.fFls, 'cJump');
+    cgReleaseRegister(item^.fReg);
+    item^.fFls := PC - 1;// Remember address of branch instruction for later fixup
+End;
+
+Procedure bJump(backAddress: Longint);
+Begin
+    cgPut('BR', 0,0, backAddress - PC, 'bJump');
+End;
+
+Var fJumpRet: Longint;
+Procedure fJump();
+Begin
+    cgPut('BR', 0,0,0, 'fJump');
+    fJumpRet := PC - 1;// remember address for later fixup
+End;
+
+Procedure cgFixUp(branchAddress: Longint);
+Begin
+    cgCodeLines[branchAddress]^.c := PC - branchAddress;
+    cgCodeLines[branchAddress]^.rem := cgCodeLines[branchAddress]^.rem + ' /fixedUp/';
+End;
+
+Procedure cgFixLink(branchAddress: Longint);
+Var nextBranchAddress: Longint;
+Begin
+    while(branchAddress <> 0) do begin
+        nextBranchAddress := cgCodelines[branchAddress]^.c;
+        cgFixUp(branchAddress);
+        branchAddress := nextBranchAddress;
+    end;
+End;
+
 procedure cgAssignmentOperator(leftItem: ptItem; rightItem: ptItem);
 Begin
     if(leftItem^.fType <> rightItem^.fType) then begin
         errorMsg('Type mismatch in assignment');
     End;
-    cgLoad(rightItem);
+    if rightItem^.fMode = mCond then begin
+        cJump(rightItem);
+        cgFixLink(rightItem^.fTru);
+        rightItem^.fMode := mReg;
+        cgPut('ADDI', rightItem^.fReg, 0,1, 'cgAssignmentOperator');
+        cgPut('BR', 0,0,2, 'cgAssignmentOperator');
+        cgFixLink(rightItem^.fFls);
+        cgPut('ADDI', rightItem^.fReg, 0, 0, 'cgAssignmentOperator');
+    end else begin
+        cgLoad(rightItem);
+    end;
 
     // leftItem must be in VAR_MODE, rightItem must be in REG_MODE
     cgPut('STW', rightItem^.fReg, leftItem^.fReg, leftItem^.fOffset, 'assignmentOperator');
+
     cgReleaseRegister(rightItem^.fReg);
     if leftItem^.fMode = mRef then begin
         cgReleaseRegister(leftItem^.fReg);
@@ -403,7 +498,7 @@ Begin
     end else begin
         cgLoad(indexItem);
         cgPut('MULI', indexItem^.fReg, indexItem^.fReg, 4, 'cgIndex');
-        
+
         cgLoad(item);
         item^.fMode := mREF;
         // item^.fOffset := 0;
@@ -412,61 +507,6 @@ Begin
     end;
     item^.fType := item^.fType^.fBase;
 end;
-
-// cEql -> BNE
-// cNeq -> BEQ
-// cLss -> BGE
-// cGeq -> BLT
-// cLeq -> BGT
-// cGtr -> BLE
-Var branchNegateRet: String;
-Procedure branchNegate(operatorSymbol: Longint);
-Begin
-    if operatorSymbol = cEql then begin branchNegateRet := 'BNE';end;
-    if operatorSymbol = cNeq then begin branchNegateRet := 'BEQ';end;
-    if operatorSymbol = cLss then begin branchNegateRet := 'BGE';end;
-    if operatorSymbol = cGeq then begin branchNegateRet := 'BLT';end;
-    if operatorSymbol = cLeq then begin branchNegateRet := 'BGT';end;
-    if operatorSymbol = cGtr then begin branchNegateRet := 'BLE';end;
-End;
-
-// Conditional Jump, to be fixed up later
-Procedure cJump(item: ptItem);
-Begin
-    branchNegate(item^.fOperator);
-    cgPut(branchNegateRet, item^.fReg, 0, item^.fFls, 'cJump');
-    cgReleaseRegister(item^.fReg);
-    item^.fFls := PC - 1;// Remember address of branch instruction for later fixup
-End;
-
-Procedure bJump(backAddress: Longint);
-Begin
-    cgPut('BR', 0,0, backAddress - PC, 'bJump');
-End;
-
-Var fJumpRet: Longint;
-Procedure fJump();
-Begin
-    cgPut('BR', 0,0,0, 'fJump');
-    fJumpRet := PC - 1;// remember address for later fixup
-End;
-
-Procedure cgFixUp(branchAddress: Longint);
-Begin
-    cgCodeLines[branchAddress]^.c := PC - branchAddress;
-    cgCodeLines[branchAddress]^.rem := cgCodeLines[branchAddress]^.rem + ' /fixedUp/';
-End;
-
-Procedure cgFixLink(branchAddress: Longint);
-Var nextBranchAddress: Longint;
-Begin
-    while(branchAddress <> 0) do begin
-        nextBranchAddress := cgCodelines[branchAddress]^.c;
-        cgFixUp(branchAddress);
-        branchAddress := nextBranchAddress;
-    end;
-End;
-
 
 // Initialize Parts of this module
 Procedure cgInit();
