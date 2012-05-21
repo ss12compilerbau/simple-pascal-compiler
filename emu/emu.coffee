@@ -199,7 +199,10 @@ class InstructionSet
             @pc.set @pc.get() + 4
 
         @add 3, 'DIVI', 'F1', (a,b,c) ->
-            @reg[a].set @reg[b].get() / c
+            if c is 0
+                console.info 'Runtime error: Division by Zero!'
+            else
+                @reg[a].set @reg[b].get() / c
             @pc.set @pc.get() + 4
 
         @add 4, 'MODI', 'F1', (a,b,c) ->
@@ -224,7 +227,10 @@ class InstructionSet
             @pc.set @pc.get() + 4
 
         @add 9, 'DIV', 'F1', (a,b,c) ->
-            @reg[a].set @reg[b].get() / @reg[c].get()
+            if @reg[c].get() is 0
+                console.info 'Runtime error: Division by Zero!'
+            else
+                @reg[a].set @reg[b].get() / @reg[c].get()
             @pc.set @pc.get() + 4
 
         @add 10, 'MOD', 'F1', (a,b,c) ->

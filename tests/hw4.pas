@@ -6,6 +6,8 @@ Program hw4;
     Var len: Longint;
     Var data: tArray;
 Begin
+    i := 3;
+    i := i : 0;
     sum := 0;
     i := 0;
     len := 3;
