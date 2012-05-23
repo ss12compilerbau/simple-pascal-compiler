@@ -5,8 +5,17 @@ COMPILER=fpc -gw3
 
 # The default task is 'all'.
 all : build
-build:  clean build.scanner build.symboltable build.parser
+
+clean :
+	rm -rf *.s *.o hello ScanWrapper ParseWrapper STWrapper SPC CGWrapper *.out tests/*.out *.exe *.asm
+	@echo "Clean succesful"
+
+build:  clean  build.codegen
+	cp CGWrapper SPC
 	@echo "Build successful!"
+
+runLustAsmTest:
+	node emu/emulator -d out.asm
 
 # Test runs all the tests.
 test : build test.scanner test.symboltable test.parser 
@@ -147,8 +156,4 @@ test.emu.fibo:
 	coffee emu/emulator.coffee emu/fibonacci.asm 12 > test.out
 	diff test.out tests/emu_fibo12.should
 	@echo "Emulator fibonacci test ok."
-
-clean :
-	rm -rf *.s *.o hello ScanWrapper ParseWrapper STWrapper SPC CGWrapper *.out tests/*.out *.exe
-	@echo "Clean succesful"
 
