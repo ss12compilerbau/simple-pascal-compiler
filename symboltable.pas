@@ -10,6 +10,8 @@
     var stString: String;
     Var stPointer: String;
     Var stRecord: String;
+    var stChar: String;
+    var stText: String;
 
     Type // forward type declatation, has to be in the same Type block!
         ptSymbolTable = ^tSymbolTable;
@@ -55,6 +57,8 @@
     var stStringType: ptType;
     var stBooleanType: ptType;
     var stPointerType: ptType;
+    var stCharType: ptType;
+    var stTextType: ptType;
 
     var stGP: Longint;
 
@@ -253,6 +257,13 @@
 
         createPredefinedType('POINTER');
         stPointerType := stCreateSymbolRet^.fType;
+        
+        createPredefinedType('CHAR');
+        stCharType := stCreateSymbolRet^.fType;
+        
+        createPredefinedType('TEXT');
+        stTextType := stCreateSymbolRet^.fType;
+        
         // writeln('d3');
     End;
 

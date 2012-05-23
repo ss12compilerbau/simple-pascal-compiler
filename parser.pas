@@ -142,7 +142,7 @@
         peekSymbol;
         ret := cFalse;
         if sym = cTimes then begin ret := cTrue; end;
-        if sym = cColon then begin ret := cTrue; end;
+        if sym = cDiv then begin ret := cTrue; end;
         if sym = cAnd then begin ret := cTrue; end;
         gRetLongInt := ret;
     end;

@@ -345,7 +345,7 @@ begin
 				if op = cTimes then begin
 					leftItem^.fValue := leftItem^.fValue * rightItem^.fValue;
 				end;
-				if op = cColon then begin
+				if op = cDiv then begin
 					leftItem^.fValue := leftItem^.fValue DIV rightItem^.fValue
 				end;
 			end
@@ -355,7 +355,7 @@ begin
 				if op = cTimes then begin
 					cgPut('MULI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgTerm');
 				end;
-				if op = cColon then begin
+				if op = cDiv then begin
 					cgPut('DIVI', leftItem^.fReg, leftItem^.fReg, rightItem^.fValue, 'cgTerm');
 				end;
 			end;
@@ -367,7 +367,7 @@ begin
 			if op = cTimes then begin
 				cgPut('MUL', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgTerm');
 			end;
-			if op = cColon then begin
+			if op = cDiv then begin
 				cgPut('DIV', leftItem^.fReg, leftItem^.fReg, rightItem^.fReg, 'cgTerm');
 			end;
 			cgReleaseRegister(rightItem^.fReg);

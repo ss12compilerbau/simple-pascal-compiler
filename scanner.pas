@@ -6,6 +6,7 @@
 	(* symbols *)
 	Var cNull: Longint; // Unknown
 	Var cTimes: Longint; // *
+	Var cDiv: Longint; // div
 	Var cAnd: Longint; // AND
 	Var cPlus: Longint; // +
 	Var cMinus: Longint; // -
@@ -233,6 +234,7 @@
 		// TODO Performance
 		sym := cIdent;
 		if id = 'DO' then begin sym := cDo; end;
+		if id = 'DIV' then begin sym := cDiv; end;
 		if id = 'IF' then begin sym := cIf; end;
 		//if id = 'TypeLongint' then begin sym := cTypeLongint; end;
 		//if id = 'TypeChar' then begin sym := cTypeChar; end;
@@ -688,6 +690,7 @@
 		(* symbols *)
 		cNull := 0; // Unknown
 		cTimes := 1; // *
+		cDiv := 2; // DIV
 		cAnd := 5; // AND
 		cPlus := 6; // +
 		cMinus := 7; // -
