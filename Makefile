@@ -21,7 +21,7 @@ runLastAsmTestDebug:
 	node emu/emulator -d out.asm
 
 # Test runs all the tests.
-test : build test.scanner test.symboltable test.parser 
+test : build test.scanner test.symboltable test.codegen
 	@echo "Tests successful!"
 
 # Scanner
@@ -95,7 +95,8 @@ test.symboltable: build.symboltable
 build.codegen: clean
 	${COMPILER} CGWrapper.pas
 
-test.codegen : test.codegen.assignment test.codegen.boolean test.codegen.arrays test.codegen.records test.codegen.arrayselements test.codegen.conditionals-loops test.codegen.field
+test.codegen : test.codegen.assignment test.codegen.arrays test.codegen.arrayselements hw4
+# not yet: test.codegen.field test.codegen.boolean test.codegen.records test.codegen.conditionals-loops 
 	@echo "Codegeneration tests ok."
 
 test.codegen.assignment : build.codegen
@@ -135,8 +136,8 @@ test.codegen.arrayselements: build.codegen
 
 test.codegen.conditionals-loops: build.codegen
 	./CGWrapper tests/cg-conditionals-loops.pas
-	@echo "Code emitted:"
-	@cat out.asm
+	diff out.asm tests/cg-conditionals-loops.should
+	@echo "conditionals-loops test okay."
 
 test.codegen.field: build.codegen
 	./CGWrapper tests/cg-field.pas
