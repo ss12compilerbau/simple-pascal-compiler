@@ -1,6 +1,10 @@
 # Simple Pascal Compiler
 
-This is a compiler based on Pascal Programming Language.  To start with the project, we have written a scanner which scan files and itself. The scanner checks every symbol or character in a file till it reaches the end of the file.
+This is a compiler based on Pascal Programming Language but handles only a subset of the pascal language. It is planned to be self-compiling soon. The compiler produces assembly code that can be run on our Virtual machine (emu/emulator.js).
+
+## Dependencies:
+* Free Pascal Compiler (fpc)
+* Node JS 0.6.* for running the virtual machine
 
 Instructions to build and test:
 
@@ -9,78 +13,17 @@ On commandline/console:
 	make	    ---- to build the project.
 	make test   ---- to run tests.
 	make clean  ---- to remove/delete unncessary files after building.
+	make runLastAsmTest ---- to run the virtual machine with the last compiled out.asm file
+	
+	./SPC someFile.pas  ---- to compile a pascal file.
 
-## EBNF
-### Programs and Blocks
+## The EBNF
+Until it isn't final, it's only reachable (here)[http://www.cs.uni-salzburg.at/~ck/wiki/index.php?n=CC-Summer-2012.SPCEBNF]
 
-            pgm = pgmHeading pgmDeclarations codeBlock "." .
-            pgmHeading = program pgmIdentifier ";" .
-            pgmDeclarations = { pgmDeclaration }
-            pgmDeclaration = varDeclaration | procDeclaration | funcDeclaration .
-            procDeclaration = procHeading varDeclarations codeBlock ";" .
-            procHeading = procedure procIdentifier defParameters ";" .
-            funcDeclaration = funcHeading varDeclarations codeBlock ";" .
-            funcHeading = function funcIdentifier defParameters ":" type ";" .
-            varDeclarations = { varDeclaration }
-            varDeclaration = var declaration ";" .
+## The Virtual Machine
+The 32-bit RISC-like processor emulator is written in CoffeeScript. It takes an assembly file as parameter and runs it. The -d parameter makes it run in debug mode. In this case each register and memory state is shown on the console. For a list of supported assembly commands and their semantics please see the human-readable source code in emu/emulator.coffee
 
-### Statements, Procedures and Functions
-
-            codeBlock = begin statements  end .
-            statements = { statement }
-            statement = simpleStatement | ifStatement | whileStatement | proCall .
-            simpleStatement = variable ":=" ( expression | funcCall ) ";" .
-            ifStatement = if expression  then codeBlock [  else codeBlock ] ";" .
-            whileStatement = while expression  do codeBlock ";" .
-            funcCall = funcIdentifier callParameters ";" .
-            procCall = procIdentifier callParameters ";" .
-            defParameters = [ "(" paraDecl { ";" paraDecl } ")" ]
-            paraDecl = varIdentifier ":" type
-            callParameters = [ "(" expression { ";" expression } ")" ]
-
-### Expressions Procedures and Functions
-
-            expression = simpleExpression [ relOperator simpleExpression ] .
-            simpleExpression = [ sign ] term { addOperator term } .
-            term = factor { multOperator factor } .
-            factor = variable | longint | string | funcIdentifier | "(" expression ")" |  not factor .
-
-### Types
-
-            type = simpleType | recordType | pointerType .
-            simpleType = longint | string .
-            recordType = record paraDecl { ";" paraDecl }  end .
-            pointerType = "^" typeIdentifier
-            EBNF GenComVariables
-            variable = varIdentifier { varModifier } .
-            varModifier = [ "^" ] ( arrAccess | recAccess )
-            arrAccess = "[" expression "]"
-            recAccess = "." varIdentifier
-
-### Identifiers
-
-            pgmIndentifier = identifier
-            constIndentifier = identifier
-            varIndentifier = identifier
-            typeIndentifier = identifier
-            procIndentifier = identifier
-            funcIndentifier = identifier
-            identifier = letter { letter | digit } .
-
-### Low Level Definitions
-
-            sign = "+" | "-" .
-            longint = [ sign ] unsignedLongnt .
-            unsignedLongint = digit { digit } .
-            string = "'" stringCharacter { stringCharacter } "'" .
-            stringCharacter = any-character-except-quote | "''" . 
-            relOperator = "=" | "<>" | "<" | "<=" | ">" | ">=" .
-            addOperator = "+" | "-" | or . 
-            multOperator = "*" | "/" | and .
-            letter = "A" | ... | "Z" | "a" | ... | "z" . 
-            digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" . 
-
-### Kommentare
-
-            Kommentare sind zwischen "(*" und "*)" eingeschlossen
+## Authors:
+    * Szabolcs Gruenwald -- szaby.gruenwald@web.de
+    * Reinhold Kolm -- reinhold.kolm@gmx.at
 
