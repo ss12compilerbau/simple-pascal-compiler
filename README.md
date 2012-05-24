@@ -18,12 +18,12 @@ On commandline/console:
 	./SPC someFile.pas  ---- to compile a pascal file.
 
 ## The EBNF
+
 Until it isn't final, the final version is only reachable [here](http://www.cs.uni-salzburg.at/~ck/wiki/index.php?n=CC-Summer-2012.SPCEBNF)
 
 As of May 24th 2012:
 
-Programs and Blocks
--------------------
+### Programs and Blocks
 
 **pgm** = pgmHeading pgmDeclarations codeBlock “.” .   
 **pgmHeading** = *program* pgmIdentifier “;” .   
@@ -40,8 +40,7 @@ codeBlock ) ) “;” .
 **oneTypeDeclaration** = typeIdentifier “=” ( recordType | arrayType | (
 “\^” typeIdentifier ) ) “;” .   
 
-Statements, Procedures and Functions
-------------------------------------
+### Statements, Procedures and Functions
 
 **codeBlock** = *begin* statements *end* .   
 **statements** = { statement }   
@@ -56,8 +55,7 @@ procCall .
 **declaration** = varIdentifier “:” type .   
 **callParameters** = [ “(” expression { “;” expression } “)” ]   
 
-Expressions Procedures and Functions
-------------------------------------
+### Expressions Procedures and Functions
 
 **expression** = simpleExpression [ relOperator simpleExpression ] .   
 **simpleExpression** = term { addOperator term } .   
@@ -65,23 +63,20 @@ Expressions Procedures and Functions
 **factor** = variable | ( [ sign ] longint ) | string | “(” expression
 “)” | *not* factor .   
 
-Types
------
+### Types
 
 **type** = simpleType | typeIdentifier .   
 **simpleType** = longint | string | char | boolean | text .   
 **recordType** = *record* declaration { “;” declaration } *end* .   
 **arrayType** = *array* *of* typeIdentifier .   
 
-Variables
----------
+### Variables
 
 **variable** = varExtIdentifier { varModifier } .   
 **varModifier** = [ “\^” ] “.” varExtIdentifier .   
 **varExtIdentifier** = varIdentifier { “[” expression “]” } .   
 
-Identifiers
------------
+### Identifiers
 
 **pgmIndentifier** = identifier .   
 **constIndentifier** = identifier .   
@@ -91,8 +86,7 @@ Identifiers
 **funcIndentifier** = identifier .   
 **identifier** = letter { letter | digit } .   
 
-Low Level Definitions
----------------------
+### Low Level Definitions
 
 **sign** = “+” | “-” .   
 **longint** = digit { digit } .   
@@ -105,8 +99,7 @@ Low Level Definitions
 **digit** = “0” | “1” | “2” | “3” | “4” | “5” | “6” | “7” | “8” | “9” .
   
 
-Kommentare
-----------
+### Kommentare
 
 **Kommentare** sind zwischen “(\*” und “\*)” eingeschlossen oder folgen
 nach “//”
