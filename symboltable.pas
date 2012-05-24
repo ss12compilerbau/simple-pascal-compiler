@@ -26,7 +26,7 @@
             fSP: Longint // Next symbol pointer
         End;
 
-        // an entry like Var i: Longing;
+        // an entry like Var i: Longint;
         tSymbol = Record
             fName: String; // obligatory for a valid Symbol. If not set, it's not yet filled (new)
             fClass: String; // can be VAR, TYPE, FIELD, PARAMETER
@@ -89,6 +89,8 @@
         isSimple := -1; // we don't know yet
         if form = 'LONGINT' then begin isSimple := 1; end;
         if form = 'STRING' then begin isSimple := 1; end;
+        if form = 'CHAR' then begin isSimple := 1; end;
+        if form = 'TEXT' then begin isSimple := 1; end;
         if form = 'POINTER' then begin isSimple := 1; end;
         if form = 'BOOLEAN' then begin isSimple := 1; end;
         if form = 'RECORD' then begin isSimple := 0; end;

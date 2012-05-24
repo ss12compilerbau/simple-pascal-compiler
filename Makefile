@@ -14,7 +14,10 @@ build:  clean  build.codegen
 	cp CGWrapper SPC
 	@echo "Build successful!"
 
-runLustAsmTest:
+runLastAsmTest:
+	node emu/emulator out.asm
+
+runLastAsmTestDebug:
 	node emu/emulator -d out.asm
 
 # Test runs all the tests.
@@ -140,15 +143,22 @@ test.codegen.field: build.codegen
 	@echo "Code emitted:"
 	@cat out.asm
 
-test.codegen.hw4: build.codegen
+hw4: build.codegen
 	./CGWrapper tests/hw4.pas
 	@echo "Code emitted:"
 	@cat out.asm
 
+hw4Extra: build.codegen
+	./CGWrapper tests/hw4-extra.pas
+	@echo "Code emitted:"
+	@cat out.asm
 
 # Emulator
 install.emu:
 	npm install -g coffee-script
+
+build.emu:
+	coffee -c emu/
 
 test.emu: test.emu.fibo
 	@echo "All emulator tests ok."

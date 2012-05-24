@@ -5,7 +5,8 @@ begin
     if i > 2 then begin
         i := 1;
     end else begin
-        i := 2;
+        i := 3;
     end;
+    Writeln(i);
 
 end.

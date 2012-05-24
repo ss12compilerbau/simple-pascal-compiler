@@ -1,53 +1,35 @@
 Program hw4;
-	type tArr = array of longint;
-	type tArrArr = array of tArr;
+    Type tArray = array of Longint;
     Var sum: Longint;
     var i: Longint;
-    var j: Longint;
 
-    Var rows: Longint;
-    Var columns: longint;
-    Var data: tArrArr;
-    
-    type complex = record
-		rl: longint;
-		ig: longint
-	end;
- 
+    Var len: Longint;
+    Var data: tArray;
 Begin
-    rows := 3;
-    columns := 5;
-	
-    if( rows > 0) AND (columns > 0) then begin
-		setlength(data, rows);
-		i := 0;
-		while( i < rows) do begin
-			setlength(data[i], columns);
-			i := i + 1;
-		end;
-    end 
-    else begin
-        data := Nil;
-    end;
-
     sum := 0;
     i := 0;
-    while( i < rows) do begin
-        j := 0;
-        while( j < columns) do begin
-            data[i][j] := i*100 + j;
-            sum := sum + data[i][j];
-            j := j + 1;
-        end;
+    len := 3;
+
+    if (len > 0) then begin
+        setLength(data, len);
+//    end else begin
+//        data := Nil;
+    end;
+
+    // statically initialize your data array with some values
+    data[0] := 10;
+    data[1] := 20;
+    data[2] := 30;
+    (*
+    *)
+
+    while (i < len) do begin
+        sum := sum + data[i];
         i := i + 1;
     end;
 
-    if((rows > 0) and (columns > 0) and (sum > 0)) then begin
+    if((len <> 0) and ((sum DIV len) > 0)) then begin
         // Writeln('Average is >0.');
-        sum := sum div rows div columns;
-        //Writeln(sum);
+        Writeln(sum DIV len);
     end;
-    
-    //writeln(sum);
-    
 End.
