@@ -38,7 +38,8 @@
             fPrev: ptSymbol; // link to the previous symbol. for conveninence
             fNext: ptSymbol; // link to the next symbol
             fOffset: Longint; // To be set when a variable is declared
-            fScope: ptSymbolTable //Pointer to the symbol table
+            fScope: ptSymbolTable; //Pointer to the symbol table
+            fParams: ptSymbol
         End;
 
         // type descriptor record for each type (Longint, String, tType, ...)
@@ -52,6 +53,7 @@
     var stGlobalScope: ptSymbolTable;
     Var stCurrentContext: ptSymbol;
     Var stProcedureParameters: Longint;
+    var procedureContext: ptSymbol;
 
     var stLongintType: ptType;
     var stStringType: ptType;

@@ -823,13 +823,18 @@
         var again : longint;
         var bTry : longint;
         var bParse : longint;
+        var nrOfParameters: Longint;
+        var nextParameter: ptSymbol;
     begin
+        // object: procedureContext
+        nrOfParameters := 0;
         parserDebugStr( 'parseDefParameters');
         PeekIsSymbol( cLParen);
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
             getSymbol; // ist '('
+            // TODO Hier weiter
             
             parseDeclaration;
             ret :=  gRetLongInt;
@@ -1633,8 +1638,9 @@ procedure parseArrayTypeTry;
     end;
     
     
-    procedure parseProcHeading;
+    procedure parseProcHeading(item: ptItem);
         var ret : longint;
+        var procObject: ptSymbol;
     begin
         parserDebugStr( 'parseProcHeading');
         parseSymbol( cProcedure);
@@ -1643,6 +1649,25 @@ procedure parseArrayTypeTry;
         if ret = cTrue then begin
             parseProcIdentifier;
             ret :=  gRetLongInt;
+            if ret = cTrue then begin
+                stFindSymbol(stCurrentScope, id);
+                procObject := stFindSymbolRet;
+                if procObject <> Nil then begin
+                    if(procObject^.fType <> item^.fType) then begin
+                        errorMsg('return type mismatch!');
+                    end;
+                    cgFixLink(procObject^.fOffset);
+                end else begin
+                    stCreateSymbol;
+                    procObject := stCreateSymbolRet;
+                    procObject^.fName := id;
+                    stSymbolTableInsert(procObject, stCurrentScope);
+                    procObject^.fClass := stProcedure;
+                    procObject^.fType := item^.fType; // in pascal this should be after the parameter list and return type def
+                    procObject^.fOffset := PC;
+                end;
+                procedureContext := procObject;
+            end;
         end;
         
         if ret = cTrue then begin
@@ -1684,9 +1709,12 @@ procedure parseArrayTypeTry;
     procedure parseProcDeclaration;
         var ret : longint;
         var fwd : longint;
+        var item: ptItem;
     begin
+        New(item);
+        // We have no return type
         parserDebugStr( 'parseProcDeclaration');
-        parseProcHeading;
+        parseProcHeading(item);
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin

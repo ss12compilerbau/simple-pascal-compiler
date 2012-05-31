@@ -95,7 +95,7 @@ test.symboltable: build.symboltable
 build.codegen: clean
 	${COMPILER} CGWrapper.pas
 
-test.codegen : test.codegen.assignment test.codegen.arrays test.codegen.arrayselements hw4
+test.codegen : test.codegen.assignment test.codegen.arrays test.codegen.arrayselements hw4 hw5
 # not yet: test.codegen.field test.codegen.boolean test.codegen.records test.codegen.conditionals-loops 
 	@echo "Codegeneration tests ok."
 
@@ -144,6 +144,11 @@ test.codegen.field: build.codegen
 	@echo "Code emitted:"
 	@cat out.asm
 
+test.codegen.proccall: build.codegen
+	./CGWrapper tests/cg-proccall.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
 hw4: build.codegen
 	./CGWrapper tests/hw4.pas
 	@echo "Code emitted:"
@@ -151,6 +156,11 @@ hw4: build.codegen
 
 hw4Extra: build.codegen
 	./CGWrapper tests/hw4-extra.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
+hw5: build.codegen
+	./CGWrapper tests/hw5.pas
 	@echo "Code emitted:"
 	@cat out.asm
 
