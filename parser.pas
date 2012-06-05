@@ -744,7 +744,7 @@
     
 
         
-    procedure parseCallParameters(specialMode: Longint);
+    procedure parseCallParameters(specialMode: Longint; symbol: ptSymbol);
         var ret : longint;
         var again : longint;
         var bTry : longint;
@@ -753,9 +753,10 @@
         var parLength: Longint;
         var parameters: Array of ptItem;
         var i: Longint;
+        var nextFormalParameter: ptSymbol;
     begin
         parLength := 0;
-        setLength(parameters, 10);
+        setLength(parameters, 16);
         parserDebugStr( 'parseCallParameters');
         PeekIsSymbol( cLParen);
         ret :=  gRetLongInt;
@@ -803,6 +804,10 @@
                 end;    
 
                 if ret = cTrue then begin
+                    if specialMode = 0 then begin
+                        nextFormalParameter := symbol^.fParams;
+                        // ...
+                    end;
                     if specialmode = 1 then begin
                         // SetLength
                         if parLength <> 2 then begin
@@ -1124,9 +1129,10 @@ procedure parseArrayTypeTry;
         gRetLongInt := ret;
     end;
 
-    procedure parseProcCall;
+    procedure parseProcCall(item: ptItem);
         var ret : longint;
         var procName: String;
+        var symbol: ptSymbol;
     begin
         parserDebugStr( 'parseProcCall');
        
@@ -1136,15 +1142,44 @@ procedure parseArrayTypeTry;
         if ret = cTrue then begin
             procName := id;
             if procName = 'SETLENGTH' then begin
-                parseCallParameters(1);
+                parseCallParameters(1, Nil);
             end else begin
                 if procName = 'NEW' then begin
-                    parseCallParameters(2);
+                    parseCallParameters(2, Nil);
                 end else begin
                     if procName = 'WRITELN' then begin
-                        parseCallParameters(3);
+                        parseCallParameters(3, Nil);
+
                     end else begin
-                        parseCallParameters(0);
+                        stFindSymbolRet := Nil;
+                        stFindSymbol(stCurrentScope, procName);
+                        symbol := stFindSymbolRet;
+                        if symbol = Nil then begin
+                            errorMsg('parseProcCall: undeclared procedure!');
+                            ret := cFalse;
+                        end else begin
+                            item^.fMode := mReg;
+                            item^.fType := symbol^.fType;
+                            cgPushUsedRegisters;
+                            parseCallParameters(0, symbol);
+                            if symbol^.fOffset <> 0 then begin
+                                cgIsBSR(symbol^.fOffset);
+                                if cgIsBSRRet = cFalse then begin
+                                    sJump(symbol^.fOffset - PC);
+                                end else begin
+                                    sJump(symbol^.fOffset);
+                                    symbol^.fOffset := sJumpRet;
+                                end;
+                            end else begin
+                                sJump(symbol^.fOffset);
+                                symbol^.fOffset := sJumpRet;
+                            end;
+                            cgPopUsedRegisters;
+                            cgRequestRegister;
+                            item^.fReg := cgRequestRegisterRet;
+                            cgPut('ADD', item^.fReg, 0, RR, 'parseProcCall');
+                        end;
+
                     end;
                 end;
             end;
@@ -1316,7 +1351,7 @@ procedure parseArrayTypeTry;
             parseProcCallTry;
             ret :=  gRetLongInt;
             if ret = cTrue then begin
-				parseProcCall;
+				parseProcCall(rightItem);
 				ret :=  gRetLongInt;
             end
             else begin
@@ -1367,6 +1402,7 @@ procedure parseArrayTypeTry;
     procedure parseStatement;
         var ret : longint;
         var bTry : longint;
+        var item: ptItem;
     begin
         parserDebugStr( 'parseStatement');
         ret := cTrue;
@@ -1374,7 +1410,8 @@ procedure parseArrayTypeTry;
         parseProcCallTry;
         bTry :=  gRetLongInt;
         if bTry = cTrue then begin
-			(parseProcCall);
+            New(item);
+			parseProcCall(item);
 			ret :=  gRetLongInt;
         end
         else begin

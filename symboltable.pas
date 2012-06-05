@@ -118,9 +118,7 @@
     Var whileBool: Longint;
     var UCFName : String;
     var UCName : String;
-    Var found: Longint;
     Begin
-        found := cFalse;
         // stFindSymbolRet := Nil; // should be done before calling!
         iterator := symbolTable^.fParams;
         whileBool := cFalse;
@@ -396,7 +394,6 @@
     End;
 
     procedure stCreateFormalParameter(parameter: ptSymbol; paramType: ptType; paramName: String);
-    Var paramIterator: ptSymbol;
     begin
         stInsertSymbolWithTypeObj(parameter, paramName, stVar, cFalse, paramType);
     end;

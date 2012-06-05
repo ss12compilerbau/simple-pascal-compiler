@@ -11,7 +11,10 @@ Var GP: Longint; // global pointer (first byte over the global variables = botto
 Var FP: Longint; // frame pointer
 Var SP: Longint; // frame pointer
 Var HP: Longint; // heap pointer
+Var RR: Longint;
 Var LINK: Longint;
+
+procedure cgPut(op: String; a: Longint; b: Longint; c: Longint; rem: String);forward;
 
 // cgRequestRegister() reserves a register and returns its number.
 Var cgRequestRegisterRet: Longint;
@@ -41,6 +44,28 @@ Begin
     end;
 End;
 
+Procedure cgPushUsedRegisters;
+Var i: Longint;
+Begin
+    i := 1;
+    while i < 25 do begin
+        if cgRegisterUsage[i] = cTrue then begin
+            cgPut('PSH', i, SP, 4, 'cgPushUsedRegisters');
+        end;
+    end;
+End;
+
+Procedure cgPopUsedRegisters;
+Var i: Longint;
+Begin
+    i := 25;
+    while i > 0 do begin
+        if cgRegisterUsage[i] = cTrue then begin
+            cgPut('POP', i, SP, 4, 'cgPopUsedRegisters');
+        end;
+    end;
+End;
+
 // Initialize the register allocation API related variables
 Procedure cgRegAllocInit();
 Var i: Longint;
@@ -58,6 +83,7 @@ Begin
     cgRegisterUsage[SP] := cTrue;
     cgRegisterUsage[HP] := cTrue; // Reserved for Heap address pointer
     cgRegisterUsage[LINK] := cTrue;
+    cgRegisterUsage[RR] := cTrue;
 
 End;
 
@@ -93,6 +119,7 @@ Begin
     FP := 27;
     HP := 29;
     SP := 30;
+    RR := 26;
     LINK := 31;
     cgPut('SUBI', GP, GP, 0, 'Reserve command to shift space for global variables');
     cgPut('ADDI', HP, GP, 0, 'Set Heap beginning');
@@ -111,6 +138,17 @@ Begin
         i := i + 1;
     End;
     close(outputfile);
+End;
+
+Var cgIsBSRRet: Longint;
+Procedure cgIsBSR(address: Longint);
+Begin
+    if cgCodeLines[address]^.op = 'BSR' then begin
+        cgIsBSRRet := cTrue;
+    end else begin
+        cgIsBSRRet := cFalse;
+    end;
+
 End;
 
 // ***** Item API ****
@@ -301,6 +339,13 @@ Begin
         branchAddress := nextBranchAddress;
     end;
 End;
+
+Var sJumpRet: Longint;
+procedure sJump(branchAddress: Longint);
+begin
+    cgPut('BSR', 0,0,branchAddress, 'sJump');
+    sJumpRet := PC - 1;
+end;
 
 procedure cgAssignmentOperator(leftItem: ptItem; rightItem: ptItem);
 Begin
