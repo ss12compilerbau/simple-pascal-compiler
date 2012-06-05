@@ -10,8 +10,9 @@
 
     function Emulator(options) {
       var i, _i;
-      if (options == null) {
-        options = {};
+      this.options = options;
+      if (this.options == null) {
+        this.options = {};
       }
       this.debug = options.debug || false;
       this.ir = new Register("IR");
@@ -76,6 +77,7 @@
           throw "Only number parameters are implemented";
         }
       }
+      this.reg[30].set(this.options.memSize - 4);
       if (this.debug) {
         debugger;
       }
@@ -211,7 +213,7 @@
     Memory.prototype.put = function(addr, word) {
       var i, offset, _i, _results;
       if (addr + 3 > this.mem.length) {
-        throw "Memory overflow";
+        throw "Memory overflow (" + addr + ")";
       }
       _results = [];
       for (i = _i = 0; _i <= 3; i = ++_i) {
@@ -388,7 +390,7 @@
         return this.pc.set(this.pc.get() + 4);
       });
       this.add(24, 'POP', 'F1', function(a, b, c) {
-        this.reg[a].set(mem.get(this.reg[b].get() / 4));
+        this.reg[a].set(this.mem.get(this.reg[b].get() / 4));
         this.reg[b].set(this.reg[b].get() + c);
         return this.pc.set(this.pc.get() + 4);
       });

@@ -2,6 +2,7 @@ Program procCall;
 
 Var testRet: Longint;
 Procedure test(a: Longint; b: Longint);
+
 begin
     testRet := a + b;
 end;

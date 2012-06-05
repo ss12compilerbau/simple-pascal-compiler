@@ -6,6 +6,13 @@
 var cgRegisterUsage: ^Longint;
 Var outputfile: Text;
 
+Var PC: Longint;
+Var GP: Longint; // global pointer (first byte over the global variables = bottom of heap)
+Var FP: Longint; // frame pointer
+Var SP: Longint; // frame pointer
+Var HP: Longint; // heap pointer
+Var LINK: Longint;
+
 // cgRequestRegister() reserves a register and returns its number.
 Var cgRequestRegisterRet: Longint;
 Procedure cgRequestRegister();
@@ -46,8 +53,12 @@ Begin
         i := i + 1;
     end;
     cgRegisterUsage[0] := cTrue;
-    cgRegisterUsage[28] := cTrue; // Reserved for Global Variable address pointer
-    cgRegisterUsage[29] := cTrue; // Reserved for Heap address pointer
+    cgRegisterUsage[GP] := cTrue; // Reserved for Global Variable address pointer
+    cgRegisterUsage[FP] := cTrue;
+    cgRegisterUsage[SP] := cTrue;
+    cgRegisterUsage[HP] := cTrue; // Reserved for Heap address pointer
+    cgRegisterUsage[LINK] := cTrue;
+
 End;
 
 
@@ -62,7 +73,6 @@ Type
         rem: String;
     End;
 Var cgCodeLines: Array of ptCodeLine; // Array
-Var pc: Longint;
 
 procedure cgPut(op: String; a: Longint; b: Longint; c: Longint; rem: String);
 begin
@@ -79,8 +89,13 @@ procedure cgCodegenInit();
 Begin
     setLength(cgCodeLines, 1000);
     PC := 0;
-    cgPut('SUBI', 28, 28, 0, 'Reserve command to shift space for global variables');
-    cgPut('ADDI', 29, 28, 0, 'Set Heap beginning');
+    GP := 28;
+    FP := 27;
+    HP := 29;
+    SP := 30;
+    LINK := 31;
+    cgPut('SUBI', GP, GP, 0, 'Reserve command to shift space for global variables');
+    cgPut('ADDI', HP, GP, 0, 'Set Heap beginning');
 End;
 
 procedure cgCodegenFinish();
@@ -188,10 +203,10 @@ end;
 
 Procedure cgSetLength(item: ptItem; lengthItem: ptItem);
 Begin
-    cgPut('STW', 29, item^.fReg, item^.fOffset, 'cgSetLength');
+    cgPut('STW', HP, item^.fReg, item^.fOffset, 'cgSetLength');
     cgLoad(lengthItem);
     cgPut('MULI', lengthItem^.fReg, lengthItem^.fReg, 4, 'cgSetLength'); // TODO Replace 4 by sizeof(item^.fType)
-    cgPut('ADD', 29, 29, lengthItem^.fReg, 'cgSetLength');
+    cgPut('ADD', HP, HP, lengthItem^.fReg, 'cgSetLength');
     cgReleaseRegister(lengthItem^.fReg);
 End;
 
@@ -199,8 +214,8 @@ Procedure cgNew(item: ptItem);
 Begin
     //TODO
     // stSizeOf(item)
-    cgPut('STW', 29, 28, item^.fOffset, 'cgSetLength');
-    // cgPut('ADDI', 29, 29, sizeofRet, 'cgNew');
+    cgPut('STW', HP, GP, item^.fOffset, 'cgSetLength');
+    // cgPut('ADDI', HP, HP, sizeofRet, 'cgNew');
 End;
 
 Var cgEmitStringRet: Longint;
@@ -507,6 +522,22 @@ Begin
     end;
     item^.fType := item^.fType^.fBase;
 end;
+
+procedure cgPrologue(localsize: Longint);
+Begin
+    cgPut('PSH', LINK, SP, 4, 'cgPrologue: save return address');
+    cgPut('PSH', FP, SP, 4, 'cgPrologue: save callers frame');
+    cgPut('ADD', FP, 0, SP, 'cgPrologue: allocate callees frame');
+    cgPut('SUBI', SP, SP, localsize, 'cgPrologue: Allocate callees local variables');
+End;
+
+procedure cgEpilogue(paramsize: Longint);
+Begin
+    cgPut('ADD', SP, 0, FP, 'cgEpilogue: Deallocate callees frame and local variables');
+    cgPut('POP', FP, SP, 4, 'cgEpilogue: Restore callers frame');
+    cgPut('POP', LINK, SP, paramsize + 4, 'cgEpilogue: Restore return address, deallocate parameters');
+    cgPut('RET', 0, 0, LINK, 'cgEpilogue: Return');
+End;
 
 // Initialize Parts of this module
 Procedure cgInit();

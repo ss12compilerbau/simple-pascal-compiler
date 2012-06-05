@@ -17,7 +17,9 @@
     
 
     procedure parseCodeBlock; forward;
-    procedure parseDeclaration; forward;
+
+    Var parseDeclarationRet: ptSymbol;
+    procedure parseDeclaration(formalParameter: ptSymbol; procDef: Longint); forward;
     procedure parseExpression(item: ptItem); forward;
 
     procedure parserErrorStr( errMsg : String);
@@ -329,7 +331,8 @@
         parserDebugStrInt( 'parseSimpleTypeTry', ret);
         gRetLongInt := ret;
     end;
-    
+
+    Var parseSimpleTypeRet: ptType;
     procedure parseSimpleType;
         var ret : longint;
     begin
@@ -337,7 +340,21 @@
         
         parseSimpleTypeTry;
         ret :=  gRetLongInt;
-        
+        if ret = cTrue then begin
+            if sym = cTypeLongint then begin
+                parseSimpleTypeRet := stLongintType;
+            end;
+            if sym = cTypeString then begin
+                parseSimpleTypeRet :=  stStringType;
+            end;
+            if sym = cTypeChar then begin
+                parseSimpleTypeRet := stCharType;
+            end;
+            if sym = cTypeText then begin
+                parseSimpleTypeRet :=  stTextType;
+            end;
+
+        end;
         getSymbol;
         
         parserDebugStrInt( 'parseSimpleType', ret);
@@ -358,18 +375,21 @@
         parseVarIdentifier;
         ret :=  gRetLongInt;
         if ret = cTrue then begin
+            stFindSymbolRet := Nil;
             stFindSymbol(stCurrentScope, id);
             if stFindSymbolRet <> Nil then begin
                 item^.fMode := mVar;
                 item^.fType := stFindSymbolRet^.fType;
-                if stCurrentScope^.fParent = Nil then begin // Global scope
-                    item^.fReg := 28;
+                if stFindSymbolRet^.fScope = stGlobalScope then begin // Global scope
+                    item^.fReg := GP;
                 end else begin
-                    item^.fReg := 27;
+                    item^.fReg := FP;
                 end;
                 item^.fOffset := stFindSymbolRet^.fOffset;
             end else begin
                 errorMsg('parseVarExtIdentifier: Variable not found');
+                // printSymbolTable(stGlobalScope, '');
+                Writeln('stCurrentScope', stCurrentScope^.fParams = Nil);
             end;
 
             peekIsSymbol( cLBrak);
@@ -826,27 +846,34 @@
         var nrOfParameters: Longint;
         var nextParameter: ptSymbol;
     begin
-        // object: procedureContext
+        // object: stCurrentContext
         nrOfParameters := 0;
         parserDebugStr( 'parseDefParameters');
+        // printSymbolTable(stGlobalScope, '');
         PeekIsSymbol( cLParen);
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
             getSymbol; // ist '('
-            // TODO Hier weiter
-            
-            parseDeclaration;
+            nextParameter := stCurrentContext^.fParams;
+
+            parseDeclaration(nextParameter, cTrue);
             ret :=  gRetLongInt;
+            nrOfParameters := 1;
+
             if ret = cTrue then begin
-                PeekIsSymbol( cSemicolon); 
+                PeekIsSymbol( cSemicolon);
                 bTry :=  gRetLongInt;
                 again := bTry;
                 while again = cTrue do begin
                     if bTry = cTrue then begin
                         getSymbol; // ";"
-                        parseDeclaration;
+
+                        New(nextParameter^.fNext);
+                        nextParameter := nextParameter^.fNext;
+                        parseDeclaration(nextParameter, cTrue);
                         bParse :=  gRetLongInt;
+                        nrOfParameters := nrOfParameters + 1;
                     end;
                     if bParse = cTrue then begin
                         PeekIsSymbol( cSemicolon);
@@ -857,7 +884,8 @@
                         again := cFalse;
                     end;
                 end;
-            
+
+
                 if bTry = cFalse then begin
                     ret := cTrue;
                 end
@@ -866,8 +894,19 @@
                 end;
                 
                 if ret = cTrue then begin
+                    // all formal parameters are parsed, fixing the symbol table entries
+                    stCurrentContext^.fValue := nrOfParameters;
+
+                    nextParameter^.fNext := Nil;
+                    nextParameter := stCurrentContext^.fParams;
+                    while nextParameter <> Nil do begin
+                        nrOfParameters := nrOfParameters - 1;
+                        nextParameter^.fOffset := nrOfParameters * 4 + 8;
+                        nextParameter := nextParameter^.fNext;
+                    end;
                     parseSymbol( cRParen); 
                     ret :=  gRetLongInt;
+                    stEndProcedureParameters;
                 end;    
             end;
         end
@@ -880,7 +919,7 @@
         gRetLongInt := ret;
     end;
     
-    procedure parseType;
+    procedure parseType(typeObj: ptType);
         var ret : longint;
         var bTry : longint;
     begin
@@ -898,11 +937,17 @@
         bTry := gRetLongInt;
         if bTry = cTrue then begin // string oder longint
             parseSimpleType;
+            typeObj := parseSimpleTypeRet;
             ret :=  gRetLongInt;
         end
         else begin // typeIdentifier
             parseTypeIdentifier;
             ret :=  gRetLongInt;
+            if ret = cTrue then begin
+                stFindSymbolRet := Nil;
+                stFindSymbol(stCurrentScope, id);
+                typeObj := stFindSymbolRet^.fType;
+            end;
         end;
         
         parserDebugStrInt( 'parseType', ret);
@@ -911,11 +956,12 @@
     
     
     
-    
-    procedure parseDeclaration;
+    procedure parseDeclaration(formalParameter: ptSymbol;procDef: Longint); // procDef is cTrue if called by parseProcDeclaration
         var ret : longint;
         var str : string;
+        var paramType: ptType;
     begin
+        New(paramType);
         parserDebugStr( 'parseDeclaration');
         parseVarIdentifier;
         ret :=  gRetLongInt;
@@ -933,7 +979,7 @@
         end;
         
         if ret = cTrue then begin
-            parseType;
+            parseType(paramType);
             ret :=  gRetLongInt;
         end;
 
@@ -942,18 +988,14 @@
             str := str + ' ' + id;
             parserDeclType := id;
             parserInfoStr( str);
-            
-            if parserUseSymTab = cTrue then begin
-				stInsertSymbol( parserDeclName, stVar, 
-					parserDeclIsPtrType, parserDeclType);
-			end;
-			if parserPrintSymTab = cTrue then begin
-				parserPrintStInsertSymbol( parserDeclName, stVar, 
-					parserDeclIsPtrType, parserDeclType);
-			end;
-
-			
-			
+            paramType := stFindSymbolRet^.fType;
+            if procDef = cTrue then begin
+                stCreateFormalParameter(formalParameter, paramType, parserDeclName);
+            end else begin
+                stFindSymbolRet := Nil;
+                stFindSymbol(stCurrentScope, parserDeclType);
+                stInsertSymbol( parserDeclName, stVar, parserDeclIsPtrType, parserDeclType);
+            end;
         end;
         
         parserDebugStrInt( 'parseDeclaration', ret);
@@ -977,13 +1019,16 @@
         var again : longint;
         var bTry : longint;
         var bParse : longint;
+        var symbol: ptSymbol;
     begin
         parserDebugStr( 'parseRecordType');
         parseSymbol( cRecord);
         ret :=  gRetLongInt;
-        
+        New(symbol);
+        // TODO take care of record declaration!
+
         if ret = cTrue then begin
-            parseDeclaration;
+            parseDeclaration(symbol, cFalse);
             ret :=  gRetLongInt;
         end;
 
@@ -996,7 +1041,7 @@
                 bParse :=  gRetLongInt;
                 
                 if bParse = cTrue then begin
-                    parseDeclaration;
+                    parseDeclaration(symbol, cFalse);
                     bParse :=  gRetLongInt;
                 end;
             end;
@@ -1586,12 +1631,15 @@ procedure parseArrayTypeTry;
     
     procedure parseVarDeclaration;
         var ret : longint;
+        var symbol: ptSymbol;
     begin
+        New(symbol);
         parseSymbol( cVar);
         ret :=  gRetLongInt;
         
         if ret = cTrue then begin
-            parseDeclaration;
+            // TODO take care of var declaration!
+            parseDeclaration(symbol, cFalse);
             ret :=  gRetLongInt;
         end;
         
@@ -1640,7 +1688,7 @@ procedure parseArrayTypeTry;
     
     procedure parseProcHeading(item: ptItem);
         var ret : longint;
-        var procObject: ptSymbol;
+        // stCurrentContext is our global procedure object, the entry in the symbol table
     begin
         parserDebugStr( 'parseProcHeading');
         parseSymbol( cProcedure);
@@ -1650,23 +1698,22 @@ procedure parseArrayTypeTry;
             parseProcIdentifier;
             ret :=  gRetLongInt;
             if ret = cTrue then begin
+                stFindSymbolRet := Nil;
                 stFindSymbol(stCurrentScope, id);
-                procObject := stFindSymbolRet;
-                if procObject <> Nil then begin
-                    if(procObject^.fType <> item^.fType) then begin
-                        errorMsg('return type mismatch!');
-                    end;
-                    cgFixLink(procObject^.fOffset);
+                stCurrentContext := stFindSymbolRet;
+                if stCurrentContext <> Nil then begin
+                    Writeln('JA');
+
+                    // if(stCurrentContext^.fType <> item^.fType) then begin
+                        // errorMsg('return type mismatch!');
+                    // end;
+                    cgFixLink(stCurrentContext^.fOffset);
                 end else begin
-                    stCreateSymbol;
-                    procObject := stCreateSymbolRet;
-                    procObject^.fName := id;
-                    stSymbolTableInsert(procObject, stCurrentScope);
-                    procObject^.fClass := stProcedure;
-                    procObject^.fType := item^.fType; // in pascal this should be after the parameter list and return type def
-                    procObject^.fOffset := PC;
+                    // stCurrentContext is Nil
+                    Writeln('NEIN');
+                    stBeginContext(id, stProcedure);
+                    stCurrentContext^.fOffset := PC;
                 end;
-                procedureContext := procObject;
             end;
         end;
         
@@ -1674,14 +1721,7 @@ procedure parseArrayTypeTry;
             parserInfoCRLF;
             parserInfoStr( '---------- Parse Prozedur ' + id);
             
-            if parserUseSymTab = cTrue then begin
-				stBeginProcedure( id);
-			end;
-			if parserPrintSymTab = cTrue then begin
-				parserInfoStr( 'stBeginProcedure( ' + id + ') ');
-			end;
-            
-            parseDefParameters; 
+            parseDefParameters;
             ret :=  gRetLongInt;
         end;
         
@@ -1709,9 +1749,10 @@ procedure parseArrayTypeTry;
     procedure parseProcDeclaration;
         var ret : longint;
         var fwd : longint;
-        var item: ptItem;
+        var item: ptItem;// More relevant for functions
+        var returnFJumpAddress: Longint;
     begin
-        New(item);
+        New(item);// only relevant for functions
         // We have no return type
         parserDebugStr( 'parseProcDeclaration');
         parseProcHeading(item);
@@ -1728,8 +1769,12 @@ procedure parseArrayTypeTry;
                 ret :=  gRetLongInt;
         
                 if ret = cTrue then begin
+                    returnFJumpAddress := 0;
+                    cgPrologue(0 - stCurrentScope^.fSP - 4);
                     parseCodeBlock;
                     ret := gRetLongInt;
+                    cgFixLink(returnFJumpAddress);
+                    cgEpilogue(stCurrentContext^.fValue * 4);
                 end;
             end;
         end;

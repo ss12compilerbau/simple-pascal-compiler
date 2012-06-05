@@ -13,7 +13,7 @@ else
         debug = true
         args = args.splice 1
     emu = new Emulator
-        memSize: 1000
+        memSize: 100000
         debug: debug
     emu.load args[0], ->
         programParams = args.splice 1

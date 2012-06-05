@@ -6,8 +6,8 @@
 
 class Emulator
     # Options can define memSize (in bytes) and debug (boolean)
-    constructor: (options) ->
-        options ?= {}
+    constructor: (@options) ->
+        @options ?= {}
         @debug = options.debug or false
         # it has an instruction register and a program counter
         @ir = new Register "IR"
@@ -57,6 +57,7 @@ class Emulator
                 nextRegForParams--
             else
                 throw "Only number parameters are implemented"
+        @reg[30].set @options.memSize - 4
         if @debug
             debugger
         if @debug then @printState()
@@ -145,7 +146,7 @@ class Memory
     # addr is the starting byte, word is the value
     put: (addr, word) ->
         if addr+3 > @mem.length
-            throw "Memory overflow"
+            throw "Memory overflow (#{addr})"
         # console.info "putting 0x#{word.toString(16)} at mem[#{addr}]"
         for i in [0..3]
             offset = (3-i)*8
@@ -307,7 +308,7 @@ class InstructionSet
             @pc.set @pc.get() + 4
 
         @add 24, 'POP', 'F1', (a,b,c) ->
-            @reg[a].set mem.get(@reg[b].get()/4)
+            @reg[a].set @mem.get(@reg[b].get()/4)
             @reg[b].set(@reg[b].get() + c)
             @pc.set(@pc.get() + 4)
 

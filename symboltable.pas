@@ -20,9 +20,10 @@
 
         // a linked list of symbols, defined by the first and last symbol
         tSymbolTable = Record
-            fFirst: ptSymbol; 
+            fFirst: ptSymbol;
             fLast: ptSymbol; // The last is only there for convenience reasons.
             fParent: ptSymbolTable; // to allow scopes
+            fParams: ptSymbol;
             fSP: Longint // Next symbol pointer
         End;
 
@@ -31,6 +32,7 @@
             fName: String; // obligatory for a valid Symbol. If not set, it's not yet filled (new)
             fClass: String; // can be VAR, TYPE, FIELD, PARAMETER
             fType: ptType; // the type object defines details
+            fValue: Longint; // Number of parameters (only for Procedures)
             // fIsForward is 1 if there was a forward declaration already, but no definition. 
             // Relevant for PROCEDURE and RECORD entries.
             fIsForward: Longint;
@@ -53,7 +55,6 @@
     var stGlobalScope: ptSymbolTable;
     Var stCurrentContext: ptSymbol;
     Var stProcedureParameters: Longint;
-    var procedureContext: ptSymbol;
 
     var stLongintType: ptType;
     var stStringType: ptType;
@@ -63,6 +64,8 @@
     var stTextType: ptType;
 
     var stGP: Longint;
+
+    Procedure printSymbolTable(symbolTable: ptSymbolTable; prefix: String);forward;
 
     Var stCreateSymbolRet: ptSymbol;
     Procedure stCreateSymbol;
@@ -96,13 +99,12 @@
         if form = 'POINTER' then begin isSimple := 1; end;
         if form = 'BOOLEAN' then begin isSimple := 1; end;
         if form = 'RECORD' then begin isSimple := 0; end;
-        if form = 'PROCEDURE' then begin isSimple := 0; end;
         if isSimple = -1 then begin
             errorMsg('Symboltable: Unrecognized Type form: ' + form);
         end else begin
             stCreateTypeRet^.fForm := form;
             If isSimple = 0 then begin
-                // is a record or a procedure
+                // is a record
                 stCreateSymbolTable(stCurrentScope);
                 stCurrentScope := stCreateSymbolTableRet;
                 stCreateTypeRet^.fFields := stCreateSymbolTableRet;
@@ -116,46 +118,85 @@
     Var whileBool: Longint;
     var UCFName : String;
     var UCName : String;
+    Var found: Longint;
     Begin
+        found := cFalse;
         // stFindSymbolRet := Nil; // should be done before calling!
-        if symbolTable^.fFirst <> Nil then begin
-            iterator := symbolTable^.fFirst;
-            whileBool := 0;
-            // if not yet found
+        iterator := symbolTable^.fParams;
+        whileBool := cFalse;
+        UCName := upCase(name);
+
+        // if not yet found
+        if iterator <> Nil then begin
+            Writeln('stFindSymbol - symboltable: ', symboltable^.fParams = stCurrentContext^.fParams);
+            Writeln('stFindSymbol - symboltable: ', stCurrentContext^.fValue);
+            Writeln('stFindSymbol - symboltable: ', symbolTable^.fParams^.fName);
             UCFName := upCase(iterator^.fName);
-            UCName := upCase(name);
+            Writeln(UCName, ' ', UCFName);
             if UCFName <> UCName then begin
                 // AND there's more to look at
-                if iterator <> symbolTable^.fLast then begin
-                    whileBool := 1;
+                if iterator^.fNext <> Nil then begin
+                    whileBool := cTrue;
                 End;
             end;
-            while whileBool = 1 do begin
+            while whileBool = cTrue do begin
                 // next
                 iterator := iterator^.fNext;
                 // prepare whileBool
                 // if not yet found
-                whileBool := 0;
+                whileBool := cFalse;
                 UCFName := upCase(iterator^.fName);
-                UCName := upCase(name);
                 if UCFName <> UCName then begin
                     // AND there's more to look at
-                    if iterator <> symbolTable^.fLast then begin
+                    if iterator^.fNext <> Nil then begin
                         // writeln('dFS4');
-                        whileBool := 1;
+                        whileBool := cTrue;
                     End;
                 end;
             end;
             if UCFName = UCName then begin
                 stFindSymbolRet := iterator;
+            end;
+        end;
+
+        if UCFName <> UCName then begin
+            if symbolTable^.fFirst <> Nil then begin
+                iterator := symbolTable^.fFirst;
+                whileBool := cFalse;
+                // if not yet found
+                UCFName := upCase(iterator^.fName);
+                if UCFName <> UCName then begin
+                    // AND there's more to look at
+                    if iterator <> symbolTable^.fLast then begin
+                        whileBool := cTrue;
+                    End;
+                end;
+                while whileBool = cTrue do begin
+                    // next
+                    iterator := iterator^.fNext;
+                    // prepare whileBool
+                    // if not yet found
+                    whileBool := cFalse;
+                    UCFName := upCase(iterator^.fName);
+                    if UCFName <> UCName then begin
+                        // AND there's more to look at
+                        if iterator <> symbolTable^.fLast then begin
+                            // writeln('dFS4');
+                            whileBool := cTrue;
+                        End;
+                    end;
+                end;
+                if UCFName = UCName then begin
+                    stFindSymbolRet := iterator;
+                end else begin
+                    if symbolTable^.fParent <> Nil then begin
+                        stFindSymbol(symbolTable^.fParent, name);
+                    end;
+                end;
             end else begin
                 if symbolTable^.fParent <> Nil then begin
                     stFindSymbol(symbolTable^.fParent, name);
                 end;
-            end;
-        end else begin
-            if symbolTable^.fParent <> Nil then begin
-                stFindSymbol(symbolTable^.fParent, name);
             end;
         end;
     End;
@@ -215,6 +256,7 @@
             symbol^.fOffset := symbolTable^.fSP;
             symbolTable^.fSP := symbolTable^.fSP - 4;
         end;
+        symbol^.fScope := stCurrentScope;
     End;
 
     Procedure createPredefinedType(typeName: String);
@@ -280,13 +322,13 @@
         stFindSymbolRet := Nil;
         stFindSymbol(stCurrentScope, name);
         if stFindSymbolRet <> Nil then begin
-            errorMsg( 'Symboltable: Duplicate Entry: ' + name);
+            errorMsg( 'Symboltable - stInsertSymbol: Duplicate Entry: ' + name);
         end else begin
             // writeln('dIS1');
             stFindType(varType);
             // writeln('dIS1.1');
             if stFindTypeRet = Nil then begin
-                errorMsg( 'Symboltable: Type not defined! ' + varType);
+                errorMsg( 'Symboltable - stInsertSymbol: Type not defined! ' + varType);
             end else begin
                 // writeln('dIS2');
                 stCreateSymbol;
@@ -314,6 +356,51 @@
         // writeln('dIS end');
     End;
 
+    // erzeugt einen Eintrag für eine Procedure oder Record in der aktuellen symboltabelle
+    Procedure stInsertSymbolWithTypeObj(symbol: ptSymbol; name: String; symbolType: String; isPointer: Longint; varType: ptType);
+    Begin
+        infoMsg( 'Symboltable: Adding new symbol ' + name);
+        // Make sure the symbol doesn't exist yet.
+        // writeln('dIS start');
+        stFindSymbolRet := Nil;
+        stFindSymbol(stCurrentScope, name);
+        if stFindSymbolRet <> Nil then begin
+            errorMsg( 'Symboltable - stInsertSymbolWithTypeObj: Duplicate Entry: ' + name);
+        end else begin
+            // writeln('dIS1');
+            if varType = Nil then begin
+                errorMsg( 'Symboltable - stInsertSymbolWithTypeObj: Type not defined! ' + varType^.fForm);
+            end else begin
+                // writeln('dIS2');
+                symbol^.fName := name;
+                symbol^.fClass := symbolType;
+                // stSymbolTableInsert(symbol, stCurrentScope);
+                // writeln('dIS3');
+                if isPointer = cTrue then begin
+                    stCreateType(stPointer);
+                    stCreateTypeRet^.fBase := varType;
+                    symbol^.fType := stCreateTypeRet;
+                end else begin
+                    symbol^.fType := varType;
+                end;
+                // writeln('dIS4');
+                if stProcedureParameters = cTrue then begin
+                    symbol^.fIsParameter := cTrue;
+                end else begin
+                    symbol^.fIsParameter := cFalse;
+                end;
+
+                // TODO: set fIsForward and fIsParameter fields
+            end;
+        end;
+    End;
+
+    procedure stCreateFormalParameter(parameter: ptSymbol; paramType: ptType; paramName: String);
+    Var paramIterator: ptSymbol;
+    begin
+        stInsertSymbolWithTypeObj(parameter, paramName, stVar, cFalse, paramType);
+    end;
+
     Procedure stBeginContext(name: String; form: String);
     Begin
         // writeln('dBC start');
@@ -321,6 +408,7 @@
         stFindSymbolRet := Nil;
         stFindSymbol(stCurrentScope, name);
         if stFindSymbolRet <> Nil then begin
+            // already exists (forward or duplicate)
             // two possibilities: forward declared Type/Procedure or duplicate entry
             if stFindSymbolRet^.fIsForward = cTrue then begin
                 Writeln('forward defined symbol ' + name);
@@ -328,28 +416,31 @@
                 stCurrentScope := stFindSymbolRet^.fType^.fFields;
             end else begin
                 // writeln('dBC 1');
-                errorMsg( 'Symboltable: Duplicate Entry: ' + name);
+                errorMsg( 'Symboltable - stBeginContext: Duplicate Entry: ' + name);
+                printSymbolTable(stCurrentScope, '');
             end;
         end else begin
             // writeln('dBC 2');
             stCreateSymbol;
             stSymbolTableInsert(stCreateSymbolRet, stCurrentScope);
+
             stCurrentContext := stCreateSymbolRet;
             if form = stRecord then begin
-                // writeln('dBC 3');
+                // New record symbol
                 stCurrentContext^.fClass := stType;
                 stCurrentContext^.fName := name;
                 stCreateType(stRecord);
                 stCurrentContext^.fType := stCreateTypeRet;
                 stCurrentContext^ .fType^ .fForm := stRecord;
             end else begin
-                // writeln('dBC 4');
+                // New Procedure Symbol
                 stCurrentContext^.fClass := stProcedure;
                 stCurrentContext^.fName := name;
-                writeln('bumm');
-                stCreateType(stProcedure);
-                stCurrentContext^.fType := stCreateTypeRet;
-                stCurrentContext^.fType^ .fForm := stProcedure;
+                // stCurrentContext^.fType := item^.fType; // in pascal this should be after the parameter list and return type def
+                New(stCurrentContext^.fParams);
+                stCreateSymbolTable(stCurrentScope);
+                stCurrentScope := stCreateSymbolTableRet;
+                stCurrentScope^.fParams := stCurrentContext^.fParams;
             end;
         end;
         // writeln('dBC end');
@@ -363,9 +454,15 @@
 
     Procedure stBeginProcedure(name: String);
     begin
+        (*
         infoMsg( 'Symboltable: Beginning new procedure ' + name);
         stBeginContext(name, stProcedure);
+        New(stCreateSymbolRet^.fParams);
+        stCurrentContext^.fParams := stCreateSymbolRet^.fParams;
+        Writeln('test stBeginProcedure: ', stCurrentContext^.fName);
+        printSymbolTable(stGlobalScope, '');
         stProcedureParameters := cTrue;
+        *)
     end;
 
     Procedure stEndProcedureParameters;
@@ -405,18 +502,18 @@
 
 
 
-    Procedure printSymbolTable(symbolTable: ptSymbolTable; prefix: String);forward;
+
 
     Procedure printType(typeObj: ptType; prefix: String);forward;
 
-    Procedure printSymbolTable(symbolTable: ptSymbolTable; prefix: String);
+    Procedure printSymbolList(first: ptSymbol; prefix: String);
     Var curSym: ptSymbol;
     Begin
         // writeln('dPST start');
-        if symbolTable = Nil then begin
-            writeln(prefix + 'Empty Symbol table.');
+        if first = Nil then begin
+            writeln(prefix + 'Empty list.');
         end else Begin
-            curSym := symbolTable^.fFirst;
+            curSym := first;
             While curSym <> Nil Do Begin
                 Write(prefix, 'Symbol Name: ', curSym^.fName, ', Class: ');
                 Write(curSym^.fClass, ', IsParameter: ', curSym^.fIsParameter);
@@ -428,10 +525,19 @@
                     Writeln;
                     printType(curSym^.fType, prefix + '    ');
                 end;
+                if curSym^.fClass = stProcedure then begin
+                    Writeln(prefix, '  Param List:');
+                    printSymbolList(curSym^.fParams, prefix + '    ');
+                end;
                 curSym := curSym^.fNext;
             End;
         End;
     End;
+
+    Procedure printSymbolTable(symbolTable: ptSymbolTable; prefix: String);
+    begin
+        printSymbolList(symbolTable^.fFirst, prefix);
+    end;
 
     Procedure printType(typeObj: ptType; prefix: String);
     Begin
