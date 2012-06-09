@@ -1,5 +1,6 @@
 SUBI 28,28,-12; Reserve command to shift space for global variables
 ADDI 29,28,0; Set Heap beginning
+BSR 0,0,1; Jump to main()
 ADDI 1,0,22; cg Const2Reg
 STW 1,28,-4; assignmentOperator
 LDW 1,28,-4; cg var2Reg

@@ -110,7 +110,8 @@ The 32-bit RISC-like processor emulator is written in CoffeeScript. It takes an 
 ## ToDo
 * Implement code generation for record field access
 * Deal with Strings (fix 64 bytes?)
-* Implement file operations in the VM
+* Implement system calls in the parser
+* Implement file operations in the VM and in the parser
 * Implement symbol table taking care of type sections and forward type declarations
 * Check out the tests if they work and if not, why
 * Do whatever is missing for self-compiling
@@ -118,4 +119,3 @@ The 32-bit RISC-like processor emulator is written in CoffeeScript. It takes an 
 ## Authors:
     * Szabolcs Gruenwald -- szaby.gruenwald@web.de
     * Reinhold Kolm -- reinhold.kolm@gmx.at
-
