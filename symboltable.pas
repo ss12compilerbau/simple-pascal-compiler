@@ -74,6 +74,9 @@
         stCreateSymbolRet^.fName := '';
         stCreateSymbolRet^.fIsForward := cFalse;
         stCreateSymbolRet^.fIsParameter := cFalse;
+        stCreateSymbolRet^.fNext := Nil;
+        stCreateSymbolRet^.fParams := Nil;
+        stCreateSymbolRet^.fType := Nil;
     End;
 
     Var stCreateSymbolTableRet: ptSymbolTable;
@@ -190,11 +193,12 @@
                 end;
             end else begin
                 if symbolTable^.fParent <> Nil then begin
-                    Writeln('Look in the parent ST: ', name);
+                    // Writeln('Look in the parent ST ', name);
                     stFindSymbol(symbolTable^.fParent, name);
                 end;
             end;
         end;
+        // Writeln('findsymbol end ', stFindSymbolRet <> Nil);
     End;
 
     Var stFindTypeRet: ptType;
@@ -202,24 +206,27 @@
     var n1 : String;
     var n2 : String;
     Begin
+
+        // printSymbolTable(stGlobalScope, '');
         // writeln('dFindType start');
         stFindSymbolRet := Nil;
-        stFindSymbol(stCurrentScope, name);
+        stFindSymbol(stGlobalScope, name);
         if stFindSymbolRet = Nil then begin
             // writeln('dFindType 0');
             stFindTypeRet := Nil;
         end else begin
             // writeln('dFindType 1 ', stFindSymbolRet^.fName);
-            writeln('dFindType ', stFindSymbolRet^.fName);
+            // writeln('FindType ', stFindSymbolRet^.fName);
             n1 := upCase(stFindSymbolRet^.fName);
             n2 := upCase(name);
             if n1 = n2 then begin
                 stFindTypeRet := stFindSymbolRet^.fType;
             end else begin
                 errorMsg(name + ' is not a TYPE!');
+                stFindTypeRet := Nil;
             end;
         end;
-        // writeln('dFindType end');
+        // writeln('dFindType end ', stFindTypeRet <> Nil);
     End;
 
     {
@@ -313,12 +320,13 @@
     // erzeugt einen Eintrag für eine Procedure oder Record in der aktuellen symboltabelle
     Procedure stInsertSymbol(name: String; symbolType: String; isPointer: Longint; varType: String);
     Begin
-        infoMsg( 'Symboltable: Adding new symbol ' + name);
+        infoMsg( 'Symboltable: Adding new symbol ' + name + ' type: "' + varType + '"');
         // Make sure the symbol doesn't exist yet.
         // writeln('dIS start');
         stFindSymbolRet := Nil;
         stFindSymbol(stCurrentScope, name);
-        if stFindSymbolRet <> Nil then begin
+        if (stFindSymbolRet <> Nil) and (stFindSymbolRet^.fScope = stCurrentScope) then begin
+
             errorMsg( 'Symboltable - stInsertSymbol: Duplicate Entry: ' + name);
         end else begin
             // writeln('dIS1');
@@ -326,7 +334,7 @@
             // writeln('dIS1.1');
             if stFindTypeRet = Nil then begin
                 errorMsg( 'Symboltable - stInsertSymbol: Type not defined! ' + varType);
-                printSymbolTable(stCurrentScope^.fParent, '');
+                printSymbolTable(stCurrentScope, '');
             end else begin
                 // writeln('dIS2');
                 stCreateSymbol;
@@ -362,7 +370,7 @@
         // writeln('dIS start');
         stFindSymbolRet := Nil;
         stFindSymbol(stCurrentScope, name);
-        if stFindSymbolRet <> Nil then begin
+        if (stFindSymbolRet <> Nil) and (stFindSymbolRet^.fScope = stCurrentScope) then begin
             errorMsg( 'Symboltable - stInsertSymbolWithTypeObj: Duplicate Entry: ' + name);
         end else begin
             // writeln('dIS1');
@@ -494,6 +502,8 @@
         infoMsg( 'Symboltable: Ending procedure');
         if stCurrentScope^.fParent <> Nil then begin
             stCurrentScope := stCurrentScope^.fParent;
+        end else begin
+            errorMsg('stEndProcedure: Called too often, already in global scope!');
         end;
     End;
 

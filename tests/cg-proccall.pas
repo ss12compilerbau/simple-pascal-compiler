@@ -2,19 +2,19 @@ Program procCall;
 var testRet: Longint;
 
 Procedure test1(x: Longint; y: Longint);
-var loc: Longint;
+var sum: Longint;
 begin
-    loc := 1;
+    sum := 1;
     testRet := x + y;
-    testRet := testRet + loc;
+    testRet := testRet + sum;
 end;
 
 Procedure test2(x: Longint; y: Longint);
-var loc: Longint;
+var sum: Longint;
 begin
-    loc := 2;
+    sum := 2;
     testRet := x + y;
-    testRet := testRet + loc;
+    testRet := testRet + sum;
 end;
 
 Var sum: Longint;

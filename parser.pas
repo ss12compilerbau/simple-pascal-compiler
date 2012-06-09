@@ -388,7 +388,9 @@
                 item^.fOffset := stFindSymbolRet^.fOffset;
             end else begin
                 errorMsg('parseVarExtIdentifier: Variable not found');
-                // printSymbolTable(stGlobalScope, '');
+                if stCurrentScope<> stGlobalScope then begin
+                    printSymbolTable(stCurrentScope^.fParent, '');
+                end;
                 //Writeln('stCurrentScope', stCurrentScope^.fParams = Nil);
             end;
 
@@ -950,9 +952,15 @@
             parseTypeIdentifier;
             ret :=  gRetLongInt;
             if ret = cTrue then begin
-                stFindSymbolRet := Nil;
+				stFindSymbolRet := Nil;
                 stFindSymbol(stCurrentScope, id);
-                typeObj := stFindSymbolRet^.fType;
+                if stFindSymbolRet = Nil then begin
+                    errorMsg('parseType: Type not found');
+                    Writeln(id);
+                    printSymbolTable(stCurrentScope, '');
+                end else begin
+	                typeObj := stFindSymbolRet^.fType;
+                end;
             end;
         end;
         
@@ -994,13 +1002,21 @@
             str := str + ' ' + id;
             parserDeclType := id;
             parserInfoStr( str);
-            paramType := stFindSymbolRet^.fType;
-            if procDef = cTrue then begin
-                stCreateFormalParameter(formalParameter, paramType, parserDeclName);
+            stFindSymbolRet := Nil;
+            stFindSymbol(stGlobalScope, parserDeclType);
+            if stFindSymbolRet <> Nil then begin
+                paramType := stFindSymbolRet^.fType;
+                if paramType <> Nil then begin
+                    if procDef = cTrue then begin
+                        stCreateFormalParameter(formalParameter, paramType, parserDeclName);
+                    end else begin
+                        stInsertSymbol( parserDeclName, stVar, parserDeclIsPtrType, parserDeclType);
+                    end;
+                end else begin
+                    errorMsg('parseDeclaration: Type not found1');
+                end;
             end else begin
-                stFindSymbolRet := Nil;
-                stFindSymbol(stCurrentScope, parserDeclType);
-                stInsertSymbol( parserDeclName, stVar, parserDeclIsPtrType, parserDeclType);
+                errorMsg('parseDeclaration: Type not found2');
             end;
         end;
         
@@ -1118,11 +1134,10 @@ procedure parseArrayTypeTry;
         parserDebugStr( 'parseProcCallTry');
 
 		ret := cFalse;
-		parseProcIdentifierTry;
+		parseProcIdentifierTry();
 		if gRetLongInt = cTrue then begin
-			peek2Symbol;
+			peek2Symbol();
 			if sym2 = cLParen then begin ret := cTrue; end;
-			if sym2 = cSemicolon then begin ret := cTrue; end;
 		end;
 
         parserDebugSyms(111);
@@ -1136,7 +1151,8 @@ procedure parseArrayTypeTry;
         var symbol: ptSymbol;
     begin
         parserDebugStr( 'parseProcCall');
-       
+        Writeln( 'parseProcCall');
+
         parseProcIdentifier;
         ret :=  gRetLongInt;
         
@@ -1163,15 +1179,19 @@ procedure parseArrayTypeTry;
                             item^.fType := symbol^.fType;
                             cgPushUsedRegisters;
                             parseCallParameters(0, symbol);
+                            Writeln('symbol^.fOffset ', symbol^.fOffset);
                             if symbol^.fOffset <> 0 then begin
                                 cgIsBSR(symbol^.fOffset);
                                 if cgIsBSRRet = cFalse then begin
+                                    Writeln('sjump1');
                                     sJump(symbol^.fOffset - PC);
                                 end else begin
+                                    Writeln('sjump2');
                                     sJump(symbol^.fOffset);
                                     symbol^.fOffset := sJumpRet;
                                 end;
                             end else begin
+                                Writeln('sjump3');
                                 sJump(symbol^.fOffset);
                                 symbol^.fOffset := sJumpRet;
                             end;
@@ -1352,6 +1372,7 @@ procedure parseArrayTypeTry;
             parseProcCallTry;
             ret :=  gRetLongInt;
             if ret = cTrue then begin
+                Writeln('parseSimpleStatement');
 				parseProcCall(rightItem);
 				ret :=  gRetLongInt;
             end
@@ -1412,6 +1433,7 @@ procedure parseArrayTypeTry;
         bTry :=  gRetLongInt;
         if bTry = cTrue then begin
             New(item);
+            Writeln('parseStatement');
 			parseProcCall(item);
 			ret :=  gRetLongInt;
 			if ret = cTrue then begin
@@ -1748,10 +1770,19 @@ procedure parseArrayTypeTry;
                     // if(stCurrentContext^.fType <> item^.fType) then begin
                         // errorMsg('return type mismatch!');
                     // end;
+                    New(stCurrentContext^.fParams);
+                    stCreateSymbolTable(stCurrentScope);
+                    stCurrentScope := stCreateSymbolTableRet;
+                    stCurrentScope^.fParams := stCurrentContext^.fParams;
+                    writeln('fix up 1');
+
                     cgFixLink(stCurrentContext^.fOffset);
+                    stCurrentContext^.fOffset := PC;
                 end else begin
+                    writeln('fix up 2');
                     // stCurrentContext is Nil
                     stBeginContext(id, stProcedure);
+                    // cgFixLink(stCurrentContext^.fOffset);
                     stCurrentContext^.fOffset := PC;
                 end;
             end;
@@ -1802,7 +1833,9 @@ procedure parseArrayTypeTry;
             PeekIsSymbol( cForward);
             fwd := gRetLongInt;
             if fwd = cTrue then begin
-                (parseSymbol( cForward));
+                parseSymbol(cForward);
+                stCurrentContext^.fOffset := 0;
+                //parseSymbol(cSemicolon);
             end
             else begin
                 parseVarDeclarations;
@@ -1820,7 +1853,7 @@ procedure parseArrayTypeTry;
         end;
         
         if ret = cTrue then begin
-            parseSymbol( cSemicolon);
+            parseSymbol(cSemicolon);
             ret :=  gRetLongInt;
         end;
         

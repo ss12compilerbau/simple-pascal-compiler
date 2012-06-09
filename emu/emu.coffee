@@ -398,7 +398,7 @@ class Instruction
         if @opcode > 63 or @opcode < 0
             throw "The opcode has to be between 0 and 63"
 
-# Specific F1 Instruction: opcode 6 bit, a, b 5 bit, c 16 bit
+# Specific F1 Instruction: opcode 6 bit, a, b 5 bit, c 16 bit | -32768 <= c <= 32767
 class F1Instr extends Instruction
     encode: (a,b,c) ->
         if c<0 then c += 0x10000
@@ -409,7 +409,7 @@ class F1Instr extends Instruction
         instr >> 16 & 31 # 5 bit
     getC: (instr) ->
         c = instr & 0xffff # 16 bit
-        if c > 0xff then c -= 0x10000
+        if c > 0x8000 then c -= 0x10000
         c
 
 # Specific F2 Instruction: opcode 6 bit, a, b, c 5 bit

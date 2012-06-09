@@ -1,15 +1,38 @@
 Program hw5;
 
-Var numbers: Array of Longint;
+Type numArray = Array of Longint;
+Var numbers: numArray;
 Var len: Longint;
 
-var evenRet: Longint;
-Procedure even(num: Longint);forward;
 var oddRet: Longint;
-Procedure odd(num: Longint);forward;
-Procedure evenOrOdd(numbers: Array of Longint; numLen: Longint);forward;
+Procedure odd(num: Longint); forward;
 
-Procedure evenOrOdd(numbers: Array of Longint; numLen: Longint);
+var evenRet: Longint;
+Procedure even(num: Longint);
+var ret: Longint;
+Begin
+    if (num = 0) then begin
+        ret := 1;
+    end else begin
+        odd(num-1);
+        ret := oddRet;
+    end;
+    evenRet := ret;
+end;
+
+Procedure odd(num: Longint);
+var ret: Longint;
+Begin
+    if (num = 0) then begin
+        ret := 0;
+    end else begin
+        even(num-1);
+        ret := evenRet;
+    end;
+    oddRet := ret;
+end;
+
+Procedure evenOrOdd(numbers: numArray; numLen: Longint);
 Var i: Longint;
 var lEven: Longint;
 var lOdd: Longint;
@@ -37,42 +60,17 @@ Begin
             end;
         end else begin
             // Writeln('number is < 0, sorry...');
-            Writeln(-1);
+            Writeln(5);
         end;
         i := i + 1;
     end;
 end;
 
-Procedure even(num: Longint);
-var ret: Longint;
-Begin
-    if (num = 0) then begin
-        ret := 1;
-    end else begin
-        odd(num-1);
-        ret := oddRet;
-    end;
-    evenRet := ret;
-end;
-
-Procedure odd(num: Longint);
-var ret: Longint;
-Begin
-    if (num = 0) then begin
-        ret := 0;
-    end else begin
-        even(num-1);
-        ret := evenRet;
-    end;
-    oddRet := ret;
-end;
-
 begin
     len := 3;
     setLength(numbers, len);
-    numbers[0] := -3;
-    numbers[1] := 2;
-    numbers[2] := 7;
+    numbers[0] := 32000;
+    numbers[1] := 32001;
+    numbers[2] := 1;
     evenOrOdd(numbers, len);
-    Writeln(0);
 end.

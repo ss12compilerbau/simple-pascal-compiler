@@ -521,7 +521,7 @@
     F1Instr.prototype.getC = function(instr) {
       var c;
       c = instr & 0xffff;
-      if (c > 0xff) {
+      if (c > 0x8000) {
         c -= 0x10000;
       }
       return c;
