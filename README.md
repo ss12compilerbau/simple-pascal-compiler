@@ -108,8 +108,6 @@ nach “//”
 The 32-bit RISC-like processor emulator is written in CoffeeScript. It takes an assembly file as parameter and runs it. The -d parameter makes it run in debug mode. In this case each register and memory state is shown on the console. For a list of supported assembly commands and their semantics please see the human-readable source code in emu/emulator.coffee
 
 ## ToDo
-* Implement code generation for procedures
-* Implement code generation for procedure calls
 * Implement code generation for record field access
 * Deal with Strings (fix 64 bytes?)
 * Implement file operations in the VM
