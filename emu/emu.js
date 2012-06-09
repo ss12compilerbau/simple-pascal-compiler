@@ -77,7 +77,7 @@
           throw "Only number parameters are implemented";
         }
       }
-      this.reg[30].set(this.options.memSize - 4);
+      this.reg[30].set(this.options.memSize);
       if (this.debug) {
         debugger;
       }

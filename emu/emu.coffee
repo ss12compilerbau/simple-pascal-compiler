@@ -57,7 +57,7 @@ class Emulator
                 nextRegForParams--
             else
                 throw "Only number parameters are implemented"
-        @reg[30].set @options.memSize - 4
+        @reg[30].set @options.memSize
         if @debug
             debugger
         if @debug then @printState()

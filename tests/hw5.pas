@@ -69,8 +69,8 @@ end;
 begin
     len := 3;
     setLength(numbers, len);
-    numbers[0] := 32000;
-    numbers[1] := 32001;
-    numbers[2] := 1;
+    numbers[0] := 3;
+    numbers[1] := 2;
+    numbers[2] := 0 - 11;
     evenOrOdd(numbers, len);
 end.

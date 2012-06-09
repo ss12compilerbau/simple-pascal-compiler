@@ -769,7 +769,9 @@
             parameters[parLength] := item;
             parLength := parLength + 1;
             if ret = cTrue then begin
-                cgPushParameter(item);
+                if specialMode = 0 then begin
+                    cgPushParameter(item);
+                end;
                 PeekIsSymbol( cComma); 
                 bTry :=  gRetLongInt;
                 again := bTry;
@@ -783,7 +785,9 @@
                     if bParse = cTrue then begin
                         parameters[parLength] := item;
                         parLength := parLength + 1;
-                        cgPushParameter(item);
+                        if specialMode = 0 then begin
+                            cgPushParameter(item);
+                        end;
                         PeekIsSymbol( cComma);
                         bTry :=  gRetLongInt;
                         again := bTry;
@@ -1151,7 +1155,6 @@ procedure parseArrayTypeTry;
         var symbol: ptSymbol;
     begin
         parserDebugStr( 'parseProcCall');
-        Writeln( 'parseProcCall');
 
         parseProcIdentifier;
         ret :=  gRetLongInt;
@@ -1179,19 +1182,15 @@ procedure parseArrayTypeTry;
                             item^.fType := symbol^.fType;
                             cgPushUsedRegisters;
                             parseCallParameters(0, symbol);
-                            Writeln('symbol^.fOffset ', symbol^.fOffset);
                             if symbol^.fOffset <> 0 then begin
                                 cgIsBSR(symbol^.fOffset);
                                 if cgIsBSRRet = cFalse then begin
-                                    Writeln('sjump1');
                                     sJump(symbol^.fOffset - PC);
                                 end else begin
-                                    Writeln('sjump2');
                                     sJump(symbol^.fOffset);
                                     symbol^.fOffset := sJumpRet;
                                 end;
                             end else begin
-                                Writeln('sjump3');
                                 sJump(symbol^.fOffset);
                                 symbol^.fOffset := sJumpRet;
                             end;
@@ -1372,8 +1371,7 @@ procedure parseArrayTypeTry;
             parseProcCallTry;
             ret :=  gRetLongInt;
             if ret = cTrue then begin
-                Writeln('parseSimpleStatement');
-				parseProcCall(rightItem);
+                parseProcCall(rightItem);
 				ret :=  gRetLongInt;
             end
             else begin
@@ -1433,8 +1431,7 @@ procedure parseArrayTypeTry;
         bTry :=  gRetLongInt;
         if bTry = cTrue then begin
             New(item);
-            Writeln('parseStatement');
-			parseProcCall(item);
+            parseProcCall(item);
 			ret :=  gRetLongInt;
 			if ret = cTrue then begin
 			    if item^.fReg <> 0 then begin
@@ -1774,12 +1771,9 @@ procedure parseArrayTypeTry;
                     stCreateSymbolTable(stCurrentScope);
                     stCurrentScope := stCreateSymbolTableRet;
                     stCurrentScope^.fParams := stCurrentContext^.fParams;
-                    writeln('fix up 1');
-
                     cgFixLink(stCurrentContext^.fOffset);
                     stCurrentContext^.fOffset := PC;
                 end else begin
-                    writeln('fix up 2');
                     // stCurrentContext is Nil
                     stBeginContext(id, stProcedure);
                     // cgFixLink(stCurrentContext^.fOffset);
