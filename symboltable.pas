@@ -190,6 +190,7 @@
                 end;
             end else begin
                 if symbolTable^.fParent <> Nil then begin
+                    Writeln('Look in the parent ST: ', name);
                     stFindSymbol(symbolTable^.fParent, name);
                 end;
             end;
@@ -209,6 +210,7 @@
             stFindTypeRet := Nil;
         end else begin
             // writeln('dFindType 1 ', stFindSymbolRet^.fName);
+            writeln('dFindType ', stFindSymbolRet^.fName);
             n1 := upCase(stFindSymbolRet^.fName);
             n2 := upCase(name);
             if n1 = n2 then begin
@@ -324,6 +326,7 @@
             // writeln('dIS1.1');
             if stFindTypeRet = Nil then begin
                 errorMsg( 'Symboltable - stInsertSymbol: Type not defined! ' + varType);
+                printSymbolTable(stCurrentScope^.fParent, '');
             end else begin
                 // writeln('dIS2');
                 stCreateSymbol;
