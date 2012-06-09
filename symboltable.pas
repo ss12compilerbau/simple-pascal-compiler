@@ -126,11 +126,8 @@
 
         // if not yet found
         if iterator <> Nil then begin
-            Writeln('stFindSymbol - symboltable: ', symboltable^.fParams = stCurrentContext^.fParams);
-            Writeln('stFindSymbol - symboltable: ', stCurrentContext^.fValue);
-            Writeln('stFindSymbol - symboltable: ', symbolTable^.fParams^.fName);
+            Write('');
             UCFName := upCase(iterator^.fName);
-            Writeln(UCName, ' ', UCFName);
             if UCFName <> UCName then begin
                 // AND there's more to look at
                 if iterator^.fNext <> Nil then begin

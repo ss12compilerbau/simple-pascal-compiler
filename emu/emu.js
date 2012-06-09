@@ -117,7 +117,9 @@
       console.log('Code+Global:');
       this.mem.printState(0, this.reg[28].get());
       console.log('Heap:');
-      return this.mem.printState(this.reg[28].get() + 1, this.reg[29].get());
+      this.mem.printState(this.reg[28].get() + 1, this.reg[29].get());
+      console.log('Stack:');
+      return this.mem.printState(this.reg[30].get() + 1, this.options.memSize);
     };
 
     Emulator.prototype._processInstr = function(instrStr) {
@@ -390,13 +392,13 @@
         return this.pc.set(this.pc.get() + 4);
       });
       this.add(24, 'POP', 'F1', function(a, b, c) {
-        this.reg[a].set(this.mem.get(this.reg[b].get() / 4));
+        this.reg[a].set(this.mem.get(this.reg[b].get()));
         this.reg[b].set(this.reg[b].get() + c);
         return this.pc.set(this.pc.get() + 4);
       });
       this.add(25, 'PSH', 'F1', function(a, b, c) {
         this.reg[b].set(this.reg[b].get() - c);
-        this.mem.put(this.reg[b].get() / 4, this.reg[a].get());
+        this.mem.put(this.reg[b].get(), this.reg[a].get());
         return this.pc.set(this.pc.get() + 4);
       });
       this.add(26, 'RET', 'F2', function(a, b, c) {

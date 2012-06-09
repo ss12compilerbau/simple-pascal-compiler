@@ -389,7 +389,7 @@
             end else begin
                 errorMsg('parseVarExtIdentifier: Variable not found');
                 // printSymbolTable(stGlobalScope, '');
-                Writeln('stCurrentScope', stCurrentScope^.fParams = Nil);
+                //Writeln('stCurrentScope', stCurrentScope^.fParams = Nil);
             end;
 
             peekIsSymbol( cLBrak);
@@ -741,9 +741,7 @@
         parserDebugStrInt( 'parseExpression', ret);
         gRetLongInt := ret;
     end;
-    
 
-        
     procedure parseCallParameters(specialMode: Longint; symbol: ptSymbol);
         var ret : longint;
         var again : longint;
@@ -769,6 +767,7 @@
             parameters[parLength] := item;
             parLength := parLength + 1;
             if ret = cTrue then begin
+                cgPushParameter(item);
                 PeekIsSymbol( cComma); 
                 bTry :=  gRetLongInt;
                 again := bTry;
@@ -778,10 +777,11 @@
                         New(item);
                         parseExpression(item);
                         bParse :=  gRetLongInt;
-                        parameters[parLength] := item;
-                        parLength := parLength + 1;
                     end;
                     if bParse = cTrue then begin
+                        parameters[parLength] := item;
+                        parLength := parLength + 1;
+                        cgPushParameter(item);
                         PeekIsSymbol( cComma);
                         bTry :=  gRetLongInt;
                         again := bTry;
@@ -801,11 +801,12 @@
                 if ret = cTrue then begin
                     parseSymbol( cRParen); 
                     ret :=  gRetLongInt;
-                end;    
+                end;
 
                 if ret = cTrue then begin
                     if specialMode = 0 then begin
                         nextFormalParameter := symbol^.fParams;
+
                         // ...
                     end;
                     if specialmode = 1 then begin
@@ -1413,6 +1414,11 @@ procedure parseArrayTypeTry;
             New(item);
 			parseProcCall(item);
 			ret :=  gRetLongInt;
+			if ret = cTrue then begin
+			    if item^.fReg <> 0 then begin
+			        cgReleaseRegister(item^.fReg);
+			    end;
+			end;
         end
         else begin
             parseIfStatementTry;
@@ -1739,15 +1745,12 @@ procedure parseArrayTypeTry;
                 stFindSymbol(stCurrentScope, id);
                 stCurrentContext := stFindSymbolRet;
                 if stCurrentContext <> Nil then begin
-                    Writeln('JA');
-
                     // if(stCurrentContext^.fType <> item^.fType) then begin
                         // errorMsg('return type mismatch!');
                     // end;
                     cgFixLink(stCurrentContext^.fOffset);
                 end else begin
                     // stCurrentContext is Nil
-                    Writeln('NEIN');
                     stBeginContext(id, stProcedure);
                     stCurrentContext^.fOffset := PC;
                 end;
@@ -1983,16 +1986,20 @@ procedure parseArrayTypeTry;
     
     procedure parsePgm;
         var ret : longint;
+        var addr: Longint;
     begin
         parsePgmHeading;
         ret := gRetLongInt;
-        
+        addr := PC;
+        cgPut('BSR', 0,0,0, 'Jump to main()');
         if ret = cTrue then begin
             parsePgmDeclarations;
             ret :=  gRetLongInt;
         end;
         
         if ret = cTrue then begin
+            Writeln('main() fixup address ', addr);
+            cgCodeLines[addr]^.c := PC - addr;
             parseCodeBlock;
             ret :=  gRetLongInt;
         end;

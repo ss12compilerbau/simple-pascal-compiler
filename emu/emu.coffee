@@ -89,6 +89,8 @@ class Emulator
         @mem.printState 0, @reg[28].get()
         console.log 'Heap:'
         @mem.printState @reg[28].get() + 1, @reg[29].get()
+        console.log 'Stack:'
+        @mem.printState @reg[30].get() + 1, @options.memSize
 
     # internal method
     _processInstr: (instrStr) ->
@@ -308,13 +310,13 @@ class InstructionSet
             @pc.set @pc.get() + 4
 
         @add 24, 'POP', 'F1', (a,b,c) ->
-            @reg[a].set @mem.get(@reg[b].get()/4)
+            @reg[a].set @mem.get(@reg[b].get())
             @reg[b].set(@reg[b].get() + c)
             @pc.set(@pc.get() + 4)
 
         @add 25, 'PSH', 'F1', (a,b,c) ->
             @reg[b].set(@reg[b].get() - c)
-            @mem.put(@reg[b].get()/4, @reg[a].get())
+            @mem.put(@reg[b].get(), @reg[a].get())
             @pc.set @pc.get() + 4
 
         # RET c: pc = reg[c]; F2, Return from Subroutine

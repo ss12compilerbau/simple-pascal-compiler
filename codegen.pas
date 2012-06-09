@@ -52,6 +52,7 @@ Begin
         if cgRegisterUsage[i] = cTrue then begin
             cgPut('PSH', i, SP, 4, 'cgPushUsedRegisters');
         end;
+        i := i + 1;
     end;
 End;
 
@@ -63,6 +64,7 @@ Begin
         if cgRegisterUsage[i] = cTrue then begin
             cgPut('POP', i, SP, 4, 'cgPopUsedRegisters');
         end;
+        i := i - 1;
     end;
 End;
 
@@ -270,6 +272,16 @@ Begin
     cgPut(';', 0,0,0,'noop');
 End;
 
+Procedure cgPushParameter(item: ptItem);
+Begin
+    if item^.fType = stBooleanType then begin
+        errorMsg('cgPushParameter: No boolean parameter expected.');
+    end;
+    cgLoad(item);
+    cgPut('PSH', item^.fReg, SP, 4, 'cgPushParameter');
+    cgReleaseRegister(item^.fReg);
+end;
+
 Procedure cgWrite(item: ptItem);
 begin
     cgLoad(item);
@@ -388,7 +400,7 @@ begin
 		bothLongint := cFalse;
 	end;
 	
-	// both Items mBool ?
+	// both Items stBooleanType ?
 	bothBool := cTrue;
 	if leftItem^.fType <> stBooleanType THEN begin
 		bothBool := cFalse;
