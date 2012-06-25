@@ -1,19 +1,39 @@
-SUBI 28,28,-16; Reserve command to shift space for global variables
+SUBI 28,28,-20; Reserve command to shift space for global variables
+ADDI 29,28,0; Set Heap beginning
+BSR 0,0,1; Jump to main()
 ADDI 1,0,3; cg Const2Reg
 STW 1,28,-4; assignmentOperator
 ADDI 1,0,10; cg Const2Reg
 STW 1,28,-8; assignmentOperator
 ADDI 1,0,100; cg Const2Reg
 STW 1,28,-12; assignmentOperator
+ADDI 1,0,0; cg Const2Reg
+STW 1,28,-16; assignmentOperator
 LDW 1,28,-4; cg var2Reg
 LDW 2,28,-8; cg var2Reg
 CMP 1,1,2; cgExpression
+BGE 1,0,21; cJump /fixedUp/
+ADDI 1,0,6; cg Const2Reg
+STW 1,28,-16; assignmentOperator
+LDW 1,28,-16; cg var2Reg
+ADDI 2,0,8; cg Const2Reg
+CMP 1,1,2; cgExpression
 BGE 1,0,8; cJump /fixedUp/
+LDW 1,28,-16; cg var2Reg
+WRN 1,0,0; Write longint
+WCR 0,0,0; Write Carriage Return
+LDW 1,28,-16; cg var2Reg
+ADDI 1,1,1; cgSimpleExpression
+STW 1,28,-16; assignmentOperator
+BR 0,0,-10; bJump
 LDW 1,28,-12; cg var2Reg
 ADDI 1,1,10; cgSimpleExpression
 STW 1,28,-12; assignmentOperator
 LDW 1,28,-4; cg var2Reg
 ADDI 1,1,1; cgSimpleExpression
 STW 1,28,-4; assignmentOperator
-BR 0,0,-10; bJump
+BR 0,0,-23; bJump
+LDW 1,28,-12; cg var2Reg
+WRN 1,0,0; Write longint
+WCR 0,0,0; Write Carriage Return
 EXT 0,0,0; Exit program

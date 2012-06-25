@@ -21,7 +21,7 @@ STW 1,28,-8; assignmentOperator
 LDW 1,28,-4; cg var2Reg
 WRN 1,0,0; Write longint
 WCR 0,0,0; Write Carriage Return
-LDW 2,28,-8; cg var2Reg
-WRN 2,0,0; Write longint
+LDW 1,28,-8; cg var2Reg
+WRN 1,0,0; Write longint
 WCR 0,0,0; Write Carriage Return
 EXT 0,0,0; Exit program

@@ -14,6 +14,21 @@ Var HP: Longint; // heap pointer
 Var RR: Longint;
 Var LINK: Longint;
 
+Var cgFreeRegisters : Longint;
+Var cgCountFreeRegistersRet: Longint;
+Procedure cgCountFreeRegisters;
+var i: Longint;
+begin
+    cgCountFreeRegistersRet := 0;
+    i := 0;
+    while i < 32 do begin
+        if cgRegisterUsage[i] = cFalse then begin
+            cgCountFreeRegistersRet := cgCountFreeRegistersRet + 1;
+        end;
+        i := i + 1;
+    end;
+end;
+
 procedure cgPut(op: String; a: Longint; b: Longint; c: Longint; rem: String);forward;
 
 // cgRequestRegister() reserves a register and returns its number.
@@ -40,6 +55,8 @@ Begin
     if i = 0 then begin
         errorMsg('cgReleaseRegister: Register 0 cannot be released!');
     end else begin
+        infoMsg('Releasing register');
+        Writeln(i);
         cgRegisterUsage[i] := cFalse;
     end;
 End;
@@ -287,6 +304,7 @@ begin
     cgLoad(item);
     if item^.fType = stLongintType then begin
         cgPut('WRN', item^.fReg,0,0,'Write longint');
+        cgReleaseRegister(item^.fReg);
     end;
     if item^.fType = stStringType then begin
         cgPut('WRS', item^.fReg, 0,0,'Write String');
@@ -535,7 +553,6 @@ begin
 	cgSimpleExpressionRet := ret;
 end;
 
-
 Var cgExpressionRet: Longint;
 procedure cgExpression( leftItem: ptItem; rightItem: ptItem; op: longint);
 	var ret: longint;
@@ -602,11 +619,18 @@ Begin
     cgCodegenInit;
     cgRegAllocInit;
     cgItemInit;
+    cgCountFreeRegisters;
+    cgFreeRegisters := cgCountFreeRegistersRet;
     // cgPut('ADDI', 1,1,2, 'Test');
 End;
 
 Procedure cgEnd();
 Begin
+    cgCountFreeRegisters;
+    if cgCountFreeRegistersRet <> cgFreeRegisters then begin
+        errorMsg('Register leak!');
+        Writeln('Missing ', cgFreeRegisters - cgCountFreeRegistersRet);
+    end;
     cgCodegenFinish;
 End;
 

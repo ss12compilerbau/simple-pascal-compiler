@@ -17,38 +17,38 @@ STW 1,28,-16; assignmentOperator
 LDW 1,28,-12; cg var2Reg
 WRN 1,0,0; Write longint
 WCR 0,0,0; Write Carriage Return
+LDW 1,28,-16; cg var2Reg
+WRN 1,0,0; Write longint
+WCR 0,0,0; Write Carriage Return
+ADDI 1,0,0; cg Const2Reg
+STW 1,28,-12; assignmentOperator
+ADDI 1,0,1; cg Const2Reg
+STW 1,28,-16; assignmentOperator
+LDW 1,28,-12; cg var2Reg
 LDW 2,28,-16; cg var2Reg
-WRN 2,0,0; Write longint
-WCR 0,0,0; Write Carriage Return
-ADDI 3,0,0; cg Const2Reg
-STW 3,28,-12; assignmentOperator
-ADDI 3,0,1; cg Const2Reg
-STW 3,28,-16; assignmentOperator
-LDW 3,28,-12; cg var2Reg
-LDW 4,28,-16; cg var2Reg
-CMP 3,3,4; cgExpression
-BLE 3,0,4; cJump /fixedUp/
-LDW 3,28,-16; cg var2Reg
-STW 3,28,-12; assignmentOperator
+CMP 1,1,2; cgExpression
+BLE 1,0,4; cJump /fixedUp/
+LDW 1,28,-16; cg var2Reg
+STW 1,28,-12; assignmentOperator
 BR 0,0,3; fJump /fixedUp/
-LDW 3,28,-12; cg var2Reg
-STW 3,28,-16; assignmentOperator
-LDW 3,28,-12; cg var2Reg
-WRN 3,0,0; Write longint
+LDW 1,28,-12; cg var2Reg
+STW 1,28,-16; assignmentOperator
+LDW 1,28,-12; cg var2Reg
+WRN 1,0,0; Write longint
 WCR 0,0,0; Write Carriage Return
-LDW 4,28,-16; cg var2Reg
-WRN 4,0,0; Write longint
+LDW 1,28,-16; cg var2Reg
+WRN 1,0,0; Write longint
 WCR 0,0,0; Write Carriage Return
-LDW 5,28,-16; cg var2Reg
-ADDI 5,5,10; cgSimpleExpression
-LDW 6,28,-12; cg var2Reg
-CMP 6,6,5; cgExpression
-BGE 6,0,5; cJump /fixedUp/
-LDW 5,28,-12; cg var2Reg
-ADDI 5,5,1; cgSimpleExpression
-STW 5,28,-12; assignmentOperator
+LDW 1,28,-16; cg var2Reg
+ADDI 1,1,10; cgSimpleExpression
+LDW 2,28,-12; cg var2Reg
+CMP 2,2,1; cgExpression
+BGE 2,0,5; cJump /fixedUp/
+LDW 1,28,-12; cg var2Reg
+ADDI 1,1,1; cgSimpleExpression
+STW 1,28,-12; assignmentOperator
 BR 0,0,-8; bJump
-LDW 5,28,-12; cg var2Reg
-WRN 5,0,0; Write longint
+LDW 1,28,-12; cg var2Reg
+WRN 1,0,0; Write longint
 WCR 0,0,0; Write Carriage Return
 EXT 0,0,0; Exit program

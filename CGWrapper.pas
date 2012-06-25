@@ -39,11 +39,11 @@ PROGRAM SPC;
 			
 			printSymbolTable( stCurrentScope, ' ');
 	    end;
-        {
+        (*
         cgRequestRegister;
         Writeln('Allocated Register: ', cgRequestRegisterRet);
         cgReleaseRegister(1);
-        }
+        *)
 	    cgEnd;
 	END.
 

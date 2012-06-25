@@ -68,7 +68,7 @@ test.scanner.include : build.scanner
 	@echo "test.scanner.string ok"
 
 test.scanner.selfScanning : build.scanner
-	./ScanWrapper scanner.pas >/dev/null
+	./ScanWrapper CGWrapper.pas
 	@echo "selfscanning ok"
 
 # Parser
@@ -163,6 +163,12 @@ hw5: build.codegen
 	./CGWrapper tests/hw5.pas
 	@echo "Code emitted:"
 	@cat out.asm
+
+factorial: build.codegen
+	./CGWrapper tests/fakultaet.pas
+	@echo "Code emitted:"
+	@cat out.asm
+
 
 # Emulator
 install.emu:
