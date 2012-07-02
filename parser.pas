@@ -168,6 +168,7 @@
         parserDebugStr( 'PeekIsVarModifier');
         peekSymbol;
         ret := cFalse;
+        if sym = cLBrak then begin ret := cTrue; end;
         if sym = cPeriod then begin ret := cTrue; end;
         if sym = cPtrRef then begin ret := cTrue; end;
         
@@ -363,7 +364,7 @@
     
     
     
-    
+    (*
     procedure parseVarExtIdentifier(item: ptItem);
         var ret : longint;
         var again : longint;
@@ -388,6 +389,8 @@
                 item^.fOffset := stFindSymbolRet^.fOffset;
             end else begin
                 errorMsg('parseVarExtIdentifier: Variable not found');
+                Writeln('Not found ', id);
+                printSymbolTable(stCurrentScope, '');
                 if stCurrentScope<> stGlobalScope then begin
                     printSymbolTable(stCurrentScope^.fParent, '');
                 end;
@@ -430,24 +433,53 @@
         parserDebugStrInt( 'parseVarExtIdentifier', ret);
         gRetLongInt := ret;
     end;
-    
-    
-    procedure parseVarModifier;
+    *)
+
+    procedure parseVarModifier(item: ptItem);
     var ret : longint;
+    var indexItem: ptItem;
+    var symbol: ptSymbol;
     begin
         parserDebugStr( 'parseVarModifier');
         
         peekSymbol;
         if sym = cPtrRef then begin
+            // Pointer reference
             getSymbol; // '^'
-        end;
-        
-        parseSymbol( cPeriod);
-        ret := gRetLongInt;
-        
-        if ret = cTrue then begin
-            parseVarExtIdentifier(Nil);
-            ret := gRetLongInt;
+            cgFollowPointer(item);
+            ret := cTrue;
+        end else begin
+            writeln('parseVarModifier ', id);
+            if sym = cPeriod then begin
+                // Field
+                Writeln('Field dereference to be implemented');
+                parseSymbol(cPeriod);
+                ret := gRetLongint;
+                if ret = cTrue then begin
+                    parseVarIdentifier;
+                    ret := gRetLongint;
+                    if ret = cTrue then begin
+                        writeln('parseVarModifier ', id);
+                        stFindSymbol(item^.fType^.fFields, id);
+                        symbol := stFindSymbolRet;
+                        cgField(item, symbol);
+                    end;
+                end;
+            end else begin
+                // Array index
+                parseSymbol( cLBrak);
+                ret :=  gRetLongInt;
+                if ret = cTrue then begin
+                    New(indexItem);
+                    parseExpression(indexItem);
+                    ret :=  gRetLongInt;
+                end;
+                if ret = cTrue then begin
+                    parseSymbol( cRBrak);
+                    ret :=  gRetLongInt;
+                    cgIndex(item, indexItem);
+                end;
+            end;
         end;
         
         parserDebugStrInt( 'parseVarModifier', ret);
@@ -471,20 +503,39 @@
         var again : longint;
         var bTry : longint;
         var bParse : longint;
-        (*
-        var ret : longint;
-        *)
     begin
         parserDebugStr( 'parseVariable');
-        parseVarExtIdentifier(item);
+        parseVarIdentifier;
         ret :=  gRetLongInt;
         if ret = cTrue then begin
-            PeekIsVarModifier; 
+
+            stFindSymbolRet := Nil;
+            stFindSymbol(stCurrentScope, id);
+            if stFindSymbolRet <> Nil then begin
+                item^.fMode := mVar;
+                item^.fType := stFindSymbolRet^.fType;
+                if stFindSymbolRet^.fScope = stGlobalScope then begin // Global scope
+                    item^.fReg := GP;
+                end else begin
+                    item^.fReg := FP;
+                end;
+                item^.fOffset := stFindSymbolRet^.fOffset;
+            end else begin
+                errorMsg('parseVariable: Variable not found');
+                Writeln('Not found ', id);
+                printSymbolTable(stCurrentScope, '');
+                if stCurrentScope<> stGlobalScope then begin
+                    printSymbolTable(stCurrentScope^.fParent, '');
+                end;
+                //Writeln('stCurrentScope', stCurrentScope^.fParams = Nil);
+            end;
+
+            PeekIsVarModifier;
             bTry :=  gRetLongInt;
             again := bTry;
             while again = cTrue do begin
                 if bTry = cTrue then begin
-                    parseVarModifier;
+                    parseVarModifier(item);
                     bParse :=  gRetLongInt;
                 end;
                 if bParse = cTrue then begin
@@ -827,8 +878,10 @@
                     if specialmode = 2 then begin
                         // New() mode
                         if parLength <> 1 then begin
-                            errorMsg('parseCallParameters: New needs 1 parameters!');
+                            errorMsg('parseCallParameters: New needs 1 parameter!');
         					ret := cFalse;
+                        end else begin
+                            cgNew(parameters[0]);
                         end;
                     end;
                     if specialmode = 3 then begin
@@ -960,7 +1013,6 @@
                 stFindSymbol(stCurrentScope, id);
                 if stFindSymbolRet = Nil then begin
                     errorMsg('parseType: Type not found');
-                    Writeln(id);
                     printSymbolTable(stCurrentScope, '');
                 end else begin
 	                typeObj := stFindSymbolRet^.fType;

@@ -10,6 +10,8 @@ varDeclarations = { varDeclaration } .
 varDeclaration = var declaration ";" .
 typeDeclaration = type oneTypeDeclaration { oneTypeDeclaration } .
 oneTypeDeclaration = typeIdentifier "=" ( recordType | arrayType | ( "^" typeIdentifier ) ) ";" .
+
+
 Statements, Procedures and Functions
 
 codeBlock = begin statements end .
@@ -22,32 +24,45 @@ procCall = procIdentifier callParameters ";" .
 defParameters = [ "(" declaration { ";" declaration } ")" ]
 declaration = varIdentifier ":" type .
 callParameters = [ "(" expression { ";" expression } ")" ]
+
+
 Expressions Procedures and Functions
 
 expression = simpleExpression [ relOperator simpleExpression ] .
 simpleExpression = term { addOperator term } .
 term = factor { multOperator factor } .
 factor = variable | ( [ sign ] longint ) | string | "(" expression ")" | not factor .
+
+
 Types
 
 type = simpleType | typeIdentifier .
 simpleType = longint | string | char | boolean | text .
 recordType = record declaration { ";" declaration } end .
 arrayType = array of typeIdentifier .
+
+
 Variables
 
 variable = varExtIdentifier { varModifier } .
 varModifier = [ "^" ] "." varExtIdentifier .
 varExtIdentifier = varIdentifier { "[" expression "]" } .
+-------
+variable = varIdentifier { varModifier } .
+varModifier = "^" | "." varIdentifier | "[" expression "]".
+
+
 Identifiers
 
-pgmIndentifier = identifier .
-constIndentifier = identifier .
-varIndentifier = identifier .
-typeIndentifier = identifier .
-procIndentifier = identifier .
-funcIndentifier = identifier .
+pgmIdentifier = identifier .
+constIdentifier = identifier .
+varIdentifier = identifier .
+typeIdentifier = identifier .
+procIdentifier = identifier .
+funcIdentifier = identifier .
 identifier = letter { letter | digit } .
+
+
 Low Level Definitions
 
 sign = "+" | "-" .

@@ -1,0 +1,45 @@
+SUBI 28,28,-32; Reserve command to shift space for global variables
+ADDI 29,28,0; Set Heap beginning
+BSR 0,0,1; Jump to main()
+STW 29,28,-8; cgNew
+ADDI 29,29,8; cgNew
+LDW 1,28,-8; cg var2Reg
+ADDI 2,0,3; cg Const2Reg
+STW 2,1,0; assignmentOperator
+LDW 1,28,-8; cg var2Reg
+ADDI 2,0,4; cg Const2Reg
+STW 2,1,4; assignmentOperator
+LDW 1,28,-8; cg var2Reg
+LDW 1,1,0; ref2Reg
+WRN 1,0,0; Write longint
+WCR 0,0,0; Write Carriage Return
+STW 29,28,-12; cgNew
+ADDI 29,29,8; cgNew
+LDW 1,28,-12; cg var2Reg
+ADDI 2,0,5; cg Const2Reg
+STW 2,1,0; assignmentOperator
+LDW 1,28,-12; cg var2Reg
+LDW 2,28,-12; cg var2Reg
+STW 2,1,4; assignmentOperator
+LDW 1,28,-12; cg var2Reg
+LDW 1,1,0; ref2Reg
+WRN 1,0,0; Write longint
+WCR 0,0,0; Write Carriage Return
+STW 29,28,-28; cgSetLength
+ADDI 1,0,2; cg Const2Reg
+MULI 1,1,4; cgSetLength
+ADD 29,29,1; cgSetLength
+LDW 1,28,-28; cg var2Reg
+LDW 2,28,-8; cg var2Reg
+STW 2,1,4; assignmentOperator
+LDW 1,28,-28; cg var2Reg
+LDW 1,1,4; ref2Reg
+LDW 1,1,0; ref2Reg
+WRN 1,0,0; Write longint
+WCR 0,0,0; Write Carriage Return
+LDW 1,28,-28; cg var2Reg
+LDW 1,1,4; ref2Reg
+LDW 1,1,4; ref2Reg
+WRN 1,0,0; Write longint
+WCR 0,0,0; Write Carriage Return
+EXT 0,0,0; Exit program

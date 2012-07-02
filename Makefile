@@ -126,8 +126,8 @@ test.codegen.arrays: build.codegen
 
 test.codegen.records: build.codegen
 	./CGWrapper tests/cg-records.pas
-	@echo "Code emitted:"
-	@cat out.asm
+	diff out.asm tests/cg-records.should
+	@echo "Records test okay."
 
 test.codegen.arrayselements: build.codegen
 	./CGWrapper tests/cg-arrayselements.pas

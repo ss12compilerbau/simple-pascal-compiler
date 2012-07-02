@@ -64,8 +64,11 @@
     var stTextType: ptType;
 
     var stGP: Longint;
+    var stInRecord: Longint;
 
     Procedure printSymbolTable(symbolTable: ptSymbolTable; prefix: String);forward;
+    Procedure stBeginRecord(name: String);forward;
+    Procedure stEndRecord;forward;
 
     Var stCreateSymbolRet: ptSymbol;
     Procedure stCreateSymbol;
@@ -77,6 +80,21 @@
         stCreateSymbolRet^.fNext := Nil;
         stCreateSymbolRet^.fParams := Nil;
         stCreateSymbolRet^.fType := Nil;
+    End;
+
+    Var stSizeOfRet: Longint;
+    Procedure stSizeOf(rec: ptType);
+    var field: ptSymbol;
+    Begin
+        stSizeOfRet := 1;
+        if rec^.fBase^.fFields = Nil then begin
+            errorMsg(rec^.fForm);
+        end;
+        field := rec^.fBase^.fFields^.fFirst;
+        while field^.fNext <> Nil do begin
+            stSizeOfRet := stSizeOfRet + 1;
+            field := field^.fNext;
+        end;
     End;
 
     Var stCreateSymbolTableRet: ptSymbolTable;
@@ -102,6 +120,7 @@
         if form = 'POINTER' then begin isSimple := 1; end;
         if form = 'BOOLEAN' then begin isSimple := 1; end;
         if form = 'RECORD' then begin isSimple := 0; end;
+        if form = 'TEMP' then begin isSimple := 1; end;
         if isSimple = -1 then begin
             errorMsg('Symboltable: Unrecognized Type form: ' + form);
         end else begin
@@ -194,11 +213,12 @@
             end else begin
                 if symbolTable^.fParent <> Nil then begin
                     // Writeln('Look in the parent ST ', name);
+                    // printSymbolTable(stGlobalScope, '');
                     stFindSymbol(symbolTable^.fParent, name);
                 end;
             end;
         end;
-        // Writeln('findsymbol end ', stFindSymbolRet <> Nil);
+        // Writeln('findsymbol end ', stFindSymbolRet = Nil, ' ', name);
     End;
 
     Var stFindTypeRet: ptType;
@@ -257,8 +277,13 @@
         symbolTable^.fLast := symbol;
         // Fill offset and shift SP 
         if symbol^.fClass = stVar then begin
-            symbol^.fOffset := symbolTable^.fSP;
-            symbolTable^.fSP := symbolTable^.fSP - 4;
+            if stInRecord = cTrue then begin
+                symbol^.fOffset := symbolTable^.fSP;
+                symbolTable^.fSP := symbolTable^.fSP + 4;
+            end else begin
+                symbol^.fOffset := symbolTable^.fSP;
+                symbolTable^.fSP := symbolTable^.fSP - 4;
+            end;
         end;
         symbol^.fScope := stCurrentScope;
     End;
@@ -289,6 +314,8 @@
         stPointer := 'POINTER';
         stRecord := 'RECORD';
 
+        stInRecord := cFalse;
+
         // Create global symbol table. The only one that's parent is Nil
         stCreateSymbolTable(Nil);
         stCurrentScope := stCreateSymbolTableRet;
@@ -314,6 +341,9 @@
         createPredefinedType('TEXT');
         stTextType := stCreateSymbolRet^.fType;
         
+        // createPredefinedType('TEMP');
+        // stTextType := stCreateSymbolRet^.fType;
+
         // writeln('d3');
     End;
 
@@ -333,9 +363,22 @@
             stFindType(varType);
             // writeln('dIS1.1');
             if stFindTypeRet = Nil then begin
-                errorMsg( 'Symboltable - stInsertSymbol: Type not defined! ' + varType);
-                printSymbolTable(stCurrentScope, '');
-            end else begin
+                if symbolType = stType then begin
+                    // Writeln('stInsertSymbol - Couldnt find ', varType);
+                    // printSymbolTable(stCurrentScope, '');
+                    stBeginRecord(varType);
+                    stEndRecord;
+                    stCreateSymbolRet^.fIsForward := cTrue;
+                    stFindType(varType);
+                    if stFindTypeRet = Nil then begin
+                        errorMsg('Symboltable: Fliege in der Suppe..');
+                    end;
+                end else begin
+                    errorMsg( 'Symboltable - stInsertSymbol: Type not defined! ' + varType);
+                    printSymbolTable(stCurrentScope, '');
+                end;
+            end;
+            if stFindTypeRet <> Nil then begin
                 // writeln('dIS2');
                 stCreateSymbol;
                 stCreateSymbolRet^.fName := name;
@@ -416,8 +459,15 @@
             // already exists (forward or duplicate)
             // two possibilities: forward declared Type/Procedure or duplicate entry
             if stFindSymbolRet^.fIsForward = cTrue then begin
-                Writeln('forward defined symbol ' + name);
                 stCurrentContext := stFindSymbolRet;
+                Writeln('forward defined symbol ' + name);
+                if stFindSymbolRet^.fType^.fFields = Nil then begin
+                    stCreateSymbolTable(stCurrentScope);
+                    stCurrentScope := stCreateSymbolTableRet;
+                    stFindSymbolRet^.fType^.fFields := stCreateSymbolTableRet;
+                    stFindSymbolRet^.fType^.fForm := stRecord;
+                end;
+
                 stCurrentScope := stFindSymbolRet^.fType^.fFields;
             end else begin
                 // writeln('dBC 1');
@@ -488,13 +538,17 @@
     begin
         infoMsg( 'Symboltable: Beginning new record ' + name);
         stBeginContext(name, stRecord);
+        stCurrentScope^.fSP := 0;
+        stInRecord := cTrue;
     end;
 
     // Ending a record
     Procedure stEndRecord;
     Begin
         infoMsg( 'Symboltable: Ending record');
+        // printSymbolTable(stGlobalScope, '');
         stCurrentScope := stCurrentScope^.fParent;
+        stInRecord := cFalse;
     End;
 
     Procedure stEndProcedure;

@@ -269,10 +269,9 @@ End;
 
 Procedure cgNew(item: ptItem);
 Begin
-    //TODO
-    // stSizeOf(item)
-    cgPut('STW', HP, GP, item^.fOffset, 'cgSetLength');
-    // cgPut('ADDI', HP, HP, sizeofRet, 'cgNew');
+    stSizeOf(item^.fType);
+    cgPut('STW', HP, item^.fReg, item^.fOffset, 'cgNew');
+    cgPut('ADDI', HP, HP, stSizeOfRet * 4, 'cgNew');
 End;
 
 Var cgEmitStringRet: Longint;
@@ -596,6 +595,20 @@ Begin
     end;
     item^.fType := item^.fType^.fBase;
 end;
+
+Procedure cgField(item: ptItem; symbol: ptSymbol);
+Begin
+    cgLoad(item);
+    item^.fMode := mREF;
+    item^.fOffset := symbol^.fOffset;
+    item^.fType := symbol^.fType;
+End;
+
+Procedure cgFollowPointer(item: ptItem);
+Begin
+
+    item^.fType := item^.fType^.fBase;
+End;
 
 procedure cgPrologue(localsize: Longint);
 Begin
