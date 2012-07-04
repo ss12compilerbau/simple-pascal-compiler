@@ -892,7 +892,24 @@
                         end;
                         cgWriteCR;
                     end;
-
+                    if specialmode = 4 then begin
+                        // EOF
+                        if parLength <> 1 then begin
+                            errorMsg('parseCallParameters: EOF needs 1 parameter!');
+        					ret := cFalse;
+                        end else begin
+                            cgEof(parameters[0]);
+                        end;
+                    end;
+                    if specialmode = 5 then begin
+                        // Read
+                        if parLength <> 2 then begin
+                            errorMsg('parseCallParameters: Read needs 2 parameters!');
+        					ret := cFalse;
+                        end else begin
+                            cgRead(parameters[0], parameters[1]);
+                        end;
+                    end;
                 end;
             end;
         end else begin
@@ -1221,37 +1238,44 @@ procedure parseArrayTypeTry;
                 end else begin
                     if procName = 'WRITELN' then begin
                         parseCallParameters(3, Nil);
-
                     end else begin
-                        stFindSymbolRet := Nil;
-                        stFindSymbol(stCurrentScope, procName);
-                        symbol := stFindSymbolRet;
-                        if symbol = Nil then begin
-                            errorMsg('parseProcCall: undeclared procedure!');
-                            ret := cFalse;
+                        if procName = 'EOF' then begin
+                            parseCallParameters(4, Nil);
+                            item^.fType := stBooleanType;
                         end else begin
-                            item^.fMode := mReg;
-                            item^.fType := symbol^.fType;
-                            cgPushUsedRegisters;
-                            parseCallParameters(0, symbol);
-                            if symbol^.fOffset <> 0 then begin
-                                cgIsBSR(symbol^.fOffset);
-                                if cgIsBSRRet = cFalse then begin
-                                    sJump(symbol^.fOffset - PC);
-                                end else begin
-                                    sJump(symbol^.fOffset);
-                                    symbol^.fOffset := sJumpRet;
-                                end;
+                            if procName = 'READ' then begin
+                                parseCallParameters(5, Nil);
                             end else begin
-                                sJump(symbol^.fOffset);
-                                symbol^.fOffset := sJumpRet;
+                                stFindSymbolRet := Nil;
+                                stFindSymbol(stCurrentScope, procName);
+                                symbol := stFindSymbolRet;
+                                if symbol = Nil then begin
+                                    errorMsg('parseProcCall: undeclared procedure!');
+                                    ret := cFalse;
+                                end else begin
+                                    item^.fMode := mReg;
+                                    item^.fType := symbol^.fType;
+                                    cgPushUsedRegisters;
+                                    parseCallParameters(0, symbol);
+                                    if symbol^.fOffset <> 0 then begin
+                                        cgIsBSR(symbol^.fOffset);
+                                        if cgIsBSRRet = cFalse then begin
+                                            sJump(symbol^.fOffset - PC);
+                                        end else begin
+                                            sJump(symbol^.fOffset);
+                                            symbol^.fOffset := sJumpRet;
+                                        end;
+                                    end else begin
+                                        sJump(symbol^.fOffset);
+                                        symbol^.fOffset := sJumpRet;
+                                    end;
+                                    cgPopUsedRegisters;
+                                    cgRequestRegister;
+                                    item^.fReg := cgRequestRegisterRet;
+                                    cgPut('ADD', item^.fReg, 0, RR, 'parseProcCall');
+                                end;
                             end;
-                            cgPopUsedRegisters;
-                            cgRequestRegister;
-                            item^.fReg := cgRequestRegisterRet;
-                            cgPut('ADD', item^.fReg, 0, RR, 'parseProcCall');
                         end;
-
                     end;
                 end;
             end;

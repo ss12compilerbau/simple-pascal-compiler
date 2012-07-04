@@ -138,7 +138,7 @@
 	var c: Char;
 	//var c10: Char;
 	BEGIN
-		Read(R, c);
+        Read(R, c);
 		chOrig := c;
 		UCaseChr(c);
 		ch := UCaseChrRet;
@@ -737,4 +737,3 @@
 		cArray := 85;
 		cOf := 84;
 	End;
-

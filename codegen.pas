@@ -127,7 +127,7 @@ begin
     cgCodeLines[PC]^.b := b;
     cgCodeLines[PC]^.c := c;
     cgCodeLines[PC]^.rem := rem;
-    Writeln(op, ', ', a, ', ', b, ', ', c, '; ', rem);
+    Writeln(PC, ': ', op, ', ', a, ', ', b, ', ', c, '; ', rem);
     PC := PC + 1;
 End;
 procedure cgCodegenInit();
@@ -556,7 +556,7 @@ Var cgExpressionRet: Longint;
 procedure cgExpression( leftItem: ptItem; rightItem: ptItem; op: longint);
 	var ret: longint;
 begin
-    if ((leftItem^.fType = stLongintType) and (rightItem^.fType = stLongintType)) then begin
+    if (leftItem^.fType = rightItem^.fType) then begin
         cgLoad(leftItem);
         if((rightItem^.fMode <> mCONST) or (rightItem^.fValue <> 0)) then begin
             cgLoad(rightItem);
@@ -575,6 +575,22 @@ begin
     end;
 
 	cgExpressionRet := ret;
+end;
+
+Procedure cgEof(item: ptItem);
+Begin
+    cgLoad(item);
+    cgPut('EOF', item^.fReg, item^.fReg, 0, 'cgEof');
+    cgPut('ADD', RR, item^.fReg, 0, 'cgEof');
+    cgReleaseRegister(item^.fReg);
+End;
+
+Procedure cgRead(item1: ptItem; item2: ptItem);
+Begin
+    // read a character from file1 into the variable item2
+    cgLoad(item1);
+    cgPut('RDF', item1^.fReg, item2^.fReg, item2^.fOffset, 'cgRead');
+    cgReleaseRegister(item1^.fReg);
 end;
 
 Procedure cgIndex(item: ptItem; indexItem: ptItem);

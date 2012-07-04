@@ -95,8 +95,8 @@ test.symboltable: build.symboltable
 build.codegen: clean
 	${COMPILER} CGWrapper.pas
 
-test.codegen : test.codegen.assignment test.codegen.arrays test.codegen.arrayselements test.codegen.conditionals-loops hw4 hw5
-# not yet: test.codegen.field test.codegen.boolean test.codegen.records test.codegen.conditionals-loops 
+test.codegen : test.codegen.assignment test.codegen.arrays test.codegen.arrayselements test.codegen.conditionals-loops hw4 hw5 test.codegen.records test.codegen.conditionals-loops
+# not yet: test.codegen.boolean
 	@echo "Codegeneration tests ok."
 
 test.codegen.assignment : build.codegen
